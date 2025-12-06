@@ -1,0 +1,40 @@
+# FastAPI and server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+sqlalchemy
+psycopg2-binary
+alembic
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+
+# Google OAuth
+google-auth
+google-auth-oauthlib
+
+# Email (MailerSend)
+mailersend
+
+# Whisper ASR
+openai-whisper
+torch
+tensorflow
+
+# Media processing
+ffmpeg-python
+ffmpeg
+pydub
+
+# Utilities
+python-dotenv
+pydantic
+pydantic-settings
+
+# Demo UI
+streamlit
+requests

@@ -1,0 +1,293 @@
+"""
+Media Service for RomaSub.AI
+Handles video/audio file uploads and audio extraction
+"""
+
+import os
+import uuid
+import subprocess
+from pathlib import Path
+from typing import Optional, Tuple, Dict
+from fastapi import UploadFile
+import shutil
+
+from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class MediaService:
+    """Service for handling media file uploads and processing"""
+
+    # In-memory storage for file metadata (temporary files only)
+    _file_registry: Dict[str, Dict] = {}
+    
+    @staticmethod
+    def generate_file_id() -> str:
+        """Generate unique file ID"""
+        return str(uuid.uuid4())
+    
+    @staticmethod
+    def get_file_extension(filename: str) -> str:
+        """Extract file extension from filename"""
+        return Path(filename).suffix.lower().lstrip('.')
+    
+    @staticmethod
+    def is_valid_extension(filename: str) -> bool:
+        """Check if file extension is allowed"""
+        ext = MediaService.get_file_extension(filename)
+        return ext in settings.allowed_extensions
+    
+    @staticmethod
+    def is_video_file(filename: str) -> bool:
+        """Check if file is a video"""
+        ext = MediaService.get_file_extension(filename)
+        return ext in settings.allowed_video_extensions.split(',')
+    
+    @staticmethod
+    def is_audio_file(filename: str) -> bool:
+        """Check if file is an audio file"""
+        ext = MediaService.get_file_extension(filename)
+        return ext in settings.allowed_audio_extensions.split(',')
+    
+    @staticmethod
+    async def save_upload_file(upload_file: UploadFile) -> Tuple[bool, str, Dict]:
+        """
+        Save uploaded file to temporary storage (in-memory tracking).
+
+        Args:
+            upload_file: FastAPI UploadFile object
+
+        Returns:
+            Tuple of (success, message/file_id, file_info_dict)
+        """
+        # Validate extension
+        if not MediaService.is_valid_extension(upload_file.filename):
+            return False, f"Invalid file type. Allowed: {settings.allowed_extensions}", {}
+
+        # Generate unique file ID and path
+        file_id = MediaService.generate_file_id()
+        ext = MediaService.get_file_extension(upload_file.filename)
+
+        # Ensure upload directory exists
+        os.makedirs(settings.temp_upload_dir, exist_ok=True)
+
+        # Create file path
+        file_path = os.path.join(settings.temp_upload_dir, f"{file_id}.{ext}")
+
+        try:
+            # Save file
+            with open(file_path, "wb") as buffer:
+                # Read in chunks to handle large files
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while True:
+                    chunk = await upload_file.read(chunk_size)
+                    if not chunk:
+                        break
+                    buffer.write(chunk)
+
+            # Get file size
+            file_size = os.path.getsize(file_path)
+
+            # Check file size
+            if file_size > settings.max_file_size_bytes:
+                os.remove(file_path)
+                return False, f"File too large. Max size: {settings.max_file_size_mb}MB", {}
+
+            # Determine file type
+            is_video = MediaService.is_video_file(upload_file.filename)
+
+            # Store file info in memory
+            file_info = {
+                "file_id": file_id,
+                "original_filename": upload_file.filename,
+                "file_path": file_path,
+                "file_size": file_size,
+                "extension": ext,
+                "is_video": is_video,
+                "audio_path": None,
+                "status": "uploaded"
+            }
+
+            MediaService._file_registry[file_id] = file_info
+
+            logger.info("File uploaded: %s (%s bytes)", file_id, file_size)
+            print(f"\n[UPLOAD] File saved: {file_path}")
+            print(f"[UPLOAD] File ID: {file_id}")
+            print(f"[UPLOAD] Size: {file_size / (1024*1024):.2f} MB")
+
+            return True, file_id, file_info
+
+        except Exception as e:
+            logger.error("Failed to save file: %s", str(e))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return False, f"Failed to save file: {str(e)}", {}
+    
+    @staticmethod
+    def get_file_info(file_id: str) -> Optional[Dict]:
+        """
+        Get file information by ID from in-memory registry.
+
+        Args:
+            file_id: Unique file identifier
+
+        Returns:
+            File info dictionary or None
+        """
+        return MediaService._file_registry.get(file_id)
+    
+    @staticmethod
+    def extract_audio(file_id: str) -> Tuple[bool, str]:
+        """
+        Extract audio from video file using FFmpeg.
+
+        Args:
+            file_id: ID of the uploaded file
+
+        Returns:
+            Tuple of (success, audio_path or error_message)
+        """
+        file_info = MediaService.get_file_info(file_id)
+
+        if not file_info:
+            return False, "File not found"
+
+        # If already audio, no extraction needed
+        if not file_info["is_video"]:
+            file_info["audio_path"] = file_info["file_path"]
+            file_info["status"] = "audio_ready"
+            print(f"\n[AUDIO] File is already audio: {file_info['file_path']}")
+            return True, file_info["file_path"]
+
+        # If audio already extracted
+        if file_info.get("audio_path"):
+            return True, file_info["audio_path"]
+
+        # Generate audio output path
+        audio_path = os.path.join(
+            settings.temp_upload_dir,
+            f"{file_id}_audio.wav"
+        )
+
+        try:
+            print(f"\n[AUDIO] Extracting audio from: {file_info['file_path']}")
+            print(f"[AUDIO] Output path: {audio_path}")
+
+            # Use FFmpeg to extract audio
+            command = [
+                "ffmpeg",
+                "-i", file_info["file_path"],
+                "-vn",
+                "-acodec", "pcm_s16le",
+                "-ar", "16000",
+                "-ac", "1",
+                "-y",
+                audio_path
+            ]
+
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode != 0:
+                logger.error("FFmpeg error: %s", result.stderr)
+                file_info["status"] = "extraction_failed"
+                return False, f"Audio extraction failed: {result.stderr}"
+
+            # Update file info in memory
+            file_info["audio_path"] = audio_path
+            file_info["status"] = "audio_ready"
+
+            audio_size = os.path.getsize(audio_path)
+            print(f"[AUDIO] Extraction complete: {audio_size / (1024*1024):.2f} MB")
+
+            logger.info("Audio extracted for file: %s", file_id)
+            return True, audio_path
+
+        except FileNotFoundError:
+            error_msg = "FFmpeg not found. Please install FFmpeg."
+            logger.error(error_msg)
+            file_info["status"] = "extraction_failed"
+            return False, error_msg
+
+        except Exception as e:
+            logger.error("Audio extraction failed: %s", str(e))
+            file_info["status"] = "extraction_failed"
+            return False, f"Audio extraction failed: {str(e)}"
+    
+    @staticmethod
+    def cleanup_file(file_id: str) -> bool:
+        """
+        Clean up temporary files for a given file ID.
+
+        Args:
+            file_id: ID of the file to clean up
+
+        Returns:
+            True if cleanup successful
+        """
+        file_info = MediaService.get_file_info(file_id)
+
+        if not file_info:
+            return False
+
+        try:
+            # Remove original file
+            if os.path.exists(file_info["file_path"]):
+                os.remove(file_info["file_path"])
+
+            # Remove extracted audio if exists and different from original
+            if file_info.get("audio_path") and file_info["audio_path"] != file_info["file_path"]:
+                if os.path.exists(file_info["audio_path"]):
+                    os.remove(file_info["audio_path"])
+
+            # Remove from registry
+            del MediaService._file_registry[file_id]
+
+            logger.info("Cleaned up files for: %s", file_id)
+            return True
+
+        except Exception as e:
+            logger.error("Cleanup failed for %s: %s", file_id, str(e))
+            return False
+    
+    @staticmethod
+    def get_audio_duration(audio_path: str) -> Optional[float]:
+        """
+        Get audio duration in seconds using FFprobe.
+        
+        Args:
+            audio_path: Path to audio file
+            
+        Returns:
+            Duration in seconds or None if failed
+        """
+        try:
+            command = [
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                audio_path
+            ]
+            
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                return float(result.stdout.strip())
+            return None
+            
+        except Exception:
+            return None
+
+
+# Create singleton instance
+media_service = MediaService()
