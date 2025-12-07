@@ -21,7 +21,7 @@ from app.utils.security import (
     create_access_token,
     generate_otp
 )
-from app.services.email_service import email_service
+from app.services import email as email_service
 from app.config import settings
 
 import logging

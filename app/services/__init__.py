@@ -6,16 +6,13 @@ Pure functional modules (use module imports):
     from app.services import auth
     from app.services import media
     from app.services import asr
+    from app.services import email
 
 Then use:
     auth.register_user(db, user_data)
     media.save_upload_file(file)
     asr.transcribe_audio(file_id, language)
-
-Class-based services (still available):
-    from app.services.email_service import EmailService
+    email.send_otp_email(to_email, to_name, otp)
 """
 
-from app.services.email_service import EmailService
-
-__all__ = ["EmailService"]
+__all__ = []
