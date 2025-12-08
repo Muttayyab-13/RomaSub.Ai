@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100, description="User's first name")
     last_name: str = Field(..., min_length=1, max_length=100, description="User's last name")
     email: EmailStr = Field(..., description="User's email address")
-    password: str = Field(..., min_length=8, max_length=100, description="User's password")
+    password: str = Field(..., min_length=8, max_length=72, description="User's password (max 72 chars due to bcrypt limit)")
     confirm_password: str = Field(..., description="Password confirmation")
     
     @validator('password')

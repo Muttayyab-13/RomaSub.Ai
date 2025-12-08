@@ -179,3 +179,89 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+
+
+# FLUTTER
+
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-versions
+pubspec.lock
+
+# Android
+android/.gradle/
+android/captures/
+android/app/build/
+android/local.properties
+android/key.properties
+
+# iOS
+ios/Flutter/.last_build_id
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Xcode
+**/DerivedData/
+**/Build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# macOS
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Runner.xcodeproj/
+macos/Runner.xcworkspace/
+macos/cmake-build-debug/
+
+# Windows
+windows/flutter/ephemeral/
+windows/Runner/GeneratedPluginRegistrant.*
+
+# Linux
+linux/flutter/ephemeral/
+linux/Runner/GeneratedPluginRegistrant.*
+
+# Web
+web/.dart_tool/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+.history/
+
+# Logs & Misc
+*.log
+*.tmp
+*.swp
+*.lock
+*.DS_Store
+
+# Firebase / Keys (optional, recommended)
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+*.pem
