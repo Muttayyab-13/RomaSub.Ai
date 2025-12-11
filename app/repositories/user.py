@@ -58,7 +58,7 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
     """
     return db.query(User).filter(User.id == user_id).first()
 
-
+# Not usingg Google for noww
 def get_user_by_google_id(db: Session, google_id: str) -> Optional[User]:
     """
     Get user by Google ID.
