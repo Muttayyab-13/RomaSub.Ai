@@ -7,6 +7,7 @@ class ApiConfig {
   static const String authRegister = '/auth/register';
   static const String authLogin = '/auth/login/json';
   static const String authGoogle = '/auth/google';
+  static const String authGoogleCode = '/auth/google/code';  // For desktop OAuth
   static const String authMe = '/auth/me';
   static const String authChangePassword = '/auth/change-password';
   static const String authForgotPassword = '/auth/forgot-password';

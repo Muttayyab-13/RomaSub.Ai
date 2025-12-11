@@ -15,6 +15,7 @@ from app.schemas.user import (
     UserResponse,
     Token,
     GoogleAuthRequest,
+    GoogleAuthCodeRequest,
     ForgotPasswordRequest,
     VerifyOTPRequest,
     ResetPasswordRequest,
@@ -177,9 +178,9 @@ async def google_auth(
 ):
     """
     Authenticate or register with Google OAuth.
-    
+
     - **id_token**: Google ID token obtained from frontend Google Sign-In
-    
+
     If user doesn't exist, a new account will be created.
     If user exists with same email, Google account will be linked.
     """
@@ -189,6 +190,36 @@ async def google_auth(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Google token"
+        )
+
+    token_response = auth_service.create_user_token(user)
+
+    # Add flag to indicate if new user was created
+    return token_response
+
+
+@router.post("/google/code", response_model=Token)
+async def google_auth_code(
+    auth_data: GoogleAuthCodeRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate or register with Google OAuth using authorization code.
+
+    This endpoint is designed for desktop applications that use the OAuth2 authorization code flow.
+
+    - **code**: Authorization code obtained from Google OAuth callback
+    - **redirect_uri**: The redirect URI used in the OAuth flow (must match the one used to get the code)
+
+    If user doesn't exist, a new account will be created.
+    If user exists with same email, Google account will be linked.
+    """
+    user, is_new = auth_service.google_auth_with_code(db, auth_data.code, auth_data.redirect_uri)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization code or failed to authenticate with Google"
         )
 
     token_response = auth_service.create_user_token(user)

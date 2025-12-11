@@ -91,11 +91,14 @@ streamlit run demo/demo_ui.py
 ### Authentication (Module 1)
 - `POST /auth/register` - Register new user
 - `POST /auth/login` - Login with email/password
-- `POST /auth/google` - Google OAuth login
+- `POST /auth/google` - Google OAuth login (mobile/web with ID token)
+- `POST /auth/google/code` - Google OAuth login (desktop with authorization code)
 - `POST /auth/forgot-password` - Request password reset OTP
 - `POST /auth/verify-otp` - Verify OTP
 - `POST /auth/reset-password` - Reset password with OTP
 - `POST /auth/change-password` - Change password (authenticated)
+
+**Google OAuth Setup**: See [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md) for detailed instructions or [GOOGLE_OAUTH_QUICKSTART.md](./GOOGLE_OAUTH_QUICKSTART.md) for quick reference.
 
 ### Media (Module 2)
 - `POST /media/upload` - Upload video/audio file

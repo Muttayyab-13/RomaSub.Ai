@@ -97,11 +97,25 @@ class Token(BaseModel):
 class GoogleAuthRequest(BaseModel):
     """Schema for Google OAuth authentication"""
     id_token: str = Field(..., description="Google ID token from frontend")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..."
+            }
+        }
+
+
+class GoogleAuthCodeRequest(BaseModel):
+    """Schema for Google OAuth authentication with authorization code (for desktop apps)"""
+    code: str = Field(..., description="Authorization code from Google OAuth")
+    redirect_uri: str = Field(..., description="Redirect URI used in OAuth flow")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "code": "4/0AeaYSHB...",
+                "redirect_uri": "http://localhost:8080/auth/callback"
             }
         }
 

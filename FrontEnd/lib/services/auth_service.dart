@@ -81,13 +81,29 @@ class AuthService {
     }
   }
 
-  /// Login with Google OAuth
+  /// Login with Google OAuth (ID token - for mobile/web)
   Future<AuthResponseModel> googleLogin(String idToken) async {
     try {
       final response = await _client.dio.post(
         ApiConfig.authGoogle,
         data: {
           'id_token': idToken,
+        },
+      );
+      return AuthResponseModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Login with Google OAuth using authorization code (for desktop)
+  Future<AuthResponseModel> googleLoginWithCode(String code, String redirectUri) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConfig.authGoogleCode,
+        data: {
+          'code': code,
+          'redirect_uri': redirectUri,
         },
       );
       return AuthResponseModel.fromJson(response.data);

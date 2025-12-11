@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from google_auth_oauthlib.flow import Flow
+import requests
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
@@ -148,11 +150,13 @@ def verify_google_token(id_token_str: str) -> Optional[dict]:
         Dictionary with user info if valid, None otherwise
     """
     try:
-        # Verify the token
+        # Verify the token with clock skew tolerance
+        # Allow up to 60 seconds of clock skew to handle minor time differences
         idinfo = id_token.verify_oauth2_token(
             id_token_str,
             google_requests.Request(),
-            settings.google_client_id
+            settings.google_client_id,
+            clock_skew_in_seconds=60
         )
 
         # Token is valid
@@ -217,6 +221,99 @@ def google_auth(db: Session, id_token_str: str) -> Tuple[Optional[User], bool]:
     user = user_repo.create_user(db, user_dict)
     logger.info("Created new user via Google: %s", user.email)
     return user, True
+
+
+def google_auth_with_code(db: Session, code: str, redirect_uri: str) -> Tuple[Optional[User], bool]:
+    """
+    Authenticate or register user with Google using authorization code.
+    This is used for desktop applications.
+
+    Args:
+        db: Database session
+        code: Authorization code from Google OAuth
+        redirect_uri: Redirect URI used in the OAuth flow
+
+    Returns:
+        Tuple of (User object, is_new_user flag)
+    """
+    try:
+        # Exchange authorization code for tokens
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "code": code,
+            "client_id": settings.google_client_id,
+            "client_secret": settings.google_client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code"
+        }
+
+        # Log the request (without exposing secrets)
+        logger.info("Exchanging auth code with Google. Redirect URI: %s", redirect_uri)
+        logger.debug("Client ID: %s", settings.google_client_id[:20] + "...")
+
+        response = requests.post(token_url, data=token_data)
+
+        # Log response status
+        logger.info("Google token exchange response status: %d", response.status_code)
+
+        response.raise_for_status()
+        tokens = response.json()
+
+        # Extract ID token
+        id_token_str = tokens.get("id_token")
+        if not id_token_str:
+            logger.error("No ID token in response from Google")
+            return None, False
+
+        # Verify ID token and get user info
+        google_info = verify_google_token(id_token_str)
+        if not google_info:
+            return None, False
+
+        # Check if user exists by Google ID
+        user = user_repo.get_user_by_google_id(db, google_info["google_id"])
+        if user:
+            # Existing user, update last login
+            user = user_repo.update_last_login(db, user)
+            return user, False
+
+        # Check if user exists by email (registered with email/password)
+        user = user_repo.get_user_by_email(db, google_info["email"])
+        if user:
+            # Link Google account to existing user
+            update_data = {
+                "google_id": google_info["google_id"],
+                "is_verified": True,
+                "last_login": datetime.utcnow()
+            }
+            user = user_repo.update_user(db, user, update_data)
+            return user, False
+
+        # Create new user with Google
+        user_dict = {
+            "first_name": google_info["first_name"] or "User",
+            "last_name": google_info["last_name"] or "",
+            "email": google_info["email"].lower(),
+            "google_id": google_info["google_id"],
+            "is_verified": True,
+            "last_login": datetime.utcnow()
+        }
+
+        user = user_repo.create_user(db, user_dict)
+        logger.info("Created new user via Google (auth code flow): %s", user.email)
+        return user, True
+
+    except requests.exceptions.RequestException as e:
+        logger.error("Failed to exchange authorization code: %s", str(e))
+        # Log the response body if available
+        if hasattr(e, 'response') and e.response is not None:
+            logger.error("Google API response: %s", e.response.text)
+        return None, False
+    except Exception as e:
+        logger.error("Error in google_auth_with_code: %s", str(e))
+        import traceback
+        logger.error("Traceback: %s", traceback.format_exc())
+        return None, False
 
 
 # ============================================================================

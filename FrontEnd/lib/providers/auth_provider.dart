@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/storage_service.dart';
 import '../services/api/api_exception.dart';
+import '../services/google_oauth_desktop_service.dart';
 
 /// Auth state class representing the current authentication status
 class AuthState {
@@ -55,12 +56,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final UserService _userService;
   final StorageService _storage;
   final GoogleSignIn? _googleSignIn;
+  final GoogleOAuthDesktopService? _desktopOAuth;
 
   AuthNotifier(
     this._authService,
     this._userService,
     this._storage,
     this._googleSignIn,
+    this._desktopOAuth,
   ) : super(AuthState()) {
     // Initialize auth state on creation
     initialize();
@@ -184,18 +187,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Sign in with Google OAuth
   Future<bool> signInWithGoogle() async {
-    // Check if Google Sign-In is configured
-    if (_googleSignIn == null) {
-      state = state.copyWith(
-        error: 'Google Sign-In is only available on Web, Android, and iOS. Please use email/password login on desktop.',
-        isLoading: false,
-      );
-      return false;
-    }
-
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      // Use desktop OAuth flow for Windows/macOS/Linux
+      if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+        if (_desktopOAuth == null) {
+          state = state.copyWith(
+            error: 'Desktop Google Sign-In is not configured',
+            isLoading: false,
+          );
+          return false;
+        }
+
+        // Get authorization code from desktop OAuth flow
+        final code = await _desktopOAuth!.signIn();
+        if (code == null) {
+          // User canceled or error occurred
+          state = state.copyWith(isLoading: false);
+          return false;
+        }
+
+        // Exchange code for tokens via backend
+        final response = await _authService.googleLoginWithCode(
+          code,
+          _desktopOAuth!.getRedirectUri(),
+        );
+        await _storage.saveToken(response.accessToken);
+        await _storage.saveUser(response.user);
+
+        state = state.copyWith(user: response.user, isLoading: false);
+        return true;
+      }
+
+      // Use google_sign_in for Web, Android, iOS
+      if (_googleSignIn == null) {
+        state = state.copyWith(
+          error: 'Google Sign-In is not configured for this platform',
+          isLoading: false,
+        );
+        return false;
+      }
+
       // Trigger Google Sign-In flow
       final googleUser = await _googleSignIn!.signIn();
       if (googleUser == null) {
@@ -221,14 +254,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(error: e.message, isLoading: false);
-      await _googleSignIn!.signOut();
+      if (_googleSignIn != null) {
+        await _googleSignIn!.signOut();
+      }
       return false;
     } catch (e) {
       state = state.copyWith(
         error: 'Google sign-in failed. Please try again.',
         isLoading: false,
       );
-      await _googleSignIn!.signOut();
+      if (_googleSignIn != null) {
+        await _googleSignIn!.signOut();
+      }
       return false;
     }
   }
@@ -367,32 +404,29 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
   // Wait for storage to be ready before creating AuthNotifier
   return storageAsync.maybeWhen(
     data: (storage) {
-      // Only initialize Google Sign-In on supported platforms (Web, Android, iOS)
       GoogleSignIn? googleSignIn;
-      final isSupported = kIsWeb ||
-                         Platform.isAndroid ||
-                         Platform.isIOS;
+      GoogleOAuthDesktopService? desktopOAuth;
 
-      if (isSupported) {
+      // Initialize appropriate Google OAuth service based on platform
+      if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+        // Use google_sign_in for Web, Android, iOS
         try {
           googleSignIn = GoogleSignIn(
             scopes: ['email', 'profile'],
             // Client ID can be set here or via meta tag in index.html
           );
         } catch (e) {
-          // Google Sign-In initialization failed - that's okay, we'll disable it
           googleSignIn = null;
         }
-      } else {
-        // Desktop platforms (Windows, macOS, Linux) are not supported
-        googleSignIn = null;
+      } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        // Use desktop OAuth flow for Windows, macOS, Linux
+        desktopOAuth = GoogleOAuthDesktopService();
       }
 
-      return AuthNotifier(authService, userService, storage, googleSignIn);
+      return AuthNotifier(authService, userService, storage, googleSignIn, desktopOAuth);
     },
     orElse: () {
       // Return a temporary notifier while storage is loading/errored
-      // This prevents the "Storage not ready" exception
       return _LoadingAuthNotifier();
     },
   );
@@ -406,6 +440,7 @@ class _LoadingAuthNotifier extends AuthNotifier {
           _DummyUserService(),
           _DummyStorageService(),
           null, // No Google Sign-In during loading
+          null, // No desktop OAuth during loading
         );
 
   @override
