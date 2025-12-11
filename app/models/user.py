@@ -29,7 +29,8 @@ class User(Base):
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    
+    profile_picture_url = Column(String(500), nullable=True)  # URL to profile picture
+
     # Authentication
     hashed_password = Column(String(255), nullable=True)  # Null for Google-only users
     

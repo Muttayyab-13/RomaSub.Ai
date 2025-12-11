@@ -74,11 +74,13 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
+    profile_picture_url: Optional[str] = None
+    google_id: Optional[str] = None
     is_active: bool
     is_verified: bool
     created_at: datetime
     last_login: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -212,11 +214,32 @@ class ChangePasswordRequest(BaseModel):
         }
 
 
+class UpdateProfileRequest(BaseModel):
+    """Schema for updating user profile"""
+    first_name: str = Field(..., min_length=1, max_length=100, description="User's first name")
+    last_name: str = Field(..., min_length=1, max_length=100, description="User's last name")
+
+    @validator('first_name', 'last_name')
+    def validate_name(cls, v):
+        """Validate name contains only valid characters"""
+        if not re.match(r'^[a-zA-Z\s\-\']+$', v):
+            raise ValueError('Name can only contain letters, spaces, hyphens, and apostrophes')
+        return v.strip()
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "first_name": "Muttayyab",
+                "last_name": "Abdurrehman"
+            }
+        }
+
+
 class MessageResponse(BaseModel):
     """Schema for simple message responses"""
     message: str
     success: bool = True
-    
+
     class Config:
         json_schema_extra = {
             "example": {

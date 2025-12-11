@@ -16,12 +16,14 @@ COMSATS University Islamabad, Abbottabad Campus
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 import sys
+from pathlib import Path
 
 from app.database import init_db
-from app.routers import auth_router, media_router, asr_router
+from app.routers import auth_router, media_router, asr_router, user_router
 from app.config import settings
 
 # Configure logging
@@ -115,6 +117,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files for uploads (profile pictures, etc.)
+UPLOADS_DIR = Path("uploads")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
 
 # Global exception handler
 @app.exception_handler(Exception)
@@ -135,6 +142,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(auth_router)
 app.include_router(media_router)
 app.include_router(asr_router)
+app.include_router(user_router)
 
 
 # Root endpoint
