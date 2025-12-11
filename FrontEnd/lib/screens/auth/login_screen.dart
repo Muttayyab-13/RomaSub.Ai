@@ -48,15 +48,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else if (mounted) {
         final error = ref.read(authNotifierProvider).error;
         if (error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          // Check if error is about email verification
+          if (error.toLowerCase().contains('verify your email') ||
+              error.toLowerCase().contains('verification')) {
+            // Show dialog with option to go to verification screen
+            _showVerificationDialog();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       }
     }
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Email Not Verified'),
+        content: const Text(
+          'Please verify your email address before logging in. '
+          'Would you like to go to the verification screen?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to verification screen with the email
+              AppRoutes.to(
+                context,
+                AppRoutes.emailVerification,
+                arguments: _emailController.text.trim(),
+              );
+            },
+            child: const Text('Verify Email'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleGoogleSignIn() async {

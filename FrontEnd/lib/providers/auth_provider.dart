@@ -109,8 +109,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Register new user
-  Future<bool> register({
+  /// Register new user (returns email for verification, not logged in)
+  Future<String?> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -125,6 +125,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
+      state = state.copyWith(isLoading: false);
+      return response.email; // Return email for email verification screen
+    } on ApiException catch (e) {
+      state = state.copyWith(error: e.message, isLoading: false);
+      return null;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Registration failed. Please try again.',
+        isLoading: false,
+      );
+      return null;
+    }
+  }
+
+  /// Verify email with OTP
+  Future<bool> verifyEmail(String email, String otp) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _authService.verifyEmail(email, otp);
       await _storage.saveToken(response.accessToken);
       await _storage.saveUser(response.user);
 
@@ -135,7 +155,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return false;
     } catch (e) {
       state = state.copyWith(
-        error: 'Registration failed. Please try again.',
+        error: 'Email verification failed. Please try again.',
+        isLoading: false,
+      );
+      return false;
+    }
+  }
+
+  /// Resend verification OTP
+  Future<bool> resendVerificationOtp(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _authService.resendVerificationOtp(email);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(error: e.message, isLoading: false);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to resend OTP. Please try again.',
         isLoading: false,
       );
       return false;
@@ -383,7 +423,7 @@ class _LoadingAuthNotifier extends AuthNotifier {
   }
 
   @override
-  Future<bool> register({
+  Future<String?> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -393,7 +433,7 @@ class _LoadingAuthNotifier extends AuthNotifier {
       error: 'Please wait, app is initializing...',
       isLoading: false,
     );
-    return false;
+    return null;
   }
 
   @override

@@ -37,16 +37,17 @@ OTP_VALIDITY_MINUTES = 15
 # User Registration & Authentication
 # ============================================================================
 
-def register_user(db: Session, user_data: UserCreate) -> User:
+def register_user(db: Session, user_data: UserCreate) -> Tuple[User, bool]:
     """
     Register a new user with email and password.
+    Sends verification OTP to user's email.
 
     Args:
         db: Database session
         user_data: User registration data
 
     Returns:
-        Created User object
+        Tuple of (Created User object, email_sent_success)
 
     Raises:
         ValueError: If email already exists
@@ -70,7 +71,11 @@ def register_user(db: Session, user_data: UserCreate) -> User:
 
     db_user = user_repo.create_user(db, user_dict)
     logger.info("Created new user: %s", db_user.email)
-    return db_user
+
+    # Send verification OTP
+    email_sent = send_verification_otp(db, db_user)
+
+    return db_user, email_sent
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
@@ -353,6 +358,120 @@ def change_password(db: Session, user: User, current_password: str, new_password
 
     logger.info("Password changed for: %s", user.email)
     return True, "Password changed successfully"
+
+
+# ============================================================================
+# Email Verification with OTP
+# ============================================================================
+
+def send_verification_otp(db: Session, user: User) -> bool:
+    """
+    Create and send email verification OTP.
+
+    Args:
+        db: Database session
+        user: User object
+
+    Returns:
+        True if OTP sent successfully, False otherwise
+    """
+    # Generate OTP
+    otp = generate_otp()
+    expires_at = datetime.utcnow() + timedelta(minutes=OTP_VALIDITY_MINUTES)
+
+    # Invalidate previous OTPs
+    user_repo.delete_user_otps(db, user.id, "email_verify")
+
+    # Create new OTP record
+    otp_data = {
+        "user_id": user.id,
+        "otp_code": otp,
+        "otp_type": "email_verify",
+        "expires_at": expires_at
+    }
+    user_repo.create_otp_record(db, otp_data)
+
+    # Send OTP email
+    email_sent = email_service.send_otp_email(
+        to_email=user.email,
+        to_name=user.full_name,
+        otp=otp,
+        purpose="email_verify"
+    )
+
+    if email_sent:
+        logger.info("Email verification OTP sent to: %s", user.email)
+    else:
+        logger.error("Failed to send verification OTP to: %s", user.email)
+
+    return email_sent
+
+
+def verify_email(db: Session, email: str, otp: str) -> Tuple[bool, str, Optional[User]]:
+    """
+    Verify email with OTP and activate user account.
+
+    Args:
+        db: Database session
+        email: User's email
+        otp: OTP code
+
+    Returns:
+        Tuple of (success, message, user_object)
+    """
+    # Get user
+    user = user_repo.get_user_by_email(db, email)
+    if not user:
+        return False, "Invalid email or OTP", None
+
+    # Check if already verified
+    if user.is_verified:
+        return True, "Email already verified", user
+
+    # Verify OTP
+    otp_record = user_repo.get_valid_otp(db, user.id, otp, "email_verify")
+    if not otp_record:
+        return False, "Invalid or expired OTP", None
+
+    # Update user as verified
+    update_data = {"is_verified": True}
+    user = user_repo.update_user(db, user, update_data)
+
+    # Mark OTP as used
+    user_repo.mark_otp_used(db, otp_record)
+
+    logger.info("Email verified for: %s", email)
+    return True, "Email verified successfully", user
+
+
+def resend_verification_otp(db: Session, email: str) -> Tuple[bool, str]:
+    """
+    Resend email verification OTP.
+
+    Args:
+        db: Database session
+        email: User's email
+
+    Returns:
+        Tuple of (success, message)
+    """
+    # Get user
+    user = user_repo.get_user_by_email(db, email)
+    if not user:
+        # Don't reveal if email exists (security best practice)
+        return True, "If the email exists and is not verified, you will receive an OTP"
+
+    # Check if already verified
+    if user.is_verified:
+        return False, "Email already verified"
+
+    # Send verification OTP
+    email_sent = send_verification_otp(db, user)
+
+    if email_sent:
+        return True, "Verification OTP sent to your email"
+    else:
+        return False, "Failed to send verification OTP"
 
 
 # ============================================================================

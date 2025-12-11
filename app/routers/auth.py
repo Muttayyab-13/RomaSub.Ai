@@ -19,7 +19,10 @@ from app.schemas.user import (
     VerifyOTPRequest,
     ResetPasswordRequest,
     ChangePasswordRequest,
-    MessageResponse
+    MessageResponse,
+    VerifyEmailRequest,
+    ResendOTPRequest,
+    RegistrationResponse
 )
 from app.services import auth as auth_service
 from app.utils.security import decode_access_token
@@ -68,13 +71,14 @@ async def get_current_user(
     return user
 
 
-@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
     """
     Register a new user with email and password.
+    A verification OTP will be sent to the user's email.
 
     - **first_name**: User's first name
     - **last_name**: User's last name
@@ -84,15 +88,23 @@ async def register(
     """
     # Register user (includes email existence check)
     try:
-        user = auth_service.register_user(db, user_data)
+        user, email_sent = auth_service.register_user(db, user_data)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
 
-    # Create and return token
-    return auth_service.create_user_token(user)
+    # Return registration success message
+    message = "Registration successful. Please check your email for verification OTP."
+    if not email_sent:
+        message = "Registration successful, but failed to send verification email. Please use resend OTP."
+
+    return RegistrationResponse(
+        message=message,
+        email=user.email,
+        user_uuid=user.uuid
+    )
 
 
 @router.post("/login", response_model=Token)
@@ -102,9 +114,9 @@ async def login(
 ):
     """
     Login with email and password.
-    
+
     Uses OAuth2 password flow for compatibility with OpenAPI/Swagger.
-    
+
     - **username**: User's email address
     - **password**: User's password
     """
@@ -117,6 +129,13 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Check if email is verified
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before logging in. Check your email for the verification OTP."
+        )
+
     return auth_service.create_user_token(user)
 
 
@@ -127,9 +146,9 @@ async def login_json(
 ):
     """
     Login with email and password (JSON body).
-    
+
     Alternative to OAuth2 form login.
-    
+
     - **email**: User's email address
     - **password**: User's password
     """
@@ -139,6 +158,13 @@ async def login_json(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
+        )
+
+    # Check if email is verified
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before logging in. Check your email for the verification OTP."
         )
 
     return auth_service.create_user_token(user)
@@ -194,16 +220,64 @@ async def verify_otp(
     db: Session = Depends(get_db)
 ):
     """
-    Verify OTP code.
-    
+    Verify OTP code for password reset.
+
     Use this to check if OTP is valid before resetting password.
-    
+
     - **email**: User's email address
     - **otp**: 6-digit OTP code received via email
     """
     is_valid, message = auth_service.verify_otp(db, request.email, request.otp)
 
     if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+
+    return MessageResponse(message=message, success=True)
+
+
+@router.post("/verify-email", response_model=Token)
+async def verify_email(
+    request: VerifyEmailRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Verify email address with OTP.
+
+    After successful verification, user will be able to login.
+
+    - **email**: User's email address
+    - **otp**: 6-digit OTP code received via email
+    """
+    success, message, user = auth_service.verify_email(db, request.email, request.otp)
+
+    if not success or not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+
+    # Return token so user can immediately login
+    return auth_service.create_user_token(user)
+
+
+@router.post("/resend-verification-otp", response_model=MessageResponse)
+async def resend_verification_otp(
+    request: ResendOTPRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Resend email verification OTP.
+
+    Use this if user didn't receive the verification email.
+
+    - **email**: User's email address
+    """
+    success, message = auth_service.resend_verification_otp(db, request.email)
+
+    if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message

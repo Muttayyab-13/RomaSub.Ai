@@ -241,6 +241,55 @@ class UpdateProfileRequest(BaseModel):
         }
 
 
+class VerifyEmailRequest(BaseModel):
+    """Schema for email verification"""
+    email: EmailStr = Field(..., description="User's email address")
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
+
+    @validator('otp')
+    def validate_otp(cls, v):
+        """Validate OTP is numeric"""
+        if not v.isdigit():
+            raise ValueError('OTP must contain only digits')
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "muttayyab@example.com",
+                "otp": "123456"
+            }
+        }
+
+
+class ResendOTPRequest(BaseModel):
+    """Schema for resending OTP"""
+    email: EmailStr = Field(..., description="User's email address")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "muttayyab@example.com"
+            }
+        }
+
+
+class RegistrationResponse(BaseModel):
+    """Schema for registration response (before email verification)"""
+    message: str
+    email: str
+    user_uuid: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Registration successful. Please check your email for verification OTP.",
+                "email": "muttayyab@example.com",
+                "user_uuid": "550e8400-e29b-41d4-a716-446655440000"
+            }
+        }
+
+
 class MessageResponse(BaseModel):
     """Schema for simple message responses"""
     message: str

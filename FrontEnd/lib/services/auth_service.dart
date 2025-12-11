@@ -28,8 +28,8 @@ class AuthService {
     }
   }
 
-  /// Register new user
-  Future<AuthResponseModel> register({
+  /// Register new user (returns registration response, not auth token)
+  Future<RegistrationResponse> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -46,7 +46,36 @@ class AuthService {
           'confirm_password': password,
         },
       );
+      return RegistrationResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Verify email with OTP (returns auth token on success)
+  Future<AuthResponseModel> verifyEmail(String email, String otp) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConfig.authVerifyEmail,
+        data: {
+          'email': email,
+          'otp': otp,
+        },
+      );
       return AuthResponseModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Resend verification OTP
+  Future<MessageResponse> resendVerificationOtp(String email) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConfig.authResendVerificationOtp,
+        data: {'email': email},
+      );
+      return MessageResponse.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
     }

@@ -35,6 +35,38 @@ class AuthResponseModel {
       'AuthResponseModel(tokenType: $tokenType, user: ${user.fullName})';
 }
 
+/// Registration response model (before email verification)
+class RegistrationResponse {
+  final String message;
+  final String email;
+  final String userUuid;
+
+  RegistrationResponse({
+    required this.message,
+    required this.email,
+    required this.userUuid,
+  });
+
+  factory RegistrationResponse.fromJson(Map<String, dynamic> json) {
+    return RegistrationResponse(
+      message: json['message'] as String,
+      email: json['email'] as String,
+      userUuid: json['user_uuid'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'email': email,
+      'user_uuid': userUuid,
+    };
+  }
+
+  @override
+  String toString() => 'RegistrationResponse(message: $message, email: $email)';
+}
+
 /// Generic message response model for API responses
 class MessageResponse {
   final String message;

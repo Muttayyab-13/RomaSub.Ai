@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../screens/splash_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/signup_screen.dart';
+import '../../screens/auth/email_verification_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_email_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_otp_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_reset_screen.dart';
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String emailVerification = '/email-verification';
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
   static const String exports = '/exports';
@@ -33,6 +35,9 @@ class AppRoutes {
         return _buildRoute(LoginScreen());
       case signup:
         return _buildRoute(SignUpScreen());
+      case emailVerification:
+        final email = routeSettings.arguments as String;
+        return _buildRoute(EmailVerificationScreen(email: email));
       case dashboard:
         return _buildRoute(DashboardScreen());
       case projects:
@@ -59,16 +64,16 @@ class AppRoutes {
   }
 
   // Navigation helpers
-  static void to(BuildContext context, String route) {
-    Navigator.pushNamed(context, route);
+  static void to(BuildContext context, String route, {Object? arguments}) {
+    Navigator.pushNamed(context, route, arguments: arguments);
   }
 
-  static void replace(BuildContext context, String route) {
-    Navigator.pushReplacementNamed(context, route);
+  static void replace(BuildContext context, String route, {Object? arguments}) {
+    Navigator.pushReplacementNamed(context, route, arguments: arguments);
   }
 
-  static void clearAndGo(BuildContext context, String route) {
-    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
+  static void clearAndGo(BuildContext context, String route, {Object? arguments}) {
+    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false, arguments: arguments);
   }
 
   static void back(BuildContext context) {

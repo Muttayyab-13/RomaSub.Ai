@@ -69,21 +69,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         _emailError == null &&
         _passwordError == null &&
         _confirmPasswordError == null) {
-      final success = await ref.read(authNotifierProvider.notifier).register(
+      final email = await ref.read(authNotifierProvider.notifier).register(
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
 
-      if (success && mounted) {
+      if (email != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(AppStrings.accountCreated),
+            content: Text('Registration successful! Please check your email for verification code.'),
             backgroundColor: AppColors.success,
           ),
         );
-        AppRoutes.clearAndGo(context, AppRoutes.dashboard);
+        // Navigate to email verification screen
+        AppRoutes.replace(context, AppRoutes.emailVerification, arguments: email);
       } else if (mounted) {
         final error = ref.read(authNotifierProvider).error;
         if (error != null) {

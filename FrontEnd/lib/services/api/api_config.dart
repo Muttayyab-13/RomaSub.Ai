@@ -12,6 +12,8 @@ class ApiConfig {
   static const String authForgotPassword = '/auth/forgot-password';
   static const String authVerifyOtp = '/auth/verify-otp';
   static const String authResetPassword = '/auth/reset-password';
+  static const String authVerifyEmail = '/auth/verify-email';
+  static const String authResendVerificationOtp = '/auth/resend-verification-otp';
 
   // Media Endpoints
   static const String mediaUpload = '/media/upload';
