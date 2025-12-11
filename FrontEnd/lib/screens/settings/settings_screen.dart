@@ -107,12 +107,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() {
       _currentPasswordError = Validators.password(_currentPasswordController.text);
       _newPasswordError = Validators.password(_newPasswordController.text);
-
-      if (_newPasswordController.text != _confirmPasswordController.text) {
-        _confirmPasswordError = AppStrings.passwordsDoNotMatch;
-      } else {
-        _confirmPasswordError = null;
-      }
+      _confirmPasswordError = Validators.confirmPassword(
+        _confirmPasswordController.text,
+        _newPasswordController.text,
+      );
     });
 
     if (_currentPasswordError == null &&
@@ -444,8 +442,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             errorText: _newPasswordError,
                             onChanged: (_) {
                               if (_newPasswordError != null) {
-                                setState(() => _newPasswordError =
-                                    Validators.password(_newPasswordController.text));
+                                setState(() {
+                                  _newPasswordError =
+                                      Validators.password(_newPasswordController.text);
+                                  // Also revalidate confirm password if it has an error
+                                  if (_confirmPasswordError != null) {
+                                    _confirmPasswordError = Validators.confirmPassword(
+                                      _confirmPasswordController.text,
+                                      _newPasswordController.text,
+                                    );
+                                  }
+                                });
                               }
                             },
                           ),
@@ -460,12 +467,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             onChanged: (_) {
                               if (_confirmPasswordError != null) {
                                 setState(() {
-                                  if (_newPasswordController.text !=
-                                      _confirmPasswordController.text) {
-                                    _confirmPasswordError = AppStrings.passwordsDoNotMatch;
-                                  } else {
-                                    _confirmPasswordError = null;
-                                  }
+                                  _confirmPasswordError = Validators.confirmPassword(
+                                    _confirmPasswordController.text,
+                                    _newPasswordController.text,
+                                  );
                                 });
                               }
                             },

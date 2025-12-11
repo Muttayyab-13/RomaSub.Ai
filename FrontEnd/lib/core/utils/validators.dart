@@ -16,8 +16,27 @@ class Validators {
     if (value == null || value.isEmpty) {
       return AppStrings.passwordRequired;
     }
-    if (value.length < 6) {
-      return AppStrings.passwordShort;
+    if (value.length < 8) {
+      return AppStrings.passwordMinLength;
+    }
+    if (!RegExp(r'[A-Za-z]').hasMatch(value)) {
+      return AppStrings.passwordNeedLetter;
+    }
+    if (!RegExp(r'\d').hasMatch(value)) {
+      return AppStrings.passwordNeedDigit;
+    }
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/;~]').hasMatch(value)) {
+      return AppStrings.passwordNeedSpecial;
+    }
+    return null;
+  }
+
+  static String? confirmPassword(String? value, String? password) {
+    if (value == null || value.isEmpty) {
+      return AppStrings.confirmPasswordRequired;
+    }
+    if (value != password) {
+      return AppStrings.passwordsDoNotMatch;
     }
     return null;
   }

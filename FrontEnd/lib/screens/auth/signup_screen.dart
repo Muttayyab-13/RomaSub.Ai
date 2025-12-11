@@ -23,12 +23,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _agreeToTerms = false;
 
   String? _firstNameError;
   String? _lastNameError;
   String? _emailError;
   String? _passwordError;
+  String? _confirmPasswordError;
 
   @override
   void dispose() {
@@ -36,6 +38,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -45,6 +48,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       _lastNameError = Validators.name(_lastNameController.text);
       _emailError = Validators.email(_emailController.text);
       _passwordError = Validators.password(_passwordController.text);
+      _confirmPasswordError = Validators.confirmPassword(
+        _confirmPasswordController.text,
+        _passwordController.text,
+      );
     });
 
     if (!_agreeToTerms) {
@@ -60,7 +67,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (_firstNameError == null &&
         _lastNameError == null &&
         _emailError == null &&
-        _passwordError == null) {
+        _passwordError == null &&
+        _confirmPasswordError == null) {
       final success = await ref.read(authNotifierProvider.notifier).register(
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
@@ -190,7 +198,35 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   errorText: _passwordError,
                   onChanged: (_) {
                     if (_passwordError != null) {
-                      setState(() => _passwordError = Validators.password(_passwordController.text));
+                      setState(() {
+                        _passwordError = Validators.password(_passwordController.text);
+                        // Also revalidate confirm password if it has an error
+                        if (_confirmPasswordError != null) {
+                          _confirmPasswordError = Validators.confirmPassword(
+                            _confirmPasswordController.text,
+                            _passwordController.text,
+                          );
+                        }
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: AppSizes.md),
+
+                // Confirm Password
+                AppTextField(
+                  controller: _confirmPasswordController,
+                  hint: AppStrings.confirmPassword,
+                  isPassword: true,
+                  errorText: _confirmPasswordError,
+                  onChanged: (_) {
+                    if (_confirmPasswordError != null) {
+                      setState(() {
+                        _confirmPasswordError = Validators.confirmPassword(
+                          _confirmPasswordController.text,
+                          _passwordController.text,
+                        );
+                      });
                     }
                   },
                 ),

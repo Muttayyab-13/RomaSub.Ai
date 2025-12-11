@@ -26,6 +26,8 @@ class UserCreate(BaseModel):
             raise ValueError('Password must contain at least one letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/;\'`~]', v):
+            raise ValueError('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>_-+=[]\\\/;\'`~)')
         return v
     
     @validator('confirm_password')
@@ -48,8 +50,8 @@ class UserCreate(BaseModel):
                 "first_name": "Muttayyab",
                 "last_name": "Abdurrehman",
                 "email": "muttayyab@example.com",
-                "password": "SecurePass123",
-                "confirm_password": "SecurePass123"
+                "password": "SecurePass123!",
+                "confirm_password": "SecurePass123!"
             }
         }
 
@@ -63,7 +65,7 @@ class UserLogin(BaseModel):
         json_schema_extra = {
             "example": {
                 "email": "muttayyab@example.com",
-                "password": "SecurePass123"
+                "password": "SecurePass123!"
             }
         }
 
@@ -160,22 +162,24 @@ class ResetPasswordRequest(BaseModel):
             raise ValueError('Password must contain at least one letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/;\'`~]', v):
+            raise ValueError('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>_-+=[]\\\/;\'`~)')
         return v
-    
+
     @validator('confirm_password')
     def passwords_match(cls, v, values):
         """Ensure passwords match"""
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
         return v
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "email": "muttayyab@example.com",
                 "otp": "123456",
-                "new_password": "NewSecurePass123",
-                "confirm_password": "NewSecurePass123"
+                "new_password": "NewSecurePass123!",
+                "confirm_password": "NewSecurePass123!"
             }
         }
 
@@ -195,21 +199,23 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('Password must contain at least one letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/;\'`~]', v):
+            raise ValueError('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>_-+=[]\\\/;\'`~)')
         return v
-    
+
     @validator('confirm_password')
     def passwords_match(cls, v, values):
         """Ensure passwords match"""
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
         return v
-    
+
     class Config:
         json_schema_extra = {
             "example": {
-                "current_password": "OldPassword123",
-                "new_password": "NewPassword456",
-                "confirm_password": "NewPassword456"
+                "current_password": "OldPassword123!",
+                "new_password": "NewPassword456!",
+                "confirm_password": "NewPassword456!"
             }
         }
 

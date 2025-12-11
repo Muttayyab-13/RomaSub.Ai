@@ -32,12 +32,10 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
   Future<void> _handleResetPassword() async {
     setState(() {
       _passwordError = Validators.password(_passwordController.text);
-
-      if (_passwordController.text != _confirmPasswordController.text) {
-        _confirmPasswordError = AppStrings.passwordsDoNotMatch;
-      } else {
-        _confirmPasswordError = null;
-      }
+      _confirmPasswordError = Validators.confirmPassword(
+        _confirmPasswordController.text,
+        _passwordController.text,
+      );
     });
 
     if (_passwordError == null && _confirmPasswordError == null) {
@@ -115,7 +113,16 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
                   errorText: _passwordError,
                   onChanged: (_) {
                     if (_passwordError != null) {
-                      setState(() => _passwordError = Validators.password(_passwordController.text));
+                      setState(() {
+                        _passwordError = Validators.password(_passwordController.text);
+                        // Also revalidate confirm password if it has an error
+                        if (_confirmPasswordError != null) {
+                          _confirmPasswordError = Validators.confirmPassword(
+                            _confirmPasswordController.text,
+                            _passwordController.text,
+                          );
+                        }
+                      });
                     }
                   },
                 ),
@@ -130,11 +137,10 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
                   onChanged: (_) {
                     if (_confirmPasswordError != null) {
                       setState(() {
-                        if (_passwordController.text != _confirmPasswordController.text) {
-                          _confirmPasswordError = AppStrings.passwordsDoNotMatch;
-                        } else {
-                          _confirmPasswordError = null;
-                        }
+                        _confirmPasswordError = Validators.confirmPassword(
+                          _confirmPasswordController.text,
+                          _passwordController.text,
+                        );
                       });
                     }
                   },

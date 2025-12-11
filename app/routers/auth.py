@@ -75,11 +75,11 @@ async def register(
 ):
     """
     Register a new user with email and password.
-    
+
     - **first_name**: User's first name
     - **last_name**: User's last name
     - **email**: User's email address (must be unique)
-    - **password**: Password (min 8 characters, must contain letter and digit)
+    - **password**: Password (min 8 characters, must contain letter, digit, and special character)
     - **confirm_password**: Must match password
     """
     # Register user (includes email existence check)
@@ -219,10 +219,10 @@ async def reset_password(
 ):
     """
     Reset password using OTP.
-    
+
     - **email**: User's email address
     - **otp**: 6-digit OTP code
-    - **new_password**: New password (min 8 characters)
+    - **new_password**: New password (min 8 characters, must contain letter, digit, and special character)
     - **confirm_password**: Must match new_password
     """
     success, message = auth_service.reset_password(
@@ -249,11 +249,11 @@ async def change_password(
 ):
     """
     Change password for authenticated user.
-    
+
     Requires valid JWT token in Authorization header.
-    
+
     - **current_password**: User's current password
-    - **new_password**: New password (min 8 characters)
+    - **new_password**: New password (min 8 characters, must contain letter, digit, and special character)
     - **confirm_password**: Must match new_password
     """
     success, message = auth_service.change_password(
