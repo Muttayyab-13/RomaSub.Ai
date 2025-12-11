@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: romasub_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: romasub_password
+      POSTGRES_DB: romasub_ai
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - romasub_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: romasub_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://postgres:romasub_password@db:5432/romasub_ai
+
+      # JWT Configuration
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-this-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+
+      # Google OAuth Configuration (Optional)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
+      # MailerSend Configuration (Optional)
+      MAILERSEND_API_KEY: ${MAILERSEND_API_KEY:-}
+      MAILERSEND_SENDER_EMAIL: ${MAILERSEND_SENDER_EMAIL:-noreply@romasub.ai}
+      MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME:-RomaSub.AI}
+
+      # Whisper Configuration
+      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+
+      # File Upload Configuration
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
+      ALLOWED_VIDEO_EXTENSIONS: mp4,avi,mkv,mov,webm
+      ALLOWED_AUDIO_EXTENSIONS: mp3,wav,m4a,flac,ogg
+    volumes:
+      - upload_data:/tmp/romasub_uploads
+      - static_data:/app/uploads
+    ports:
+      - "8000:8000"
+    networks:
+      - romasub_network
+
+volumes:
+  postgres_data:
+    driver: local
+  upload_data:
+    driver: local
+  static_data:
+    driver: local
+
+networks:
+  romasub_network:
+    driver: bridge
