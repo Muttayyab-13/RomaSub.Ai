@@ -5,6 +5,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/app_logo.dart';
 
 class Sidebar extends ConsumerWidget {
   final String currentRoute;
@@ -20,7 +21,7 @@ class Sidebar extends ConsumerWidget {
       color: Colors.black,
       child: Column(
         children: [
-          // Logo - "R." in white rounded square
+          // Logo - use image asset instead of text
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.lg),
             child: Container(
@@ -31,14 +32,7 @@ class Sidebar extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
               child: const Center(
-                child: Text(
-                  'R.',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: AppLogo(size: 40),
               ),
             ),
           ),

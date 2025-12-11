@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../providers/upload_provider.dart';
+import 'transcription_complete_dialog.dart';
 
 /// Upload progress dialog showing real-time upload and transcription progress
 class UploadProgressDialog extends ConsumerWidget {
@@ -202,15 +203,23 @@ class UploadProgressDialog extends ConsumerWidget {
                       bottomRight: Radius.circular(AppSizes.radiusLg),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: AppSizes.sm,
                     children: [
-                      // Close button
+                      // Close/Cancel button
                       if (!uploadState.isProcessing)
                         TextButton(
                           onPressed: () {
-                            ref.read(uploadNotifierProvider.notifier).reset();
-                            Navigator.of(context).pop();
+                            if (uploadState.phase == UploadPhase.completed) {
+                              // Show improved completion dialog
+                              Navigator.of(context).pop();
+                              _showCompletionDialog(context, ref, uploadState);
+                            } else {
+                              // Cancel and close
+                              ref.read(uploadNotifierProvider.notifier).reset();
+                              Navigator.of(context).pop();
+                            }
                           },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
@@ -219,7 +228,7 @@ class UploadProgressDialog extends ConsumerWidget {
                             ),
                           ),
                           child: Text(
-                            uploadState.phase == UploadPhase.completed ? 'Close' : 'Cancel',
+                            uploadState.phase == UploadPhase.completed ? 'Continue' : 'Cancel',
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
@@ -228,11 +237,9 @@ class UploadProgressDialog extends ConsumerWidget {
                           ),
                         ),
 
-                      const SizedBox(width: AppSizes.sm),
-
-                      // Download SRT button (only when completed)
+                      // Quick Download button (only when completed)
                       if (uploadState.phase == UploadPhase.completed)
-                        ElevatedButton.icon(
+                        ElevatedButton(
                           onPressed: () async {
                             final srtContent =
                                 await ref.read(uploadNotifierProvider.notifier).downloadSrt();
@@ -250,8 +257,6 @@ class UploadProgressDialog extends ConsumerWidget {
                               );
                             }
                           },
-                          icon: const Icon(Icons.download_outlined, size: 20),
-                          label: const Text('Download SRT'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
@@ -263,6 +268,14 @@ class UploadProgressDialog extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                             ),
                             elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.download_outlined, size: 20),
+                              SizedBox(width: 8),
+                              Text('Quick Download'),
+                            ],
                           ),
                         ),
 
@@ -346,6 +359,70 @@ class UploadProgressDialog extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Show completion dialog with improved design
+void _showCompletionDialog(
+  BuildContext context,
+  WidgetRef ref,
+  UploadState uploadState,
+) {
+  if (uploadState.transcription == null) return;
+
+  final transcription = uploadState.transcription!;
+
+  TranscriptionCompleteDialog.show(
+    context,
+    filename: uploadState.currentFileName ?? 'Unknown',
+    duration: transcription.durationFormatted,
+    segmentCount: transcription.segmentCount,
+    language: 'Urdu',
+    previewText: transcription.text,
+    onDownload: () async {
+      // Download SRT file
+      final srtContent = await ref.read(uploadNotifierProvider.notifier).downloadSrt();
+
+      if (srtContent != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('SRT downloaded successfully!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+          ),
+        );
+      }
+
+      // Reset state
+      ref.read(uploadNotifierProvider.notifier).reset();
+    },
+    onViewDetails: () {
+      // TODO: Navigate to project details/viewer screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('View details coming soon!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Reset state
+      ref.read(uploadNotifierProvider.notifier).reset();
+    },
+    onEdit: () {
+      // TODO: Navigate to subtitle editor screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Subtitle editor coming soon!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Reset state
+      ref.read(uploadNotifierProvider.notifier).reset();
+    },
+  );
 }
 
 /// Show upload progress dialog
