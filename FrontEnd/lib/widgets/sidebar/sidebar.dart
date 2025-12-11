@@ -16,67 +16,64 @@ class Sidebar extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider);
 
     return Container(
-      width: AppSizes.sidebarWidth,
-      color: AppColors.sidebarBg,
+      width: 100,
+      color: Colors.black,
       child: Column(
         children: [
-          // Logo
+          // Logo - "R." in white rounded square
           Padding(
-            padding: const EdgeInsets.all(AppSizes.lg),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSizes.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.sidebarActive,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  ),
-                  child: const Icon(
-                    Icons.video_library,
-                    color: AppColors.accent,
-                    size: AppSizes.iconMd,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.sm),
-                const Text(
-                  AppStrings.appName,
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.lg),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+              ),
+              child: const Center(
+                child: Text(
+                  'R.',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: AppSizes.fontLg,
+                    color: Colors.black,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              ),
             ),
           ),
 
-          const SizedBox(height: AppSizes.md),
+          const SizedBox(height: AppSizes.xl),
 
-          // Menu Items
+          // Menu Items (icon-only)
           _MenuItem(
             icon: Icons.home_outlined,
             label: AppStrings.dashboard,
             isActive: currentRoute == AppRoutes.dashboard,
             onTap: () => AppRoutes.replace(context, AppRoutes.dashboard),
           ),
+          const SizedBox(height: AppSizes.sm),
           _MenuItem(
-            icon: Icons.folder_outlined,
+            icon: Icons.videocam_outlined,
             label: AppStrings.recentProjects,
             isActive: currentRoute == AppRoutes.projects,
             onTap: () => AppRoutes.replace(context, AppRoutes.projects),
           ),
+          const SizedBox(height: AppSizes.sm),
           _MenuItem(
             icon: Icons.download_outlined,
             label: AppStrings.exports,
             isActive: currentRoute == AppRoutes.exports,
             onTap: () => AppRoutes.replace(context, AppRoutes.exports),
           ),
+          const SizedBox(height: AppSizes.sm),
           _MenuItem(
-            icon: Icons.feedback_outlined,
+            icon: Icons.chat_bubble_outline,
             label: AppStrings.feedback,
             isActive: currentRoute == AppRoutes.feedback,
             onTap: () => AppRoutes.replace(context, AppRoutes.feedback),
           ),
+          const SizedBox(height: AppSizes.sm),
           _MenuItem(
             icon: Icons.settings_outlined,
             label: AppStrings.settings,
@@ -86,58 +83,22 @@ class Sidebar extends ConsumerWidget {
 
           const Spacer(),
 
-          // User Profile
+          // Logout Button
           Padding(
-            padding: const EdgeInsets.all(AppSizes.md),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.accent,
-                  child: Text(
-                    authState.userInitial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            padding: const EdgeInsets.only(bottom: AppSizes.lg),
+            child: Tooltip(
+              message: 'Logout',
+              child: IconButton(
+                icon: const Icon(
+                  Icons.logout,
+                  color: AppColors.sidebarText,
+                  size: AppSizes.iconMd,
                 ),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        authState.userName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: AppSizes.fontSm,
-                        ),
-                      ),
-                      Text(
-                        authState.userEmail,
-                        style: const TextStyle(
-                          color: AppColors.sidebarText,
-                          fontSize: AppSizes.fontXs,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.logout,
-                    color: AppColors.sidebarText,
-                    size: AppSizes.iconSm,
-                  ),
-                  onPressed: () {
-                    ref.read(authNotifierProvider.notifier).logout();
-                    AppRoutes.clearAndGo(context, AppRoutes.login);
-                  },
-                ),
-              ],
+                onPressed: () {
+                  ref.read(authNotifierProvider.notifier).logout();
+                  AppRoutes.clearAndGo(context, AppRoutes.login);
+                },
+              ),
             ),
           ),
         ],
@@ -161,31 +122,36 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSizes.sm,
-        vertical: AppSizes.xs,
-      ),
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.sidebarActive : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isActive ? AppColors.accent : AppColors.sidebarText,
-          size: AppSizes.iconSm,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : AppColors.sidebarText,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            fontSize: AppSizes.fontSm,
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
+          child: Row(
+            children: [
+              // Active indicator dot
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isActive ? Colors.white : Colors.transparent,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(2),
+                    bottomRight: Radius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSizes.md),
+              // Icon
+              Icon(
+                icon,
+                color: isActive ? Colors.white : AppColors.sidebarText,
+                size: AppSizes.iconMd,
+              ),
+            ],
           ),
         ),
-        onTap: onTap,
-        dense: true,
       ),
     );
   }

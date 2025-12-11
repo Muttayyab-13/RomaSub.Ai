@@ -83,12 +83,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.xl,
+            vertical: AppSizes.xxl,
+          ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.authMaxWidth),
+            constraints: const BoxConstraints(maxWidth: 380),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -97,7 +100,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 Text(
                   AppStrings.loginTitle,
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: AppSizes.xl),
 

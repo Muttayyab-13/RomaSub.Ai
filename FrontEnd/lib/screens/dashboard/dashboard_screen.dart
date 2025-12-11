@@ -125,17 +125,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Greeting Card
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.lg,
-            vertical: AppSizes.md,
+            horizontal: AppSizes.xl,
+            vertical: AppSizes.lg,
           ),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+                spreadRadius: 0,
               ),
             ],
           ),
@@ -145,15 +146,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Text(
                 '${AppStrings.hello} $userName!',
                 style: const TextStyle(
-                  fontSize: AppSizes.fontXl,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: AppSizes.xs),
               const Text(
                 AppStrings.welcomeBack,
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppSizes.fontMd,
+                ),
               ),
             ],
           ),
@@ -167,19 +172,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               hasBadge: true,
               onTap: () {},
             ),
-            const SizedBox(width: AppSizes.sm),
+            const SizedBox(width: AppSizes.md),
             Container(
-              padding: const EdgeInsets.all(AppSizes.md),
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: Colors.black,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: Text(
-                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: AppSizes.fontMd,
+              child: Center(
+                child: Text(
+                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: AppSizes.fontLg,
+                  ),
                 ),
               ),
             ),
@@ -212,54 +220,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(height: AppSizes.lg),
 
-        // Upload Box
-        Container(
-          padding: const EdgeInsets.all(AppSizes.xxl),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            border: Border.all(color: AppColors.accent, width: 2),
+        // Upload Box with dashed border
+        CustomPaint(
+          painter: DashedBorderPainter(
+            color: AppColors.accent,
+            strokeWidth: 2,
+            dashWidth: 8,
+            dashSpace: 6,
+            borderRadius: AppSizes.radiusLg,
           ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.accentLight,
-                  shape: BoxShape.circle,
+          child: Container(
+            padding: const EdgeInsets.all(AppSizes.xxl),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSizes.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.upload_outlined,
+                    size: AppSizes.iconXl,
+                    color: AppColors.accent,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.cloud_upload_outlined,
-                  size: AppSizes.iconXl,
-                  color: AppColors.accent,
+                const SizedBox(height: AppSizes.lg),
+                const Text(
+                  AppStrings.uploadTitle,
+                  style: TextStyle(
+                    fontSize: AppSizes.fontLg,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              const Text(
-                AppStrings.uploadTitle,
-                style: TextStyle(
-                  fontSize: AppSizes.fontLg,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                const SizedBox(height: AppSizes.sm),
+                const Text(
+                  AppStrings.uploadDesc,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: AppSizes.fontSm,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: AppSizes.sm),
-              const Text(
-                AppStrings.uploadDesc,
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppSizes.lg),
-              SizedBox(
-                width: 180,
-                child: ElevatedButton(
+                const SizedBox(height: AppSizes.lg),
+                ElevatedButton(
                   onPressed: _handleFilePicker,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.xl,
+                      vertical: AppSizes.md,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                    ),
                   ),
-                  child: const Text(AppStrings.chooseFile),
+                  child: const Text(
+                    AppStrings.chooseFile,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: AppSizes.fontMd,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -268,15 +298,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildStatusSection() {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.lg),
+      padding: const EdgeInsets.all(AppSizes.xl),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -291,19 +322,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.lg),
+          const SizedBox(height: AppSizes.xl),
           _StatusItem(
             label: AppStrings.audioTranscription,
             status: AppStrings.ready,
             isOnline: false,
           ),
-          const SizedBox(height: AppSizes.md),
+          const SizedBox(height: AppSizes.lg),
           _StatusItem(
             label: AppStrings.romanUrduTranslation,
             status: AppStrings.ready,
             isOnline: false,
           ),
-          const SizedBox(height: AppSizes.md),
+          const SizedBox(height: AppSizes.lg),
           _StatusItem(
             label: AppStrings.aiModelStatus,
             status: AppStrings.online,
@@ -332,24 +363,27 @@ class _IconButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
       child: Container(
-        padding: const EdgeInsets.all(AppSizes.sm),
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Stack(
+          alignment: Alignment.center,
           children: [
-            Icon(icon, color: AppColors.textPrimary),
+            Icon(icon, color: AppColors.textPrimary, size: 22),
             if (hasBadge)
               Positioned(
-                right: 0,
-                top: 0,
+                right: 10,
+                top: 10,
                 child: Container(
                   width: 8,
                   height: 8,
@@ -382,23 +416,28 @@ class _StatusItem extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.textSecondary),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: AppSizes.fontMd,
+            ),
+          ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSizes.md,
-            vertical: AppSizes.xs,
+            vertical: AppSizes.sm,
           ),
           decoration: BoxDecoration(
-            color: isOnline ? AppColors.success.withOpacity(0.1) : AppColors.surfaceVariant,
+            color: isOnline ? AppColors.success.withOpacity(0.15) : AppColors.surfaceVariant,
             borderRadius: BorderRadius.circular(AppSizes.radiusXl),
           ),
           child: Text(
             status,
             style: TextStyle(
-              fontSize: AppSizes.fontXs,
+              fontSize: AppSizes.fontSm,
               fontWeight: FontWeight.w600,
               color: isOnline ? AppColors.success : AppColors.textPrimary,
             ),
@@ -407,4 +446,71 @@ class _StatusItem extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Custom painter for dashed border
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+  final double borderRadius;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = _createDashedPath(path, dashWidth, dashSpace);
+    canvas.drawPath(dashPath, paint);
+  }
+
+  Path _createDashedPath(Path source, double dashWidth, double dashSpace) {
+    final dashedPath = Path();
+    for (final metric in source.computeMetrics()) {
+      double distance = 0.0;
+      bool draw = true;
+      while (distance < metric.length) {
+        final length = draw ? dashWidth : dashSpace;
+        if (distance + length > metric.length) {
+          if (draw) {
+            dashedPath.addPath(
+              metric.extractPath(distance, metric.length),
+              Offset.zero,
+            );
+          }
+          break;
+        } else {
+          if (draw) {
+            dashedPath.addPath(
+              metric.extractPath(distance, distance + length),
+              Offset.zero,
+            );
+          }
+          distance += length;
+          draw = !draw;
+        }
+      }
+    }
+    return dashedPath;
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
