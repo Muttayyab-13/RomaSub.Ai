@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/common/app_text_field.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../services/api/api_config.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -19,7 +20,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  // Profile fields
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   String? _firstNameError;
@@ -27,7 +27,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isEditingProfile = false;
   bool _isSavingProfile = false;
 
-  // Password fields
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -36,14 +35,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String? _confirmPasswordError;
   bool _isChangingPassword = false;
 
-  // Profile picture
   String? _selectedImagePath;
   bool _isUploadingImage = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize profile fields with current user data
     final user = ref.read(authNotifierProvider).user;
     if (user != null) {
       _firstNameController.text = user.firstName;
@@ -69,8 +66,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     if (_firstNameError == null && _lastNameError == null) {
       setState(() => _isSavingProfile = true);
-
-      final success = await ref.read(authNotifierProvider.notifier).updateProfile(
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .updateProfile(
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
           );
@@ -80,23 +78,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _isSavingProfile = false;
           _isEditingProfile = false;
         });
-
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(AppStrings.profileUpdated),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          AppSnackbar.showSuccess(context, AppStrings.profileUpdated);
         } else {
           final error = ref.read(authNotifierProvider).error;
           if (error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            AppSnackbar.showError(context, error);
           }
         }
       }
@@ -105,7 +92,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _handleChangePassword() async {
     setState(() {
-      _currentPasswordError = Validators.password(_currentPasswordController.text);
+      _currentPasswordError = Validators.password(
+        _currentPasswordController.text,
+      );
       _newPasswordError = Validators.password(_newPasswordController.text);
       _confirmPasswordError = Validators.confirmPassword(
         _confirmPasswordController.text,
@@ -117,36 +106,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _newPasswordError == null &&
         _confirmPasswordError == null) {
       setState(() => _isChangingPassword = true);
-
-      final success = await ref.read(authNotifierProvider.notifier).changePassword(
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .changePassword(
             _currentPasswordController.text,
             _newPasswordController.text,
           );
 
       if (mounted) {
         setState(() => _isChangingPassword = false);
-
         if (success) {
-          // Clear fields
           _currentPasswordController.clear();
           _newPasswordController.clear();
           _confirmPasswordController.clear();
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(AppStrings.passwordUpdated),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          AppSnackbar.showSuccess(context, 'Password changed successfully!');
         } else {
           final error = ref.read(authNotifierProvider).error;
           if (error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            AppSnackbar.showError(context, error);
           }
         }
       }
@@ -154,46 +131,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _handlePickImage() async {
-    final ImagePicker picker = ImagePicker();
-
     try {
-      final XFile? image = await picker.pickImage(
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
       );
 
-      if (image != null && mounted) {
+      if (pickedFile != null) {
         setState(() {
-          _selectedImagePath = image.path;
+          _selectedImagePath = pickedFile.path;
           _isUploadingImage = true;
         });
 
         final success = await ref
             .read(authNotifierProvider.notifier)
-            .uploadProfilePicture(image.path);
+            .uploadProfilePicture(pickedFile.path);
 
         if (mounted) {
           setState(() => _isUploadingImage = false);
-
           if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile picture updated successfully!'),
-                backgroundColor: AppColors.success,
-              ),
-            );
+            AppSnackbar.showSuccess(context, 'Profile picture updated!');
           } else {
             setState(() => _selectedImagePath = null);
             final error = ref.read(authNotifierProvider).error;
             if (error != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(error),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              AppSnackbar.showError(context, error);
             }
           }
         }
@@ -201,12 +165,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isUploadingImage = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to pick image: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackbar.showError(context, 'Failed to pick image: $e');
       }
     }
   }
@@ -216,341 +175,111 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
 
+    final isDark = ref.watch(themeProvider).isDark;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           const Sidebar(currentRoute: AppRoutes.settings),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.xl),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Text(
-                      AppStrings.settings,
-                      style: Theme.of(context).textTheme.headlineLarge,
-                    ),
-                    const SizedBox(height: AppSizes.xl),
-
-                    // Profile Picture Section
-                    _buildSection(
-                      title: AppStrings.profilePicture,
-                      child: Column(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
                         children: [
-                          Stack(
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white : Colors.black,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.settings_outlined,
+                              color: isDark ? Colors.black : Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _selectedImagePath != null
-                                  ? CircleAvatar(
-                                      radius: 50,
-                                      backgroundImage: FileImage(File(_selectedImagePath!)),
-                                    )
-                                  : user?.profilePictureUrl != null
-                                      ? CircleAvatar(
-                                          radius: 50,
-                                          backgroundImage: NetworkImage(
-                                            '${ref.read(apiConfigProvider).baseUrl}${user!.profilePictureUrl}',
-                                          ),
-                                        )
-                                      : CircleAvatar(
-                                          radius: 50,
-                                          backgroundColor: AppColors.accent,
-                                          child: Text(
-                                            authState.userInitial,
-                                            style: const TextStyle(
-                                              fontSize: 40,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                              if (_isUploadingImage)
-                                Positioned.fill(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.black.withOpacity(0.5),
-                                    ),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSizes.md),
-                          ElevatedButton.icon(
-                            onPressed: _isUploadingImage ? null : _handlePickImage,
-                            icon: const Icon(Icons.photo_camera),
-                            label: const Text(AppStrings.changePhoto),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Profile Information Section
-                    _buildSection(
-                      title: AppStrings.profile,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!_isEditingProfile) ...[
-                            _buildInfoRow(
-                              label: AppStrings.firstName,
-                              value: user?.firstName ?? '-',
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            _buildInfoRow(
-                              label: AppStrings.lastName,
-                              value: user?.lastName ?? '-',
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            _buildInfoRow(
-                              label: AppStrings.email,
-                              value: user?.email ?? '-',
-                            ),
-                            const SizedBox(height: AppSizes.lg),
-                            if (user?.googleId == null) ...[
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    setState(() => _isEditingProfile = true);
-                                  },
-                                  icon: const Icon(Icons.edit),
-                                  label: const Text('Edit Profile'),
-                                ),
-                              ),
-                            ] else ...[
-                              const Text(
-                                'Google accounts cannot edit name directly.',
-                                style: TextStyle(
-                                  color: AppColors.textHint,
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                          ] else ...[
-                            // Edit mode
-                            AppTextField(
-                              controller: _firstNameController,
-                              hint: AppStrings.firstName,
-                              errorText: _firstNameError,
-                              onChanged: (_) {
-                                if (_firstNameError != null) {
-                                  setState(() => _firstNameError =
-                                      Validators.name(_firstNameController.text));
-                                }
-                              },
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            AppTextField(
-                              controller: _lastNameController,
-                              hint: AppStrings.lastName,
-                              errorText: _lastNameError,
-                              onChanged: (_) {
-                                if (_lastNameError != null) {
-                                  setState(() => _lastNameError =
-                                      Validators.name(_lastNameController.text));
-                                }
-                              },
-                            ),
-                            const SizedBox(height: AppSizes.lg),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _isSavingProfile
-                                        ? null
-                                        : () {
-                                            setState(() {
-                                              _isEditingProfile = false;
-                                              // Reset to original values
-                                              _firstNameController.text = user?.firstName ?? '';
-                                              _lastNameController.text = user?.lastName ?? '';
-                                            });
-                                          },
-                                    child: const Text('Cancel'),
-                                  ),
-                                ),
-                                const SizedBox(width: AppSizes.md),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _isSavingProfile ? null : _handleSaveProfile,
-                                    child: _isSavingProfile
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Text(AppStrings.saveChanges),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Security Section - Change Password
-                    _buildSection(
-                      title: AppStrings.security,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppStrings.changePassword,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: AppSizes.md),
-
-                          // Current Password
-                          AppTextField(
-                            controller: _currentPasswordController,
-                            hint: AppStrings.currentPassword,
-                            isPassword: true,
-                            errorText: _currentPasswordError,
-                            onChanged: (_) {
-                              if (_currentPasswordError != null) {
-                                setState(() => _currentPasswordError =
-                                    Validators.password(_currentPasswordController.text));
-                              }
-                            },
-                          ),
-                          const SizedBox(height: AppSizes.md),
-
-                          // New Password
-                          AppTextField(
-                            controller: _newPasswordController,
-                            hint: AppStrings.newPassword,
-                            isPassword: true,
-                            errorText: _newPasswordError,
-                            onChanged: (_) {
-                              if (_newPasswordError != null) {
-                                setState(() {
-                                  _newPasswordError =
-                                      Validators.password(_newPasswordController.text);
-                                  // Also revalidate confirm password if it has an error
-                                  if (_confirmPasswordError != null) {
-                                    _confirmPasswordError = Validators.confirmPassword(
-                                      _confirmPasswordController.text,
-                                      _newPasswordController.text,
-                                    );
-                                  }
-                                });
-                              }
-                            },
-                          ),
-                          const SizedBox(height: AppSizes.md),
-
-                          // Confirm Password
-                          AppTextField(
-                            controller: _confirmPasswordController,
-                            hint: AppStrings.confirmPassword,
-                            isPassword: true,
-                            errorText: _confirmPasswordError,
-                            onChanged: (_) {
-                              if (_confirmPasswordError != null) {
-                                setState(() {
-                                  _confirmPasswordError = Validators.confirmPassword(
-                                    _confirmPasswordController.text,
-                                    _newPasswordController.text,
-                                  );
-                                });
-                              }
-                            },
-                          ),
-                          const SizedBox(height: AppSizes.lg),
-
-                          // Update Password Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: AppSizes.buttonHeight,
-                            child: ElevatedButton(
-                              onPressed: _isChangingPassword ? null : _handleChangePassword,
-                              child: _isChangingPassword
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(AppStrings.updatePassword),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Account Information Section
-                    _buildSection(
-                      title: AppStrings.accountInfo,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (user?.googleId != null) ...[
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.success,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: AppSizes.sm),
-                                Text(
-                                  AppStrings.googleAccount,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                          ],
-                          Row(
-                            children: [
-                              Icon(
-                                user?.isVerified == true
-                                    ? Icons.verified_user
-                                    : Icons.info_outline,
-                                color: user?.isVerified == true
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                                size: 20,
-                              ),
-                              const SizedBox(width: AppSizes.sm),
                               Text(
-                                user?.isVerified == true
-                                    ? AppStrings.verified
-                                    : AppStrings.notVerified,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                                AppStrings.settings,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Manage your account settings and preferences',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
                                 ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 32),
+
+                      // Two-column layout
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left - Profile Card
+                          SizedBox(
+                            width: 320,
+                            child: _buildProfileCard(authState, user, isDark),
+                          ),
+                          const SizedBox(width: 24),
+
+                          // Right - Settings
+                          Expanded(
+                            child: Column(
+                              children: [
+                                _buildSection(
+                                  'Profile Information',
+                                  Icons.person_outline,
+                                  _buildProfileSection(user, isDark),
+                                  isDark,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildSection(
+                                  'Security',
+                                  Icons.lock_outline,
+                                  _buildSecuritySection(isDark),
+                                  isDark,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildSection(
+                                  'Account',
+                                  Icons.info_outline,
+                                  _buildAccountSection(user, isDark),
+                                  isDark,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildSection(
+                                  'Appearance',
+                                  Icons.palette_outlined,
+                                  _buildAppearanceSection(),
+                                  isDark,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -560,69 +289,476 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required Widget child,
-  }) {
+  Widget _buildProfileCard(AuthState authState, dynamic user, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final dividerColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final avatarBg = isDark ? Colors.grey.shade300 : Colors.black;
+    final avatarText = isDark ? Colors.black : Colors.white;
+    final cameraBg = isDark ? Colors.grey.shade300 : Colors.black;
+    final cameraIcon = isDark ? Colors.black : Colors.white;
+
     return Container(
-      padding: const EdgeInsets.all(AppSizes.lg),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: AppColors.border),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: avatarBg,
+                backgroundImage: _selectedImagePath != null
+                    ? FileImage(File(_selectedImagePath!))
+                    : (user?.profilePictureUrl != null
+                          ? NetworkImage(
+                              '${ApiConfig.baseUrl}${user.profilePictureUrl}',
+                            )
+                          : null),
+                child:
+                    (_selectedImagePath == null &&
+                        user?.profilePictureUrl == null)
+                    ? Text(
+                        authState.userInitial,
+                        style: TextStyle(
+                          fontSize: 48,
+                          color: avatarText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
+              ),
+              if (_isUploadingImage)
+                const Positioned.fill(
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black54,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: InkWell(
+                  onTap: _isUploadingImage ? null : _handlePickImage,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cameraBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: cardBg, width: 3),
+                    ),
+                    child: Icon(Icons.camera_alt, color: cameraIcon, size: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            user?.email ?? '',
+            style: TextStyle(color: textSecondary, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          Divider(color: dividerColor),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified, size: 16, color: Colors.green.shade700),
+                const SizedBox(width: 6),
+                Text(
+                  user?.isVerified == true ? 'Verified' : 'Unverified',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, IconData icon, Widget child, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final iconBg = isDark ? Colors.grey.shade700 : Colors.grey.shade100;
+    final iconColor = isDark ? Colors.grey.shade300 : Colors.black87;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSizes.lg),
+          const SizedBox(height: 20),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow({
-    required String label,
-    required String value,
-  }) {
-    return Row(
+  Widget _buildProfileSection(dynamic user, bool isDark) {
+    if (!_isEditingProfile) {
+      return Column(
+        children: [
+          _buildInfoRow('First Name', user?.firstName ?? '-', isDark),
+          _buildInfoRow('Last Name', user?.lastName ?? '-', isDark),
+          _buildInfoRow('Email', user?.email ?? '-', isDark),
+          const SizedBox(height: 16),
+          if (user?.googleId == null)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _isEditingProfile = true),
+                icon: Icon(
+                  Icons.edit,
+                  size: 18,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                label: Text(
+                  'Edit Profile',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: isDark ? Colors.white : Colors.black,
+                  side: BorderSide(
+                    color: isDark ? Colors.grey.shade600 : Colors.black,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return Column(
       children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+        AppTextField(
+          controller: _firstNameController,
+          hint: 'First Name',
+          errorText: _firstNameError,
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _lastNameController,
+          hint: 'Last Name',
+          errorText: _lastNameError,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _isSavingProfile
+                    ? null
+                    : () {
+                        setState(() {
+                          _isEditingProfile = false;
+                          _firstNameController.text = user?.firstName ?? '';
+                          _lastNameController.text = user?.lastName ?? '';
+                        });
+                      },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  side: const BorderSide(color: Colors.black),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isSavingProfile ? null : _handleSaveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: _isSavingProfile
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Save'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSecuritySection(bool isDark) {
+    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
+    final buttonText = isDark ? Colors.black : Colors.white;
+
+    return Column(
+      children: [
+        AppTextField(
+          controller: _currentPasswordController,
+          hint: 'Current Password',
+          isPassword: true,
+          errorText: _currentPasswordError,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _newPasswordController,
+          hint: 'New Password',
+          isPassword: true,
+          errorText: _newPasswordError,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: _confirmPasswordController,
+          hint: 'Confirm Password',
+          isPassword: true,
+          errorText: _confirmPasswordError,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isChangingPassword ? null : _handleChangePassword,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonBg,
+              foregroundColor: buttonText,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: _isChangingPassword
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: buttonText,
+                    ),
+                  )
+                : Text('Update Password', style: TextStyle(color: buttonText)),
           ),
         ),
       ],
     );
   }
-}
 
-// Provider to access API config
-final apiConfigProvider = Provider((ref) {
-  return _ApiConfig();
-});
+  Widget _buildAccountSection(dynamic user, bool isDark) {
+    return Column(
+      children: [
+        _buildInfoRow(
+          'Account Type',
+          user?.googleId != null ? 'Google' : 'Email',
+          isDark,
+        ),
+        _buildInfoRow(
+          'Verification',
+          user?.isVerified == true ? 'Verified' : 'Pending',
+          isDark,
+        ),
+        _buildInfoRow(
+          'Member Since',
+          _formatDate(user?.createdAt?.toIso8601String()),
+          isDark,
+        ),
+      ],
+    );
+  }
 
-class _ApiConfig {
-  // You should import the actual ApiConfig here
-  final String baseUrl = 'http://localhost:8000'; // Or from ApiConfig.baseUrl
+  Widget _buildInfoRow(String label, String value, bool isDark) {
+    final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final valueBg = isDark ? Colors.grey.shade800 : Colors.grey.shade100;
+    final valueColor = isDark ? Colors.white : Colors.black;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: TextStyle(color: labelColor, fontSize: 14),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: valueBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: valueColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return '-';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  Widget _buildAppearanceSection() {
+    final themeState = ref.watch(themeProvider);
+    final isDark = themeState.isDark;
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white : Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  color: isDark ? Colors.black : Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dark Mode',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isDark
+                          ? 'Currently using dark theme'
+                          : 'Currently using light theme',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isDark,
+                onChanged: (_) =>
+                    ref.read(themeProvider.notifier).toggleTheme(),
+                activeColor: Colors.white,
+                activeTrackColor: Colors.black,
+                inactiveThumbColor: Colors.black,
+                inactiveTrackColor: Colors.grey.shade300,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }

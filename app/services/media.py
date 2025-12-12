@@ -11,6 +11,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Tuple, Dict
 from fastapi import UploadFile
+import static_ffmpeg
+static_ffmpeg.add_paths()
 
 from app.config import settings
 import logging

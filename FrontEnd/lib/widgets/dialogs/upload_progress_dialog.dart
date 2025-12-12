@@ -12,15 +12,16 @@ class UploadProgressDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final uploadState = ref.watch(uploadNotifierProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
       canPop: !uploadState.isProcessing, // Prevent dismissal during processing
       child: Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
@@ -35,273 +36,405 @@ class UploadProgressDialog extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Content
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.xxl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Icon based on phase
-                    _buildPhaseIcon(uploadState.phase),
-                    const SizedBox(height: AppSizes.xl),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSizes.xxl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon based on phase
+                      _buildPhaseIcon(uploadState.phase),
+                      const SizedBox(height: AppSizes.xl),
 
-                    // Filename
-                    if (uploadState.currentFileName != null) ...[
+                      // Filename
+                      if (uploadState.currentFileName != null) ...[
+                        Text(
+                          uploadState.currentFileName!,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                      ],
+
+                      // Phase message
                       Text(
-                        uploadState.currentFileName!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: AppColors.textPrimary,
+                        uploadState.phaseMessage,
+                        style: TextStyle(
+                          color: uploadState.phase == UploadPhase.error
+                              ? AppColors.error
+                              : AppColors.textSecondary,
+                          fontSize: AppSizes.fontMd,
                         ),
                         textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: AppSizes.md),
-                    ],
+                      const SizedBox(height: AppSizes.xl),
 
-                    // Phase message
-                    Text(
-                      uploadState.phaseMessage,
-                      style: TextStyle(
-                        color: uploadState.phase == UploadPhase.error
-                            ? AppColors.error
-                            : AppColors.textSecondary,
-                        fontSize: AppSizes.fontMd,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSizes.xl),
-
-                    // Progress indicator
-                    if (uploadState.phase == UploadPhase.uploading) ...[
-                      LinearProgressIndicator(
-                        value: uploadState.uploadProgress,
-                        backgroundColor: AppColors.border,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                      ),
-                      const SizedBox(height: AppSizes.md),
-                      Text(
-                        uploadState.progressPercent,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: AppSizes.fontMd,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ] else if (uploadState.phase == UploadPhase.transcribing ||
-                        uploadState.phase == UploadPhase.extractingAudio) ...[
-                      const SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 4,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
-                        ),
-                      ),
-                    ],
-
-                    // Transcription result preview
-                    if (uploadState.phase == UploadPhase.completed &&
-                        uploadState.transcription != null) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(AppSizes.lg),
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                          border: Border.all(
-                            color: AppColors.success.withOpacity(0.2),
-                            width: 1.5,
+                      // Progress indicator
+                      if (uploadState.phase == UploadPhase.uploading) ...[
+                        LinearProgressIndicator(
+                          value: uploadState.uploadProgress,
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.accent,
+                          ),
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                        const SizedBox(height: AppSizes.md),
+                        Text(
+                          uploadState.progressPercent,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: AppSizes.fontMd,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ] else if (uploadState.phase ==
+                          UploadPhase.transcribing) ...[
+                        LinearProgressIndicator(
+                          value: uploadState.transcriptionProgress,
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.accent,
+                          ),
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                      ] else if (uploadState.phase ==
+                          UploadPhase.extractingAudio) ...[
+                        LinearProgressIndicator(
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.accent,
+                          ),
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        Text(
+                          'Extracting Audio...',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: AppSizes.fontMd,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+
+                      // Transcription result preview
+                      if (uploadState.phase == UploadPhase.completed &&
+                          uploadState.transcription != null) ...[
+                        InkWell(
+                          onTap: () {
+                            _showFullTextDialog(
+                              context,
+                              uploadState.transcription!.text,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusMd,
+                          ),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(AppSizes.lg),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
+                              ),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.check,
-                                    color: AppColors.success,
-                                    size: 16,
-                                  ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success.withOpacity(
+                                          0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        color: AppColors.success,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSizes.sm),
+                                    Text(
+                                      '${uploadState.transcription!.segmentCount} segments',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: AppSizes.fontMd,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSizes.sm,
+                                        vertical: AppSizes.xs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(
+                                          AppSizes.radiusSm,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        uploadState
+                                            .transcription!
+                                            .durationFormatted,
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                          fontSize: AppSizes.fontSm,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: AppSizes.sm),
-                                Text(
-                                  '${uploadState.transcription!.segmentCount} segments',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: AppSizes.fontMd,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const Spacer(),
+                                const SizedBox(height: AppSizes.md),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSizes.sm,
-                                    vertical: AppSizes.xs,
-                                  ),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(AppSizes.md),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surfaceVariant,
-                                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                                  ),
-                                  child: Text(
-                                    uploadState.transcription!.durationFormatted,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: AppSizes.fontSm,
-                                      fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.grey.shade900
+                                        : AppColors.surface,
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusSm,
                                     ),
                                   ),
+                                  child: Text(
+                                    uploadState.transcription!.text,
+                                    style: TextStyle(
+                                      fontSize: AppSizes.fontSm,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      height: 1.6,
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSizes.sm),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: Icon(
+                                        Icons.visibility_outlined,
+                                        size: 16,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSizes.xs),
+                                    const Text(
+                                      'Click to view full text',
+                                      style: TextStyle(
+                                        fontSize: AppSizes.fontSm,
+                                        color: AppColors.accent,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppSizes.md),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(AppSizes.md),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                              ),
-                              child: Text(
-                                uploadState.transcription!.text,
-                                style: const TextStyle(
-                                  fontSize: AppSizes.fontSm,
-                                  color: AppColors.textSecondary,
-                                  height: 1.6,
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                textDirection: TextDirection.rtl,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
 
               // Action buttons
-              if (!uploadState.isProcessing || uploadState.phase == UploadPhase.completed)
+              if (!uploadState.isProcessing ||
+                  uploadState.phase == UploadPhase.completed)
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(AppSizes.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: Theme.of(context).colorScheme.surfaceContainer,
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(AppSizes.radiusLg),
                       bottomRight: Radius.circular(AppSizes.radiusLg),
                     ),
                   ),
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: AppSizes.sm,
-                    children: [
-                      // Close/Cancel button
-                      if (!uploadState.isProcessing)
-                        TextButton(
-                          onPressed: () {
-                            if (uploadState.phase == UploadPhase.completed) {
-                              // Show improved completion dialog
-                              Navigator.of(context).pop();
-                              _showCompletionDialog(context, ref, uploadState);
-                            } else {
-                              // Cancel and close
-                              ref.read(uploadNotifierProvider.notifier).reset();
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.lg,
-                              vertical: AppSizes.md,
-                            ),
-                          ),
-                          child: Text(
-                            uploadState.phase == UploadPhase.completed ? 'Continue' : 'Cancel',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: AppSizes.fontMd,
-                            ),
-                          ),
-                        ),
-
-                      // Quick Download button (only when completed)
-                      if (uploadState.phase == UploadPhase.completed)
-                        ElevatedButton(
-                          onPressed: () async {
-                            final srtContent =
-                                await ref.read(uploadNotifierProvider.notifier).downloadSrt();
-
-                            if (srtContent != null && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('SRT downloaded successfully!'),
-                                  backgroundColor: AppColors.success,
-                                  behavior: SnackBarBehavior.floating,
+                  child: uploadState.phase == UploadPhase.completed
+                      // Completed state: Two buttons side by side
+                      ? Row(
+                          children: [
+                            // Continue button
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  _showCompletionDialog(
+                                    context,
+                                    ref,
+                                    uploadState,
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  side: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    width: 1.5,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSizes.md + 4,
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMd,
+                                    ),
                                   ),
                                 ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.xl,
-                              vertical: AppSizes.md + 2,
+                                child: Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: AppSizes.fontMd,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.download_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('Quick Download'),
-                            ],
-                          ),
-                        ),
+                            const SizedBox(width: AppSizes.md),
+                            // Quick Download button
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  final srtContent = await ref
+                                      .read(uploadNotifierProvider.notifier)
+                                      .downloadSrt();
 
-                      // Retry button (only on error)
-                      if (uploadState.phase == UploadPhase.error)
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.read(uploadNotifierProvider.notifier).clearError();
-                            Navigator.of(context).pop();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.xl,
-                              vertical: AppSizes.md + 2,
+                                  if (srtContent != null && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'SRT downloaded successfully!',
+                                        ),
+                                        backgroundColor: AppColors.success,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppSizes.radiusMd,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSizes.md + 4,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMd,
+                                    ),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.download_outlined, size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Download SRT',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text('Try Again'),
+                          ],
+                        )
+                      // Other states: Cancel or Retry
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (!uploadState.isProcessing)
+                              TextButton(
+                                onPressed: () {
+                                  ref
+                                      .read(uploadNotifierProvider.notifier)
+                                      .reset();
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            if (uploadState.phase == UploadPhase.error)
+                              ElevatedButton(
+                                onPressed: () {
+                                  ref
+                                      .read(uploadNotifierProvider.notifier)
+                                      .clearError();
+                                  Navigator.of(context).pop();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                ),
+                                child: const Text('Try Again'),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
                 ),
             ],
           ),
@@ -348,17 +481,93 @@ class UploadProgressDialog extends ConsumerWidget {
     return Container(
       width: 80,
       height: 80,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: 40,
-        color: color,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
+      child: Icon(icon, size: 40, color: color),
     );
   }
+}
+
+/// Show full text dialog
+void _showFullTextDialog(BuildContext context, String fullText) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(AppSizes.lg),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppSizes.radiusLg),
+                  topRight: Radius.circular(AppSizes.radiusLg),
+                ),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Icon(
+                      Icons.article_outlined,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.md),
+                  const Text(
+                    'Full Transcription',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSizes.xl),
+                child: SelectableText(
+                  fullText,
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                    height: 2.0,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Show completion dialog with improved design
@@ -380,7 +589,9 @@ void _showCompletionDialog(
     previewText: transcription.text,
     onDownload: () async {
       // Download SRT file
-      final srtContent = await ref.read(uploadNotifierProvider.notifier).downloadSrt();
+      final srtContent = await ref
+          .read(uploadNotifierProvider.notifier)
+          .downloadSrt();
 
       if (srtContent != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

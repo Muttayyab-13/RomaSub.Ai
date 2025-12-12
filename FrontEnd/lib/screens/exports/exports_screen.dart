@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/export_model.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/cards/export_card.dart';
 
-class ExportsScreen extends StatelessWidget {
+class ExportsScreen extends ConsumerWidget {
   const ExportsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(themeProvider).isDark;
     final exports = Export.getSampleData();
 
+    // Theme-aware colors
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       body: Row(
         children: [
           const Sidebar(currentRoute: AppRoutes.exports),
@@ -29,10 +36,11 @@ class ExportsScreen extends StatelessWidget {
                     vertical: AppSizes.md,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: cardBg,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: (isDark ? Colors.black : Colors.grey)
+                            .withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -40,17 +48,20 @@ class ExportsScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         AppStrings.exports,
                         style: TextStyle(
                           fontSize: AppSizes.fontXl,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color: textPrimary,
+                        ),
                         onPressed: () {},
                       ),
                     ],
@@ -64,22 +75,25 @@ class ExportsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           AppStrings.exportHistory,
                           style: TextStyle(
                             fontSize: AppSizes.fontLg,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: AppSizes.md),
-                        ...exports.map((export) => ExportCard(
-                          title: export.fileName,
-                          subtitle: '${export.timeAgo} • ${export.size}',
-                          icon: export.icon,
-                          onDownload: () {},
-                          onDelete: () {},
-                        )),
+                        ...exports.map(
+                          (export) => ExportCard(
+                            title: export.fileName,
+                            subtitle: '${export.timeAgo} • ${export.size}',
+                            icon: export.icon,
+                            onDownload: () {},
+                            onDelete: () {},
+                            isDark: isDark,
+                          ),
+                        ),
                       ],
                     ),
                   ),

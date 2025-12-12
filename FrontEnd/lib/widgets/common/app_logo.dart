@@ -5,13 +5,18 @@ import '../../core/constants/app_assets.dart';
 
 class AppLogo extends StatelessWidget {
   final double size;
-  
+
   const AppLogo({super.key, this.size = 60});
 
   @override
   Widget build(BuildContext context) {
+    // Check if we are in dark mode using Theme.of(context).
+    // However, AppLogo is StatelessWidget.
+    // I can just use Theme.of(context).brightness.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Image.asset(
-      AppAssets.logo,
+      isDark ? AppAssets.logoDark : AppAssets.logo,
       width: size,
       height: size,
       fit: BoxFit.contain,

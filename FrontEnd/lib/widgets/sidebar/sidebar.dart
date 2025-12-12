@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/app_logo.dart';
+import '../../providers/theme_provider.dart';
 
 class Sidebar extends ConsumerWidget {
   final String currentRoute;
@@ -14,88 +13,142 @@ class Sidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authNotifierProvider);
+    final isDark = ref.watch(themeProvider).isDark;
+
+    // Light mode: sidebar is black with white/grey icons
+    // Dark mode: sidebar is dark grey (#2A2A2A) to match cards
+    final sidebarBg = isDark ? const Color(0xFF2A2A2A) : Colors.black;
+    final iconColor = isDark ? Colors.grey.shade500 : const Color(0xFF9CA3AF);
+    // Active item: White pill with black icon in both modes for contrast
+    final activeIconColor = Colors.black;
+    final activeBgColor = Colors.white;
 
     return Container(
       width: 100,
-      color: Colors.black,
-      child: Column(
-        children: [
-          // Logo - use image asset instead of text
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.lg),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              ),
-              child: const Center(
-                child: AppLogo(size: 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AppSizes.xl),
-
-          // Menu Items (icon-only)
-          _MenuItem(
-            icon: Icons.home_outlined,
-            label: AppStrings.dashboard,
-            isActive: currentRoute == AppRoutes.dashboard,
-            onTap: () => AppRoutes.replace(context, AppRoutes.dashboard),
-          ),
-          const SizedBox(height: AppSizes.sm),
-          _MenuItem(
-            icon: Icons.videocam_outlined,
-            label: AppStrings.recentProjects,
-            isActive: currentRoute == AppRoutes.projects,
-            onTap: () => AppRoutes.replace(context, AppRoutes.projects),
-          ),
-          const SizedBox(height: AppSizes.sm),
-          _MenuItem(
-            icon: Icons.download_outlined,
-            label: AppStrings.exports,
-            isActive: currentRoute == AppRoutes.exports,
-            onTap: () => AppRoutes.replace(context, AppRoutes.exports),
-          ),
-          const SizedBox(height: AppSizes.sm),
-          _MenuItem(
-            icon: Icons.chat_bubble_outline,
-            label: AppStrings.feedback,
-            isActive: currentRoute == AppRoutes.feedback,
-            onTap: () => AppRoutes.replace(context, AppRoutes.feedback),
-          ),
-          const SizedBox(height: AppSizes.sm),
-          _MenuItem(
-            icon: Icons.settings_outlined,
-            label: AppStrings.settings,
-            isActive: currentRoute == AppRoutes.settings,
-            onTap: () => AppRoutes.replace(context, AppRoutes.settings),
-          ),
-
-          const Spacer(),
-
-          // Logout Button
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSizes.lg),
-            child: Tooltip(
-              message: 'Logout',
-              child: IconButton(
-                icon: const Icon(
-                  Icons.logout,
-                  color: AppColors.sidebarText,
-                  size: AppSizes.iconMd,
-                ),
-                onPressed: () {
-                  ref.read(authNotifierProvider.notifier).logout();
-                  AppRoutes.clearAndGo(context, AppRoutes.login);
-                },
-              ),
-            ),
+      margin: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: sidebarBg,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    // Logo - switches between light and dark versions
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.xl,
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: isDark ? 80 : 74,
+                          height: isDark ? 80 : 74,
+                          child: Image.asset(
+                            isDark
+                                ? 'assets/images/logos/logo2.png'
+                                : 'assets/images/logos/logo3.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSizes.md),
+
+                    // Menu Items
+                    _MenuItem(
+                      icon: Icons.home_rounded,
+                      label: AppStrings.dashboard,
+                      isActive: currentRoute == AppRoutes.dashboard,
+                      onTap: () =>
+                          AppRoutes.replace(context, AppRoutes.dashboard),
+                      iconColor: iconColor,
+                      activeIconColor: activeIconColor,
+                      activeBgColor: activeBgColor,
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+                    _MenuItem(
+                      icon: Icons.videocam_rounded,
+                      label: AppStrings.recentProjects,
+                      isActive: currentRoute == AppRoutes.projects,
+                      onTap: () =>
+                          AppRoutes.replace(context, AppRoutes.projects),
+                      iconColor: iconColor,
+                      activeIconColor: activeIconColor,
+                      activeBgColor: activeBgColor,
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+                    _MenuItem(
+                      icon: Icons.download_rounded,
+                      label: AppStrings.exports,
+                      isActive: currentRoute == AppRoutes.exports,
+                      onTap: () =>
+                          AppRoutes.replace(context, AppRoutes.exports),
+                      iconColor: iconColor,
+                      activeIconColor: activeIconColor,
+                      activeBgColor: activeBgColor,
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+                    _MenuItem(
+                      icon: Icons.chat_bubble_rounded,
+                      label: AppStrings.feedback,
+                      isActive: currentRoute == AppRoutes.feedback,
+                      onTap: () =>
+                          AppRoutes.replace(context, AppRoutes.feedback),
+                      iconColor: iconColor,
+                      activeIconColor: activeIconColor,
+                      activeBgColor: activeBgColor,
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+                    _MenuItem(
+                      icon: Icons.settings_rounded,
+                      label: AppStrings.settings,
+                      isActive: currentRoute == AppRoutes.settings,
+                      onTap: () =>
+                          AppRoutes.replace(context, AppRoutes.settings),
+                      iconColor: iconColor,
+                      activeIconColor: activeIconColor,
+                      activeBgColor: activeBgColor,
+                    ),
+
+                    const Spacer(),
+
+                    // Logout Button
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSizes.xl),
+                      child: Tooltip(
+                        message: 'Logout',
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.logout_rounded,
+                            color: iconColor,
+                            size: 28,
+                          ),
+                          onPressed: () {
+                            ref.read(authNotifierProvider.notifier).logout();
+                            AppRoutes.clearAndGo(context, AppRoutes.login);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -106,12 +159,18 @@ class _MenuItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final Color iconColor;
+  final Color activeIconColor;
+  final Color activeBgColor;
 
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
+    required this.iconColor,
+    required this.activeIconColor,
+    required this.activeBgColor,
   });
 
   @override
@@ -120,30 +179,20 @@ class _MenuItem extends StatelessWidget {
       message: label,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
-          child: Row(
-            children: [
-              // Active indicator dot
-              Container(
-                width: 4,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: isActive ? Colors.white : Colors.transparent,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(2),
-                    bottomRight: Radius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSizes.md),
-              // Icon
-              Icon(
-                icon,
-                color: isActive ? Colors.white : AppColors.sidebarText,
-                size: AppSizes.iconMd,
-              ),
-            ],
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: isActive ? activeBgColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              color: isActive ? activeIconColor : iconColor,
+              size: 28,
+            ),
           ),
         ),
       ),

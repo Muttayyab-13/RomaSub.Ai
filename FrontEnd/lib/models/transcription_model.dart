@@ -24,12 +24,7 @@ class TranscriptionSegment {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'start': start,
-      'end': end,
-      'text': text,
-    };
+    return {'id': id, 'start': start, 'end': end, 'text': text};
   }
 
   /// Get duration in seconds
@@ -76,17 +71,26 @@ class TranscriptionModel {
   /// Create TranscriptionModel from JSON (API response)
   factory TranscriptionModel.fromJson(Map<String, dynamic> json) {
     final segmentsList = json['segments'] as List<dynamic>?;
-    final segments = segmentsList
-            ?.map((s) => TranscriptionSegment.fromJson(s as Map<String, dynamic>))
+    final segments =
+        segmentsList
+            ?.map(
+              (s) => TranscriptionSegment.fromJson(s as Map<String, dynamic>),
+            )
             .toList() ??
         [];
+
+    // Parse duration from 'audio_duration_seconds' or 'duration' field
+    final duration =
+        (json['audio_duration_seconds'] as num?)?.toDouble() ??
+        (json['duration'] as num?)?.toDouble() ??
+        0.0;
 
     return TranscriptionModel(
       fileId: json['file_id'] as String,
       language: json['language'] as String? ?? 'ur',
       text: json['text'] as String,
       segments: segments,
-      duration: (json['duration'] as num?)?.toDouble() ?? 0.0,
+      duration: duration,
     );
   }
 

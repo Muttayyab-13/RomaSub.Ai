@@ -8,7 +8,8 @@ import 'package:window_manager/window_manager.dart';
 /// Google OAuth service for Windows desktop application
 /// Uses authorization code flow with local HTTP server
 class GoogleOAuthDesktopService {
-  static const String clientId = '1095223738206-39barm48obffu8tpfo919bg3be2aa4o5.apps.googleusercontent.com';
+  static const String clientId =
+      '670826496672-pb3a7uqhlnidff25bq2k7qkkteskjmsr.apps.googleusercontent.com';
 
   static const String redirectUri = 'http://localhost:8080/auth/callback';
   static const String scope = 'email profile openid';
@@ -108,7 +109,7 @@ class GoogleOAuthDesktopService {
     }
   }
 
-  /// Build HTML response for OAuth callback page
+  /// Build HTML response for OAuth callback page - Black & White theme
   String _buildHtmlResponse(bool success) {
     if (success) {
       return '''
@@ -116,95 +117,78 @@ class GoogleOAuthDesktopService {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Authentication Successful</title>
+    <title>Authentication Successful - RomaSub.AI</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            background: #f5f5f5;
         }
         .container {
             background: white;
-            padding: 3rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
             text-align: center;
-            max-width: 450px;
+            max-width: 420px;
+            border: 1px solid #e0e0e0;
         }
-        .success-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: checkmark 0.5s ease-in-out;
+        .icon {
+            width: 72px;
+            height: 72px;
+            background: black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: pop 0.4s ease-out;
         }
-        @keyframes checkmark {
+        @keyframes pop {
             0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
+            70% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-        h1 {
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-            font-size: 1.75rem;
-        }
-        p {
-            color: #718096;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-        .app-instruction {
-            background: #f0f4ff;
-            border-left: 4px solid #667eea;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0.5rem;
+        .checkmark { font-size: 36px; color: white; }
+        h1 { color: #1a1a1a; font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+        p { color: #666; font-size: 15px; margin-bottom: 24px; line-height: 1.5; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f0f0;
+            padding: 12px 20px;
+            border-radius: 24px;
             font-weight: 600;
-            color: #4a5568;
+            color: #333;
+            font-size: 14px;
         }
-        .countdown {
-            color: #667eea;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-            font-style: italic;
-        }
+        .countdown { margin-top: 20px; color: #999; font-size: 13px; }
     </style>
     <script>
-        // Try to close the window (works in some browsers)
         let countdown = 3;
-        const countdownEl = document.getElementById('countdown');
-
-        const timer = setInterval(() => {
+        setInterval(() => {
             countdown--;
-            if (countdownEl) {
-                countdownEl.textContent = countdown;
-            }
+            const el = document.getElementById('countdown');
+            if (el) el.textContent = countdown;
             if (countdown <= 0) {
-                clearInterval(timer);
-                // Attempt to close (may not work in all browsers)
                 window.close();
-                // If still open after 500ms, show alternative message
-                setTimeout(() => {
-                    const instruction = document.getElementById('instruction');
-                    if (instruction) {
-                        instruction.innerHTML = '👈 Return to RomaSub.AI app to continue';
-                    }
-                }, 500);
+                document.getElementById('badge').innerHTML = '👈 Return to RomaSub.AI app';
             }
         }, 1000);
     </script>
 </head>
 <body>
     <div class="container">
-        <div class="success-icon">✅</div>
+        <div class="icon"><span class="checkmark">✓</span></div>
         <h1>Authentication Successful!</h1>
-        <p>You have successfully signed in with Google.</p>
-        <div class="app-instruction" id="instruction">
-            👈 Return to the RomaSub.AI app to continue
-        </div>
-        <p class="countdown">Attempting to close in <span id="countdown">3</span> seconds...</p>
+        <p>You've signed in with Google successfully.</p>
+        <div class="badge" id="badge">🚀 Return to the app to continue</div>
+        <p class="countdown">Closing in <span id="countdown">3</span>s...</p>
     </div>
 </body>
 </html>
@@ -215,92 +199,78 @@ class GoogleOAuthDesktopService {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Authentication Failed</title>
+    <title>Authentication Failed - RomaSub.AI</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            background: #f5f5f5;
         }
         .container {
             background: white;
-            padding: 3rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
             text-align: center;
-            max-width: 450px;
+            max-width: 420px;
+            border: 1px solid #e0e0e0;
         }
-        .error-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: shake 0.5s ease-in-out;
+        .icon {
+            width: 72px;
+            height: 72px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: shake 0.4s ease-out;
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
-        h1 {
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-            font-size: 1.75rem;
-        }
-        p {
-            color: #718096;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-        .app-instruction {
-            background: #fff5f5;
-            border-left: 4px solid #f5576c;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0.5rem;
+        .x-mark { font-size: 36px; color: white; }
+        h1 { color: #1a1a1a; font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+        p { color: #666; font-size: 15px; margin-bottom: 24px; line-height: 1.5; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f0f0;
+            padding: 12px 20px;
+            border-radius: 24px;
             font-weight: 600;
-            color: #4a5568;
+            color: #333;
+            font-size: 14px;
         }
-        .countdown {
-            color: #f5576c;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-            font-style: italic;
-        }
+        .countdown { margin-top: 20px; color: #999; font-size: 13px; }
     </style>
     <script>
         let countdown = 5;
-        const countdownEl = document.getElementById('countdown');
-
-        const timer = setInterval(() => {
+        setInterval(() => {
             countdown--;
-            if (countdownEl) {
-                countdownEl.textContent = countdown;
-            }
+            const el = document.getElementById('countdown');
+            if (el) el.textContent = countdown;
             if (countdown <= 0) {
-                clearInterval(timer);
                 window.close();
-                setTimeout(() => {
-                    const instruction = document.getElementById('instruction');
-                    if (instruction) {
-                        instruction.innerHTML = '👈 Return to RomaSub.AI app to try again';
-                    }
-                }, 500);
+                document.getElementById('badge').innerHTML = '👈 Return to RomaSub.AI to try again';
             }
         }, 1000);
     </script>
 </head>
 <body>
     <div class="container">
-        <div class="error-icon">❌</div>
+        <div class="icon"><span class="x-mark">✕</span></div>
         <h1>Authentication Failed</h1>
-        <p>There was an error signing in with Google. Please try again or use email/password login.</p>
-        <div class="app-instruction" id="instruction">
-            👈 Return to the RomaSub.AI app to try again
-        </div>
-        <p class="countdown">Attempting to close in <span id="countdown">5</span> seconds...</p>
+        <p>Something went wrong. Please try again or use email login.</p>
+        <div class="badge" id="badge">👈 Return to the app to try again</div>
+        <p class="countdown">Closing in <span id="countdown">5</span>s...</p>
     </div>
 </body>
 </html>

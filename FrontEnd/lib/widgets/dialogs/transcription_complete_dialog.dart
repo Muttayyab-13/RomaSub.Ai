@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_sizes.dart';
 
-/// Improved Transcription Complete Dialog
-/// Follows HCI principles and RomaSub.AI design system
+/// Clean and Modern Transcription Complete Dialog
 class TranscriptionCompleteDialog extends StatefulWidget {
   final String filename;
   final String duration;
@@ -26,7 +23,6 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required this.onEdit,
   }) : super(key: key);
 
-  /// Show this dialog
   static Future<void> show(
     BuildContext context, {
     required String filename,
@@ -64,26 +60,18 @@ class _TranscriptionCompleteDialogState
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _checkAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-
     _scaleAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutBack,
     );
-
-    _checkAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
-    );
-
     _animationController.forward();
   }
 
@@ -95,172 +83,128 @@ class _TranscriptionCompleteDialogState
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-      ),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 560),
-        padding: EdgeInsets.all(AppSizes.xl),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildSuccessIcon(),
-              SizedBox(height: AppSizes.lg),
-              _buildTitle(),
-              SizedBox(height: AppSizes.lg),
-              _buildInfoCard(),
-              SizedBox(height: AppSizes.lg),
-              _buildPreviewSection(),
-              SizedBox(height: AppSizes.lg),
-              _buildActionButtons(),
-              SizedBox(height: AppSizes.md),
-              _buildCloseButton(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuccessIcon() {
     return ScaleTransition(
       scale: _scaleAnimation,
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF10B981), Color(0xFF34D399)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withOpacity(0.3),
-              blurRadius: 25,
-              offset: const Offset(0, 10),
+      child: Dialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide.none,
+        ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 650),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with success icon
+                _buildHeader(),
+
+                // Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Stats cards
+                        _buildStatsRow(),
+                        const SizedBox(height: 20),
+
+                        // Preview section
+                        _buildPreviewSection(),
+                        const SizedBox(height: 24),
+
+                        // Action buttons
+                        _buildActionButtons(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: FadeTransition(
-          opacity: _checkAnimation,
-          child: const Icon(
-            Icons.check_rounded,
-            color: Colors.white,
-            size: 40,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTitle() {
-    return const Text(
-      'Transcription Complete!',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF1F2937),
-        letterSpacing: -0.5,
-      ),
-      textAlign: TextAlign.center,
-    );
-  }
+  Widget _buildHeader() {
+    final theme = Theme.of(context);
 
-  Widget _buildInfoCard() {
     return Container(
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
-      padding: EdgeInsets.all(AppSizes.md),
       child: Column(
         children: [
-          _buildInfoRow('📄', 'File:', widget.filename, isFilename: true),
-          _buildDivider(),
-          _buildInfoRow('⏱️', 'Duration:', widget.duration),
-          _buildDivider(),
-          _buildInfoRow(
-              '📝', 'Segments:', '${widget.segmentCount} subtitles'),
-          _buildDivider(),
-          _buildInfoRow('🗣️', 'Language:', widget.language),
-          _buildDivider(),
-          _buildInfoRow('✅', 'Status:', '', showBadge: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    String icon,
-    String label,
-    String value, {
-    bool isFilename = false,
-    bool showBadge = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSizes.xs),
-      child: Row(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
-          SizedBox(width: AppSizes.sm),
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          if (showBadge)
-            _buildStatusBadge()
-          else
-            Expanded(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isFilename ? FontWeight.w600 : FontWeight.w500,
-                  color: const Color(0xFF1F2937),
+          // Success icon with black background
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary, // Adapts to theme (Black/White)
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ),
-        ],
-      ),
-    );
-  }
+            child: Icon(
+              Icons.check_rounded,
+              color: theme.colorScheme.onPrimary, // White/Black
+              size: 36,
+            ),
+          ),
+          const SizedBox(height: 20),
 
-  Widget _buildStatusBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFD1FAE5),
-        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+          // Title
           Text(
-            '● Ready',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF065F46),
+            'Transcription Complete!',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Filename in a subtle chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.insert_drive_file_outlined,
+                  size: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    widget.filename,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -268,45 +212,124 @@ class _TranscriptionCompleteDialogState
     );
   }
 
-  Widget _buildDivider() {
-    return Divider(
-      color: const Color(0xFFE5E7EB),
-      height: AppSizes.sm,
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            'Duration',
+            widget.duration,
+            Icons.timer_outlined,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Segments',
+            '${widget.segmentCount}',
+            Icons.format_list_numbered,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard('Language', widget.language, Icons.language),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey.shade900 : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: theme.colorScheme.secondary),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: theme.colorScheme.secondary),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildPreviewSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Preview:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        SizedBox(height: AppSizes.xs),
-        Container(
-          constraints: const BoxConstraints(maxHeight: 100),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-          ),
-          padding: EdgeInsets.all(AppSizes.md),
-          child: SingleChildScrollView(
-            child: Text(
-              widget.previewText,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF1F2937),
-                height: 2,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Preview',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
               ),
             ),
+            TextButton.icon(
+              onPressed: () => _showFullText(),
+              icon: Icon(
+                Icons.open_in_full,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              label: Text(
+                'View Full',
+                style: TextStyle(color: theme.colorScheme.primary),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey.shade900 : const Color(0xFFFAFAFA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Text(
+            widget.previewText,
+            style: TextStyle(
+              fontSize: 15,
+              color: theme.colorScheme.onSurface,
+              height: 1.8,
+            ),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.right,
           ),
         ),
       ],
@@ -314,146 +337,162 @@ class _TranscriptionCompleteDialogState
   }
 
   Widget _buildActionButtons() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Stack vertically on small screens
-        if (constraints.maxWidth < 500) {
-          return Column(
-            children: [
-              _buildActionButton(
-                icon: Icons.download_rounded,
-                label: 'Download SRT',
-                color: const Color(0xFF10B981),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onDownload();
-                },
-              ),
-              SizedBox(height: AppSizes.sm),
-              _buildActionButton(
-                icon: Icons.visibility_rounded,
-                label: 'View Details',
-                color: AppColors.accent,
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onViewDetails();
-                },
-              ),
-              SizedBox(height: AppSizes.sm),
-              _buildActionButton(
-                icon: Icons.edit_rounded,
-                label: 'Edit Subtitles',
-                color: Colors.white,
-                textColor: const Color(0xFF374151),
-                borderColor: const Color(0xFFE5E7EB),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onEdit();
-                },
-              ),
-            ],
-          );
-        }
+    final theme = Theme.of(context);
 
-        // Horizontal row on larger screens
-        return Row(
+    return Column(
+      children: [
+        // Primary: Download SRT
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.onDownload();
+            },
+            icon: Icon(
+              Icons.download_rounded,
+              size: 20,
+              color: theme.colorScheme.onPrimary,
+            ),
+            label: Text(
+              'Download SRT File',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Secondary buttons row
+        Row(
           children: [
             Expanded(
-              child: _buildActionButton(
-                icon: Icons.download_rounded,
-                label: 'Download SRT',
-                color: const Color(0xFF10B981),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onDownload();
-                },
-              ),
-            ),
-            SizedBox(width: AppSizes.sm),
-            Expanded(
-              child: _buildActionButton(
-                icon: Icons.visibility_rounded,
-                label: 'View Details',
-                color: AppColors.accent,
+              child: OutlinedButton.icon(
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onViewDetails();
                 },
+                icon: const Icon(Icons.visibility_outlined, size: 18),
+                label: const Text('View Details'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurface,
+                  side: BorderSide(color: theme.colorScheme.onSurface),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
-            SizedBox(width: AppSizes.sm),
+            const SizedBox(width: 12),
             Expanded(
-              child: _buildActionButton(
-                icon: Icons.edit_rounded,
-                label: 'Edit Subtitles',
-                color: Colors.white,
-                textColor: const Color(0xFF374151),
-                borderColor: const Color(0xFFE5E7EB),
+              child: OutlinedButton.icon(
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onEdit();
                 },
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurface,
+                  side: BorderSide(color: theme.colorScheme.onSurface),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+
+        // Close button
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Close',
+            style: TextStyle(
+              color: theme.colorScheme.secondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    Color textColor = Colors.white,
-    Color? borderColor,
-    required VoidCallback onPressed,
-  }) {
-    final isWhiteBackground = color == Colors.white;
+  void _showFullText() {
+    final theme = Theme.of(context);
 
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
-          decoration: BoxDecoration(
-            border: borderColor != null
-                ? Border.all(color: borderColor)
-                : null,
-            borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-            boxShadow: isWhiteBackground
-                ? null
-                : [
-                    BoxShadow(
-                      color: color.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: theme.dividerColor)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.article_outlined,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Full Transcription',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ],
-          ),
-          padding: EdgeInsets.symmetric(
-            vertical: AppSizes.sm,
-            horizontal: AppSizes.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: textColor,
-                size: 24,
-              ),
-              SizedBox(height: AppSizes.xs),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
                 ),
-                textAlign: TextAlign.center,
+              ),
+
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: SelectableText(
+                    widget.previewText,
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface,
+                      height: 2.0,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -461,28 +500,4 @@ class _TranscriptionCompleteDialogState
       ),
     );
   }
-
-  Widget _buildCloseButton() {
-    return TextButton(
-      onPressed: () => Navigator.of(context).pop(),
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.xl,
-          vertical: AppSizes.sm,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-          side: const BorderSide(color: Color(0xFFE5E7EB)),
-        ),
-        foregroundColor: const Color(0xFF6B7280),
-      ),
-      child: const Text(
-        'Close',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
+} // End of class

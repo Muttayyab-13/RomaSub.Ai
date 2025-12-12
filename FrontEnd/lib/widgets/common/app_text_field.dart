@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 
 class AppTextField extends StatefulWidget {
@@ -9,6 +8,7 @@ class AppTextField extends StatefulWidget {
   final String? errorText;
   final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
+  final bool isDark;
 
   const AppTextField({
     super.key,
@@ -18,6 +18,7 @@ class AppTextField extends StatefulWidget {
     this.errorText,
     this.onChanged,
     this.keyboardType,
+    this.isDark = false,
   });
 
   @override
@@ -29,17 +30,28 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    // Theme-aware colors
+    final bgColor = widget.isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final borderColor = widget.isDark
+        ? Colors.grey.shade700
+        : Colors.grey.shade300;
+    final textColor = widget.isDark ? Colors.white : Colors.black;
+    final hintColor = widget.isDark
+        ? Colors.grey.shade500
+        : Colors.grey.shade500;
+    final iconColor = widget.isDark
+        ? Colors.grey.shade400
+        : Colors.grey.shade600;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: bgColor,
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
             border: Border.all(
-              color: widget.errorText != null 
-                  ? AppColors.error 
-                  : AppColors.border,
+              color: widget.errorText != null ? Colors.red : borderColor,
             ),
           ),
           child: TextField(
@@ -47,13 +59,10 @@ class _AppTextFieldState extends State<AppTextField> {
             obscureText: widget.isPassword && _obscure,
             onChanged: widget.onChanged,
             keyboardType: widget.keyboardType,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppSizes.fontSm,
-            ),
+            style: TextStyle(color: textColor, fontSize: AppSizes.fontSm),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: const TextStyle(color: AppColors.textHint),
+              hintStyle: TextStyle(color: hintColor),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.md,
@@ -62,10 +71,10 @@ class _AppTextFieldState extends State<AppTextField> {
               suffixIcon: widget.isPassword
                   ? IconButton(
                       icon: Icon(
-                        _obscure 
-                            ? Icons.visibility_outlined 
+                        _obscure
+                            ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppColors.textHint,
+                        color: iconColor,
                         size: AppSizes.iconSm,
                       ),
                       onPressed: () => setState(() => _obscure = !_obscure),
@@ -80,7 +89,7 @@ class _AppTextFieldState extends State<AppTextField> {
             child: Text(
               widget.errorText!,
               style: const TextStyle(
-                color: AppColors.error,
+                color: Colors.red,
                 fontSize: AppSizes.fontXs,
               ),
             ),

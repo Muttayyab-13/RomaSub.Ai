@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
 
-class FeedbackScreen extends StatefulWidget {
+class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
 
   @override
-  State<FeedbackScreen> createState() => _FeedbackScreenState();
+  ConsumerState<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
-class _FeedbackScreenState extends State<FeedbackScreen> {
+class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _feedbackController = TextEditingController();
   int _rating = 0;
 
@@ -27,7 +28,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a rating'),
-          backgroundColor: AppColors.warning,
+          backgroundColor: Colors.amber,
         ),
       );
       return;
@@ -36,10 +37,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(AppStrings.feedbackThanks),
-        backgroundColor: AppColors.success,
+        backgroundColor: Colors.green,
       ),
     );
-    
+
     setState(() {
       _rating = 0;
       _feedbackController.clear();
@@ -48,8 +49,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ref.watch(themeProvider).isDark;
+
+    // Theme-aware colors
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
+    final buttonText = isDark ? Colors.black : Colors.white;
+    final starColor = isDark ? Colors.amber.shade300 : Colors.amber.shade600;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       body: Row(
         children: [
           const Sidebar(currentRoute: AppRoutes.feedback),
@@ -63,10 +76,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     vertical: AppSizes.md,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: cardBg,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: (isDark ? Colors.black : Colors.grey)
+                            .withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -74,17 +88,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         AppStrings.feedback,
                         style: TextStyle(
                           fontSize: AppSizes.fontXl,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color: textPrimary,
+                        ),
                         onPressed: () {},
                       ),
                     ],
@@ -98,18 +115,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           AppStrings.feedbackTitle,
                           style: TextStyle(
                             fontSize: AppSizes.fontXl,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: AppSizes.xs),
-                        const Text(
+                        Text(
                           AppStrings.feedbackSubtitle,
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: textSecondary),
                         ),
                         const SizedBox(height: AppSizes.lg),
 
@@ -117,19 +134,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         Container(
                           padding: const EdgeInsets.all(AppSizes.lg),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                            border: Border.all(color: AppColors.border),
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusLg,
+                            ),
+                            border: Border.all(color: borderColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 AppStrings.rateExperience,
                                 style: TextStyle(
                                   fontSize: AppSizes.fontMd,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: textPrimary,
                                 ),
                               ),
                               const SizedBox(height: AppSizes.md),
@@ -143,20 +162,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                       setState(() => _rating = index + 1);
                                     },
                                     icon: Icon(
-                                      index < _rating ? Icons.star : Icons.star_border,
-                                      color: AppColors.accent,
+                                      index < _rating
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: starColor,
                                     ),
                                   );
                                 }),
                               ),
                               const SizedBox(height: AppSizes.lg),
 
-                              const Text(
+                              Text(
                                 AppStrings.yourFeedback,
                                 style: TextStyle(
                                   fontSize: AppSizes.fontMd,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: textPrimary,
                                 ),
                               ),
                               const SizedBox(height: AppSizes.sm),
@@ -164,10 +185,25 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               TextField(
                                 controller: _feedbackController,
                                 maxLines: 6,
+                                style: TextStyle(color: textPrimary),
                                 decoration: InputDecoration(
                                   hintText: AppStrings.feedbackHint,
+                                  hintStyle: TextStyle(color: textSecondary),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade100,
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMd,
+                                    ),
+                                    borderSide: BorderSide(color: borderColor),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMd,
+                                    ),
+                                    borderSide: BorderSide(color: borderColor),
                                   ),
                                 ),
                               ),
@@ -177,10 +213,17 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                 width: 200,
                                 child: ElevatedButton.icon(
                                   onPressed: _submitFeedback,
-                                  icon: const Icon(Icons.send, size: AppSizes.iconSm),
-                                  label: const Text(AppStrings.submitFeedback),
+                                  icon: Icon(
+                                    Icons.send,
+                                    size: AppSizes.iconSm,
+                                    color: buttonText,
+                                  ),
+                                  label: Text(
+                                    AppStrings.submitFeedback,
+                                    style: TextStyle(color: buttonText),
+                                  ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.accent,
+                                    backgroundColor: buttonBg,
                                   ),
                                 ),
                               ),

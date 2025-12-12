@@ -36,7 +36,7 @@ def get_logo_base64() -> str:
 
 
 # ============================================================================
-# Email Template Functions
+# Email Template Functions - Black & White Theme
 # ============================================================================
 
 def get_password_reset_template(name: str, otp: str) -> str:
@@ -51,40 +51,55 @@ def get_password_reset_template(name: str, otp: str) -> str:
         HTML email content
     """
     logo_base64 = get_logo_base64()
-    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI Logo" style="max-width: 200px; height: auto;">' if logo_base64 else '<h1>RomaSub.AI</h1>'
+    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI" style="max-width: 180px; height: auto;">' if logo_base64 else '<div style="font-size: 28px; font-weight: bold; color: white;">RomaSub.AI</div>'
 
     return f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-            .header {{ background-color: #1a73e8; color: white; padding: 20px; text-align: center; }}
-            .logo {{ max-width: 200px; height: auto; }}
-            .content {{ padding: 30px; background-color: #f9f9f9; }}
-            .otp-box {{ background-color: #e3f2fd; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }}
-            .otp-code {{ font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1a73e8; }}
-            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            body {{ margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; }}
+            .wrapper {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
+            .card {{ background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }}
+            .header {{ background: #000000; padding: 32px; text-align: center; }}
+            .content {{ padding: 40px 32px; }}
+            .title {{ color: #1a1a1a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; }}
+            .text {{ color: #666; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; }}
+            .otp-container {{ background: #f8f8f8; border: 2px solid #e0e0e0; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }}
+            .otp-code {{ font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #000000; font-family: monospace; }}
+            .expiry {{ display: inline-block; background: #000; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 16px; }}
+            .footer {{ background: #fafafa; padding: 24px 32px; text-align: center; border-top: 1px solid #eee; }}
+            .footer-text {{ color: #999; font-size: 12px; margin: 0; }}
+            .divider {{ height: 1px; background: #eee; margin: 24px 0; }}
+            .security-note {{ background: #f0f0f0; padding: 16px; border-radius: 8px; margin-top: 24px; }}
+            .security-text {{ color: #666; font-size: 13px; margin: 0; }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                {logo_html}
-            </div>
-            <div class="content">
-                <h2>Password Reset Request</h2>
-                <p>Hello {name},</p>
-                <p>We received a request to reset your password. Use the OTP code below to complete the process:</p>
-                <div class="otp-box">
-                    <div class="otp-code">{otp}</div>
+        <div class="wrapper">
+            <div class="card">
+                <div class="header">
+                    {logo_html}
                 </div>
-                <p>This code will expire in <strong>15 minutes</strong>.</p>
-                <p>If you didn't request this password reset, please ignore this email.</p>
-            </div>
-            <div class="footer">
-                <p>&copy; 2024 RomaSub.AI - Roman Urdu Captions Generator</p>
+                <div class="content">
+                    <h1 class="title">🔐 Password Reset</h1>
+                    <p class="text">Hello <strong>{name}</strong>,</p>
+                    <p class="text">We received a request to reset your password. Use the verification code below:</p>
+                    
+                    <div class="otp-container">
+                        <div class="otp-code">{otp}</div>
+                        <div class="expiry">⏱️ Expires in 15 minutes</div>
+                    </div>
+                    
+                    <div class="security-note">
+                        <p class="security-text">🛡️ If you didn't request this reset, please ignore this email. Your account is still secure.</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p class="footer-text">© 2024 RomaSub.AI — Roman Urdu Captions Generator</p>
+                </div>
             </div>
         </div>
     </body>
@@ -104,39 +119,59 @@ def get_email_verify_template(name: str, otp: str) -> str:
         HTML email content
     """
     logo_base64 = get_logo_base64()
-    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI Logo" style="max-width: 200px; height: auto;">' if logo_base64 else '<h1>RomaSub.AI</h1>'
+    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI" style="max-width: 180px; height: auto;">' if logo_base64 else '<div style="font-size: 28px; font-weight: bold; color: white;">RomaSub.AI</div>'
 
     return f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-            .header {{ background-color: #1a73e8; color: white; padding: 20px; text-align: center; }}
-            .logo {{ max-width: 200px; height: auto; }}
-            .content {{ padding: 30px; background-color: #f9f9f9; }}
-            .otp-box {{ background-color: #e3f2fd; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }}
-            .otp-code {{ font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1a73e8; }}
-            .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            body {{ margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; }}
+            .wrapper {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
+            .card {{ background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }}
+            .header {{ background: #000000; padding: 32px; text-align: center; }}
+            .content {{ padding: 40px 32px; }}
+            .title {{ color: #1a1a1a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; }}
+            .text {{ color: #666; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; }}
+            .highlight {{ color: #000; font-weight: 600; }}
+            .otp-container {{ background: #f8f8f8; border: 2px solid #e0e0e0; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }}
+            .otp-code {{ font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #000000; font-family: monospace; }}
+            .expiry {{ display: inline-block; background: #000; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 16px; }}
+            .footer {{ background: #fafafa; padding: 24px 32px; text-align: center; border-top: 1px solid #eee; }}
+            .footer-text {{ color: #999; font-size: 12px; margin: 0; }}
+            .welcome-box {{ background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%); border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center; }}
+            .welcome-emoji {{ font-size: 48px; margin-bottom: 12px; }}
+            .welcome-text {{ color: #333; font-size: 16px; font-weight: 600; margin: 0; }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                {logo_html}
-            </div>
-            <div class="content">
-                <h2>Verify Your Email</h2>
-                <p>Hello {name},</p>
-                <p>Thank you for registering with RomaSub.AI! Please use the OTP code below to verify your email:</p>
-                <div class="otp-box">
-                    <div class="otp-code">{otp}</div>
+        <div class="wrapper">
+            <div class="card">
+                <div class="header">
+                    {logo_html}
                 </div>
-                <p>This code will expire in <strong>15 minutes</strong>.</p>
-            </div>
-            <div class="footer">
-                <p>&copy; 2024 RomaSub.AI - Roman Urdu Captions Generator</p>
+                <div class="content">
+                    <div class="welcome-box">
+                        <div class="welcome-emoji">👋</div>
+                        <p class="welcome-text">Welcome to RomaSub.AI!</p>
+                    </div>
+                    
+                    <h1 class="title">✉️ Verify Your Email</h1>
+                    <p class="text">Hello <strong>{name}</strong>,</p>
+                    <p class="text">Thank you for joining <span class="highlight">RomaSub.AI</span>! Please enter the verification code below to activate your account:</p>
+                    
+                    <div class="otp-container">
+                        <div class="otp-code">{otp}</div>
+                        <div class="expiry">⏱️ Expires in 15 minutes</div>
+                    </div>
+                    
+                    <p class="text" style="margin-top: 24px;">Once verified, you'll have full access to generate Roman Urdu captions for your videos!</p>
+                </div>
+                <div class="footer">
+                    <p class="footer-text">© 2024 RomaSub.AI — Roman Urdu Captions Generator</p>
+                </div>
             </div>
         </div>
     </body>
@@ -174,11 +209,11 @@ def send_otp_email(to_email: str, to_name: str, otp: str, purpose: str = "passwo
 
         # Subject and content based on purpose
         if purpose == "password_reset":
-            subject = "Reset Your RomaSub.AI Password"
+            subject = "🔐 Reset Your RomaSub.AI Password"
             html_content = get_password_reset_template(to_name, otp)
             text_content = f"Your password reset OTP is: {otp}. This code expires in 15 minutes."
         else:
-            subject = "Verify Your RomaSub.AI Email"
+            subject = "✉️ Verify Your RomaSub.AI Email"
             html_content = get_email_verify_template(to_name, otp)
             text_content = f"Your email verification OTP is: {otp}. This code expires in 15 minutes."
 
