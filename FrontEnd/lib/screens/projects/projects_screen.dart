@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/project_model.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/cards/project_card.dart';
 
@@ -27,18 +27,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Replace with real project provider when implemented
+    final isDark = ref.watch(themeProvider).isDark;
     final allProjects = Project.getSampleData();
     final projects = _searchQuery.isEmpty
         ? allProjects
         : allProjects
-            .where((p) =>
-                p.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                p.fileName.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .toList();
+              .where(
+                (p) =>
+                    p.title.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ||
+                    p.fileName.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ),
+              )
+              .toList();
+
+    // Theme-aware colors
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       body: Row(
         children: [
           const Sidebar(currentRoute: AppRoutes.projects),
@@ -52,10 +64,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     vertical: AppSizes.md,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: cardBg,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: (isDark ? Colors.black : Colors.grey)
+                            .withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -63,12 +76,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         AppStrings.recentProjects,
                         style: TextStyle(
                           fontSize: AppSizes.fontXl,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       const Spacer(),
@@ -78,20 +91,47 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         child: TextField(
                           controller: _searchController,
                           onChanged: (v) => setState(() => _searchQuery = v),
+                          style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
                             hintText: AppStrings.searchProjects,
-                            prefixIcon: const Icon(Icons.search, size: AppSizes.iconSm),
-                            contentPadding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+                            hintStyle: TextStyle(
+                              color: isDark
+                                  ? Colors.grey.shade500
+                                  : Colors.grey.shade600,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              size: AppSizes.iconSm,
+                              color: textPrimary,
+                            ),
+                            filled: true,
+                            fillColor: isDark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade100,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: AppSizes.sm,
+                            ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
+                              ),
+                              borderSide: BorderSide(color: borderColor),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
+                              ),
+                              borderSide: BorderSide(color: borderColor),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: AppSizes.md),
                       IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color: textPrimary,
+                        ),
                         onPressed: () {},
                       ),
                     ],
@@ -105,24 +145,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           AppStrings.allProjects,
                           style: TextStyle(
                             fontSize: AppSizes.fontLg,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: AppSizes.md),
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            childAspectRatio: 1.4,
-                            crossAxisSpacing: AppSizes.md,
-                            mainAxisSpacing: AppSizes.md,
-                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                childAspectRatio: 1.4,
+                                crossAxisSpacing: AppSizes.md,
+                                mainAxisSpacing: AppSizes.md,
+                              ),
                           itemCount: projects.length,
                           itemBuilder: (context, index) {
                             final project = projects[index];
@@ -131,6 +172,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               time: project.timeAgo,
                               icon: project.icon,
                               onTap: () {},
+                              isDark: isDark,
                             );
                           },
                         ),

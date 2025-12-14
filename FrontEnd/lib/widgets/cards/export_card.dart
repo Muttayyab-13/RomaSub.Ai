@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 
 class ExportCard extends StatelessWidget {
@@ -8,6 +7,7 @@ class ExportCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onDownload;
   final VoidCallback? onDelete;
+  final bool isDark;
 
   const ExportCard({
     super.key,
@@ -16,27 +16,36 @@ class ExportCard extends StatelessWidget {
     required this.icon,
     this.onDownload,
     this.onDelete,
+    this.isDark = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Theme-aware colors
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final iconBg = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final iconColor = isDark ? Colors.grey.shade300 : Colors.grey.shade700;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textHint = isDark ? Colors.grey.shade500 : Colors.grey.shade600;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.sm),
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cardBg,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(AppSizes.sm),
             decoration: BoxDecoration(
-              color: AppColors.accentLight,
+              color: iconBg,
               borderRadius: BorderRadius.circular(AppSizes.radiusMd),
             ),
-            child: Icon(icon, color: AppColors.accent, size: AppSizes.iconMd),
+            child: Icon(icon, color: iconColor, size: AppSizes.iconMd),
           ),
           const SizedBox(width: AppSizes.md),
           Expanded(
@@ -45,29 +54,26 @@ class ExportCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontSm,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.xs),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: AppSizes.fontXs,
-                    color: AppColors.textHint,
-                  ),
+                  style: TextStyle(fontSize: AppSizes.fontXs, color: textHint),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.download, color: AppColors.accent),
+            icon: Icon(Icons.download, color: iconColor),
             onPressed: onDownload,
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
             onPressed: onDelete,
           ),
         ],

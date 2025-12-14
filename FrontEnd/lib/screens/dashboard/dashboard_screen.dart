@@ -7,6 +7,7 @@ import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/upload_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/dialogs/upload_progress_dialog.dart';
 import '../../services/api/api_config.dart';
@@ -56,7 +57,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
 
       // Start upload and transcription
-      await ref.read(uploadNotifierProvider.notifier).uploadAndTranscribe(
+      await ref
+          .read(uploadNotifierProvider.notifier)
+          .uploadAndTranscribe(
             filePath,
             language: 'ur', // Urdu language
           );
@@ -75,9 +78,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+    final isDark = ref.watch(themeProvider).isDark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           const Sidebar(currentRoute: AppRoutes.dashboard),
@@ -88,7 +92,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Row
-                  _buildHeader(authState.userName),
+                  _buildHeader(authState, isDark),
                   const SizedBox(height: AppSizes.xl),
 
                   // Main Content
@@ -96,17 +100,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Left - Upload Section
-                      Expanded(
-                        flex: 6,
-                        child: _buildUploadSection(),
-                      ),
+                      Expanded(flex: 6, child: _buildUploadSection(isDark)),
                       const SizedBox(width: AppSizes.lg),
 
                       // Right - Status Section
-                      Expanded(
-                        flex: 4,
-                        child: _buildStatusSection(),
-                      ),
+                      Expanded(flex: 4, child: _buildStatusSection(isDark)),
                     ],
                   ),
                 ],
@@ -118,7 +116,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader(String userName) {
+  Widget _buildHeader(AuthState authState, bool isDark) {
+    // Dynamic greeting based on time
+    final hour = DateTime.now().hour;
+    String greeting = 'Good Morning';
+    if (hour >= 12 && hour < 17) {
+      greeting = 'Good Afternoon';
+    } else if (hour >= 17) {
+      greeting = 'Good Evening';
+    }
+
+    // Get first name
+    final firstName = authState.userName.trim().split(' ').first;
+
+    // Theme-aware colors
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -129,11 +144,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             vertical: AppSizes.lg,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: cardBg,
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 4),
                 spreadRadius: 0,
@@ -144,19 +159,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${AppStrings.hello} $userName!',
-                style: const TextStyle(
+                '$greeting, $firstName!',
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: AppSizes.xs),
-              const Text(
+              Text(
                 AppStrings.welcomeBack,
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                   fontSize: AppSizes.fontMd,
                 ),
               ),
@@ -168,53 +183,74 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Row(
           children: [
             _IconButton(
-              icon: Icons.notifications_outlined,
-              hasBadge: true,
-              onTap: () {},
+              icon: isDark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+              onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
+              isDark: isDark,
             ),
             const SizedBox(width: AppSizes.md),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-              ),
-              child: Center(
-                child: Text(
-                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: AppSizes.fontLg,
+            _IconButton(
+              icon: Icons.notifications_outlined,
+              hasBadge: true,
+              isDark: isDark,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Guide to Use'),
+                    content: const Text(
+                      'Welcome to RomaSub.AI!\n\n'
+                      '1. Click "Choose File" to upload a video or audio.\n'
+                      '2. Wait for the transcription and translation to complete.\n'
+                      '3. Download your SRT subtitle file.\n\n'
+                      'Need more help? Visit the Feedback section.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Got it'),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
+            const SizedBox(width: AppSizes.md),
+            _ProfilePicture(authState: authState),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildUploadSection() {
+  Widget _buildUploadSection(bool isDark) {
+    // Theme-aware colors
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final accentBg = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
+    final buttonText = isDark ? Colors.black : Colors.white;
+    final borderColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           AppStrings.welcomeTitle,
           style: TextStyle(
             fontSize: AppSizes.fontXxl,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
         ),
         const SizedBox(height: AppSizes.sm),
-        const Text(
+        Text(
           AppStrings.welcomeDesc,
           style: TextStyle(
             fontSize: AppSizes.fontSm,
-            color: AppColors.textSecondary,
+            color: textSecondary,
             height: 1.5,
           ),
         ),
@@ -223,7 +259,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Upload Box with dashed border
         CustomPaint(
           painter: DashedBorderPainter(
-            color: AppColors.accent,
+            color: borderColor,
             strokeWidth: 2,
             dashWidth: 8,
             dashSpace: 6,
@@ -232,7 +268,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Container(
             padding: const EdgeInsets.all(AppSizes.xxl),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: cardBg,
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             ),
             child: Column(
@@ -240,29 +276,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(AppSizes.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.accentLight,
+                    color: accentBg,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.upload_outlined,
                     size: AppSizes.iconXl,
-                    color: AppColors.accent,
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.lg),
-                const Text(
+                Text(
                   AppStrings.uploadTitle,
                   style: TextStyle(
                     fontSize: AppSizes.fontLg,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.sm),
-                const Text(
+                Text(
                   AppStrings.uploadDesc,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                     fontSize: AppSizes.fontSm,
                   ),
                   textAlign: TextAlign.center,
@@ -271,7 +307,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ElevatedButton(
                   onPressed: _handleFilePicker,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
+                    backgroundColor: buttonBg,
+                    foregroundColor: buttonText,
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSizes.xl,
                       vertical: AppSizes.md,
@@ -280,11 +317,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     AppStrings.chooseFile,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: AppSizes.fontMd,
+                      color: buttonText,
                     ),
                   ),
                 ),
@@ -296,15 +334,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildStatusSection() {
+  Widget _buildStatusSection(bool isDark) {
+    // Theme-aware colors
+    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black;
+
     return Container(
       padding: const EdgeInsets.all(AppSizes.xl),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cardBg,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
             blurRadius: 15,
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -314,31 +356,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             AppStrings.processingStatus,
             style: TextStyle(
               fontSize: AppSizes.fontLg,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: AppSizes.xl),
           _StatusItem(
             label: AppStrings.audioTranscription,
             status: AppStrings.ready,
-            isOnline: false,
+            isOnline: true,
+            isDark: isDark,
           ),
           const SizedBox(height: AppSizes.lg),
           _StatusItem(
             label: AppStrings.romanUrduTranslation,
-            status: AppStrings.ready,
+            status: 'Pending',
             isOnline: false,
+            isPending: true,
+            isDark: isDark,
           ),
           const SizedBox(height: AppSizes.lg),
           _StatusItem(
             label: AppStrings.aiModelStatus,
             status: AppStrings.online,
             isOnline: true,
+            isDark: isDark,
           ),
         ],
       ),
@@ -350,15 +396,23 @@ class _IconButton extends StatelessWidget {
   final IconData icon;
   final bool hasBadge;
   final VoidCallback onTap;
+  final bool isDark;
 
   const _IconButton({
     required this.icon,
     this.hasBadge = false,
     required this.onTap,
+    this.isDark = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bg = isDark ? const Color(0xFF2A2A2A) : AppColors.surface;
+    final iconColor = isDark ? Colors.white : AppColors.textPrimary;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.03);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -366,11 +420,11 @@ class _IconButton extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: bg,
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: shadowColor,
               blurRadius: 12,
               offset: const Offset(0, 2),
             ),
@@ -379,7 +433,7 @@ class _IconButton extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(icon, color: AppColors.textPrimary, size: 22),
+            Icon(icon, color: iconColor, size: 22),
             if (hasBadge)
               Positioned(
                 right: 10,
@@ -404,25 +458,42 @@ class _StatusItem extends StatelessWidget {
   final String label;
   final String status;
   final bool isOnline;
+  final bool isPending;
+  final bool isDark;
 
   const _StatusItem({
     required this.label,
     required this.status,
     required this.isOnline,
+    this.isPending = false,
+    this.isDark = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Determine colors based on status
+    Color backgroundColor;
+    Color textColor;
+    final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+
+    if (isPending) {
+      backgroundColor = Colors.amber.withOpacity(0.15);
+      textColor = Colors.amber.shade700;
+    } else if (isOnline) {
+      backgroundColor = Colors.green.withOpacity(0.15);
+      textColor = Colors.green;
+    } else {
+      backgroundColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+      textColor = isDark ? Colors.white : Colors.black;
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: AppSizes.fontMd,
-            ),
+            style: TextStyle(color: labelColor, fontSize: AppSizes.fontMd),
           ),
         ),
         Container(
@@ -431,7 +502,7 @@ class _StatusItem extends StatelessWidget {
             vertical: AppSizes.sm,
           ),
           decoration: BoxDecoration(
-            color: isOnline ? AppColors.success.withOpacity(0.15) : AppColors.surfaceVariant,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(AppSizes.radiusXl),
           ),
           child: Text(
@@ -439,11 +510,58 @@ class _StatusItem extends StatelessWidget {
             style: TextStyle(
               fontSize: AppSizes.fontSm,
               fontWeight: FontWeight.w600,
-              color: isOnline ? AppColors.success : AppColors.textPrimary,
+              color: textColor,
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ProfilePicture extends StatelessWidget {
+  final AuthState authState;
+
+  const _ProfilePicture({required this.authState});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = authState.user;
+    final hasProfilePicture =
+        user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty;
+
+    return InkWell(
+      onTap: () => AppRoutes.replace(context, AppRoutes.settings),
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: hasProfilePicture ? null : Colors.black,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey.shade300, width: 2),
+          image: hasProfilePicture
+              ? DecorationImage(
+                  image: NetworkImage(
+                    '${ApiConfig.baseUrl}${user.profilePictureUrl}',
+                  ),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: hasProfilePicture
+            ? null
+            : Center(
+                child: Text(
+                  authState.userInitial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+      ),
     );
   }
 }
@@ -472,10 +590,12 @@ class DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(borderRadius),
+        ),
+      );
 
     final dashPath = _createDashedPath(path, dashWidth, dashSpace);
     canvas.drawPath(dashPath, paint);

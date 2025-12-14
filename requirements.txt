@@ -29,6 +29,7 @@ tensorflow
 ffmpeg-python
 ffmpeg
 pydub
+static_ffmpeg
 
 # Utilities
 python-dotenv
