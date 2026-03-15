@@ -374,9 +374,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: AppSizes.lg),
           _StatusItem(
             label: AppStrings.romanUrduTranslation,
-            status: 'Pending',
-            isOnline: false,
-            isPending: true,
+            status: AppStrings.ready,
+            isOnline: true,
             isDark: isDark,
           ),
           const SizedBox(height: AppSizes.lg),

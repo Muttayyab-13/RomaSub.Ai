@@ -47,8 +47,11 @@ def get_whisper_model():
         print(f"\n[ASR] Loading Whisper model: {settings.whisper_model}")
         print("[ASR] This may take a moment on first run...")
 
+        import torch
         import whisper
-        _whisper_model = whisper.load_model(settings.whisper_model)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"[ASR] Using device: {device}")
+        _whisper_model = whisper.load_model(settings.whisper_model, device=device)
 
         print(f"[ASR] Whisper model loaded successfully!")
 
@@ -137,6 +140,24 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
 
         # Store result in memory
         _transcription_results[file_id] = transcription_result
+
+        # Auto-transliterate to Roman Urdu
+        try:
+            from app.services import transliteration as transliteration_service
+            print("[ASR] Auto-transliterating to Roman Urdu...")
+            success_t, msg_t, result_t = transliteration_service.transliterate_transcription(file_id)
+            if success_t:
+                transcription_result["roman_urdu_text"] = result_t["roman_urdu_text"]
+                transcription_result["roman_urdu_segments"] = result_t["segments"]
+                print("[ASR] Auto-transliteration complete!")
+            else:
+                print(f"[ASR] Auto-transliteration failed: {msg_t}")
+                transcription_result["roman_urdu_text"] = None
+                transcription_result["roman_urdu_segments"] = None
+        except Exception as e:
+            logger.warning("Auto-transliteration failed: %s", str(e))
+            transcription_result["roman_urdu_text"] = None
+            transcription_result["roman_urdu_segments"] = None
 
         # Print results to console
         print(f"\n{'='*60}")

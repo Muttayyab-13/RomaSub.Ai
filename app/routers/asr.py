@@ -31,7 +31,9 @@ class TranscriptionResponse(BaseModel):
     file_id: str
     language: str
     text: str
+    roman_urdu_text: Optional[str] = None
     segments: List[TranscriptionSegment]
+    roman_urdu_segments: Optional[List[dict]] = None
     segment_count: int
     processing_time_seconds: float
     audio_duration_seconds: Optional[float]
@@ -97,7 +99,9 @@ async def transcribe_file(
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),
@@ -138,7 +142,9 @@ async def transcribe_file_anonymous(
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),
@@ -168,7 +174,9 @@ async def get_transcription_result(file_id: str):
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),

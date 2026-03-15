@@ -112,6 +112,27 @@ class UploadProgressDialog extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppSizes.md),
                       ] else if (uploadState.phase ==
+                          UploadPhase.transliterating) ...[
+                        LinearProgressIndicator(
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.accent,
+                          ),
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        Text(
+                          'Converting to Roman Urdu...',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: AppSizes.fontMd,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ] else if (uploadState.phase ==
                           UploadPhase.extractingAudio) ...[
                         LinearProgressIndicator(
                           backgroundColor: AppColors.border,
@@ -141,7 +162,10 @@ class UploadProgressDialog extends ConsumerWidget {
                           onTap: () {
                             _showFullTextDialog(
                               context,
-                              uploadState.transcription!.text,
+                              uploadState.transcription!.hasRomanUrdu
+                                  ? uploadState.transcription!.romanUrduText!
+                                  : uploadState.transcription!.text,
+                              isRomanUrdu: uploadState.transcription!.hasRomanUrdu,
                             );
                           },
                           borderRadius: BorderRadius.circular(
@@ -232,7 +256,9 @@ class UploadProgressDialog extends ConsumerWidget {
                                     ),
                                   ),
                                   child: Text(
-                                    uploadState.transcription!.text,
+                                    uploadState.transcription!.hasRomanUrdu
+                                        ? uploadState.transcription!.romanUrduText!
+                                        : uploadState.transcription!.text,
                                     style: TextStyle(
                                       fontSize: AppSizes.fontSm,
                                       color: Theme.of(
@@ -242,7 +268,9 @@ class UploadProgressDialog extends ConsumerWidget {
                                     ),
                                     maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
-                                    textDirection: TextDirection.rtl,
+                                    textDirection: uploadState.transcription!.hasRomanUrdu
+                                        ? TextDirection.ltr
+                                        : TextDirection.rtl,
                                   ),
                                 ),
                                 const SizedBox(height: AppSizes.sm),
@@ -339,19 +367,20 @@ class UploadProgressDialog extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: AppSizes.md),
-                            // Quick Download button
+                            // Quick Download button (Roman Urdu SRT)
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  final srtContent = await ref
-                                      .read(uploadNotifierProvider.notifier)
-                                      .downloadSrt();
+                                  final notifier = ref.read(uploadNotifierProvider.notifier);
+                                  final srtContent = uploadState.transcription?.hasRomanUrdu == true
+                                      ? await notifier.downloadRomanUrduSrt()
+                                      : await notifier.downloadSrt();
 
                                   if (srtContent != null && context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: const Text(
-                                          'SRT downloaded successfully!',
+                                          'Roman Urdu SRT downloaded!',
                                         ),
                                         backgroundColor: AppColors.success,
                                         behavior: SnackBarBehavior.floating,
@@ -419,7 +448,7 @@ class UploadProgressDialog extends ConsumerWidget {
                                 ),
                               ),
                             if (uploadState.phase == UploadPhase.error)
-                              ElevatedButton(
+                              Flexible(child: ElevatedButton(
                                 onPressed: () {
                                   ref
                                       .read(uploadNotifierProvider.notifier)
@@ -432,7 +461,7 @@ class UploadProgressDialog extends ConsumerWidget {
                                   elevation: 0,
                                 ),
                                 child: const Text('Try Again'),
-                              ),
+                              )),
                           ],
                         ),
                 ),
@@ -462,6 +491,7 @@ class UploadProgressDialog extends ConsumerWidget {
         break;
       case UploadPhase.extractingAudio:
       case UploadPhase.transcribing:
+      case UploadPhase.transliterating:
         icon = Icons.auto_awesome_outlined;
         color = AppColors.accent;
         backgroundColor = AppColors.accentLight;
@@ -488,7 +518,7 @@ class UploadProgressDialog extends ConsumerWidget {
 }
 
 /// Show full text dialog
-void _showFullTextDialog(BuildContext context, String fullText) {
+void _showFullTextDialog(BuildContext context, String fullText, {bool isRomanUrdu = false}) {
   showDialog(
     context: context,
     builder: (context) => Dialog(
@@ -530,9 +560,9 @@ void _showFullTextDialog(BuildContext context, String fullText) {
                     ),
                   ),
                   const SizedBox(width: AppSizes.md),
-                  const Text(
-                    'Full Transcription',
-                    style: TextStyle(
+                  Text(
+                    isRomanUrdu ? 'Roman Urdu Transliteration' : 'Full Transcription',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -553,8 +583,8 @@ void _showFullTextDialog(BuildContext context, String fullText) {
                 padding: const EdgeInsets.all(AppSizes.xl),
                 child: SelectableText(
                   fullText,
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.right,
+                  textDirection: isRomanUrdu ? TextDirection.ltr : TextDirection.rtl,
+                  textAlign: isRomanUrdu ? TextAlign.left : TextAlign.right,
                   style: const TextStyle(
                     fontSize: 16,
                     color: AppColors.textPrimary,
@@ -586,12 +616,16 @@ void _showCompletionDialog(
     duration: transcription.durationFormatted,
     segmentCount: transcription.segmentCount,
     language: 'Urdu',
-    previewText: transcription.text,
+    previewText: transcription.hasRomanUrdu
+        ? transcription.romanUrduText!
+        : transcription.text,
+    romanUrduPreviewText: transcription.romanUrduText,
     onDownload: () async {
-      // Download SRT file
-      final srtContent = await ref
-          .read(uploadNotifierProvider.notifier)
-          .downloadSrt();
+      // Download Roman Urdu SRT file (fallback to Urdu SRT)
+      final notifier = ref.read(uploadNotifierProvider.notifier);
+      final srtContent = transcription.hasRomanUrdu
+          ? await notifier.downloadRomanUrduSrt()
+          : await notifier.downloadSrt();
 
       if (srtContent != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

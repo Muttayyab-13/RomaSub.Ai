@@ -25,6 +25,11 @@ openai-whisper
 torch
 tensorflow
 
+# Transliteration (M2M100)
+transformers>=4.45.0
+sentencepiece
+safetensors
+
 # Media processing
 ffmpeg-python
 ffmpeg

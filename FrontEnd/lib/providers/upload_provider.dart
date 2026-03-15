@@ -29,7 +29,8 @@ class UploadState {
   bool get isProcessing =>
       phase == UploadPhase.uploading ||
       phase == UploadPhase.transcribing ||
-      phase == UploadPhase.extractingAudio;
+      phase == UploadPhase.extractingAudio ||
+      phase == UploadPhase.transliterating;
 
   /// Get progress percentage as string (0-100)
   String get progressPercent => '${(uploadProgress * 100).toInt()}%';
@@ -46,6 +47,8 @@ class UploadState {
       case UploadPhase.transcribing:
         final percent = (transcriptionProgress * 100).toInt();
         return 'Transcribing audio... $percent%';
+      case UploadPhase.transliterating:
+        return 'Transliterating to Roman Urdu...';
       case UploadPhase.completed:
         return 'Transcription complete!';
       case UploadPhase.error:
@@ -85,6 +88,7 @@ enum UploadPhase {
   uploading,
   extractingAudio,
   transcribing,
+  transliterating,
   completed,
   error,
 }
@@ -175,6 +179,15 @@ class UploadNotifier extends StateNotifier<UploadState> {
         isComplete = true;
         await progressTimer.cancel();
 
+        // Show transliterating phase (backend already did it, this is for UX)
+        if (transcription.hasRomanUrdu) {
+          state = state.copyWith(
+            phase: UploadPhase.transliterating,
+            transcriptionProgress: 1.0,
+          );
+          await Future.delayed(const Duration(milliseconds: 800));
+        }
+
         // Completed!
         state = state.copyWith(
           phase: UploadPhase.completed,
@@ -211,6 +224,27 @@ class UploadNotifier extends StateNotifier<UploadState> {
       return srtContent;
     } catch (e) {
       state = state.copyWith(error: 'Failed to download SRT: ${e.toString()}');
+      return null;
+    }
+  }
+
+  /// Download Roman Urdu SRT file content
+  ///
+  /// Returns Roman Urdu SRT content as string if available
+  Future<String?> downloadRomanUrduSrt() async {
+    if (state.uploadResponse == null) return null;
+
+    try {
+      final srtContent = await _transcriptionService.getTransliterationSrt(
+        state.uploadResponse!.fileId,
+      );
+      return srtContent;
+    } catch (e) {
+      // Fallback: generate client-side from cached segments
+      if (state.transcription?.hasRomanUrdu == true) {
+        return state.transcription!.toRomanUrduSrtContent();
+      }
+      state = state.copyWith(error: 'Failed to download Roman Urdu SRT: ${e.toString()}');
       return null;
     }
   }

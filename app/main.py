@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from app.database import init_db
-from app.routers import auth_router, media_router, asr_router, user_router
+from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router
 from app.config import settings
 
 # Configure logging
@@ -59,6 +59,8 @@ async def lifespan(app: FastAPI):
     
     # Log configuration
     logger.info(f"Whisper Model: {settings.whisper_model}")
+    logger.info(f"M2M100 Model: {settings.m2m100_model_path}")
+    logger.info(f"Transliteration Device: {settings.transliteration_device}")
     logger.info(f"Max File Size: {settings.max_file_size_mb}MB")
     logger.info(f"Temp Upload Dir: {settings.temp_upload_dir}")
     
@@ -90,6 +92,7 @@ app = FastAPI(
     - **Module 1**: User Authentication & Registration
     - **Module 2**: Video/Audio Input Handler
     - **Module 3**: Automated Speech Recognition (ASR)
+    - **Module 6**: Transliteration Engine (Urdu to Roman Urdu)
     
     ---
     
@@ -143,6 +146,7 @@ app.include_router(auth_router)
 app.include_router(media_router)
 app.include_router(asr_router)
 app.include_router(user_router)
+app.include_router(transliteration_router)
 
 
 # Root endpoint
@@ -160,7 +164,8 @@ async def root():
         "modules": {
             "auth": "User authentication and registration",
             "media": "Video/audio file upload and processing",
-            "asr": "Automatic speech recognition with Whisper"
+            "asr": "Automatic speech recognition with Whisper",
+            "transliteration": "Urdu to Roman Urdu transliteration with M2M100"
         }
     }
 
@@ -173,7 +178,9 @@ async def health_check():
     return {
         "status": "healthy",
         "database": "connected",
-        "whisper_model": settings.whisper_model
+        "whisper_model": settings.whisper_model,
+        "m2m100_model": settings.m2m100_model_path,
+        "transliteration_device": settings.transliteration_device
     }
 
 

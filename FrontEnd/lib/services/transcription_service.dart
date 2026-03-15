@@ -83,6 +83,38 @@ class TranscriptionService {
     }
   }
 
+  /// Transliterate raw Urdu text to Roman Urdu
+  ///
+  /// [urduText] - Urdu text to transliterate
+  ///
+  /// Returns a map with urdu_text, roman_urdu_text, processing_time_seconds
+  Future<Map<String, dynamic>> transliterateText(String urduText) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConfig.transliterateText,
+        data: {'text': urduText},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get Roman Urdu SRT subtitle content
+  ///
+  /// Returns the Roman Urdu SRT file content as a string
+  Future<String> getTransliterationSrt(String fileId) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConfig.transliterateResultSrt(fileId),
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['srt_content'] as String;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Poll for transcription completion
   ///
   /// Polls the server every [pollInterval] until transcription is complete or timeout

@@ -7,6 +7,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
   final int segmentCount;
   final String language;
   final String previewText;
+  final String? romanUrduPreviewText;
   final VoidCallback onDownload;
   final VoidCallback onViewDetails;
   final VoidCallback onEdit;
@@ -18,6 +19,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required this.segmentCount,
     required this.language,
     required this.previewText,
+    this.romanUrduPreviewText,
     required this.onDownload,
     required this.onViewDetails,
     required this.onEdit,
@@ -30,6 +32,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required int segmentCount,
     required String language,
     required String previewText,
+    String? romanUrduPreviewText,
     required VoidCallback onDownload,
     required VoidCallback onViewDetails,
     required VoidCallback onEdit,
@@ -43,6 +46,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
         segmentCount: segmentCount,
         language: language,
         previewText: previewText,
+        romanUrduPreviewText: romanUrduPreviewText,
         onDownload: onDownload,
         onViewDetails: onViewDetails,
         onEdit: onEdit,
@@ -320,7 +324,7 @@ class _TranscriptionCompleteDialogState
             border: Border.all(color: theme.dividerColor),
           ),
           child: Text(
-            widget.previewText,
+            widget.romanUrduPreviewText ?? widget.previewText,
             style: TextStyle(
               fontSize: 15,
               color: theme.colorScheme.onSurface,
@@ -328,8 +332,12 @@ class _TranscriptionCompleteDialogState
             ),
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
+            textDirection: widget.romanUrduPreviewText != null
+                ? TextDirection.ltr
+                : TextDirection.rtl,
+            textAlign: widget.romanUrduPreviewText != null
+                ? TextAlign.left
+                : TextAlign.right,
           ),
         ),
       ],
@@ -355,7 +363,7 @@ class _TranscriptionCompleteDialogState
               color: theme.colorScheme.onPrimary,
             ),
             label: Text(
-              'Download SRT File',
+              'Download Roman Urdu SRT',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -461,7 +469,9 @@ class _TranscriptionCompleteDialogState
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Full Transcription',
+                        widget.romanUrduPreviewText != null
+                            ? 'Roman Urdu Transliteration'
+                            : 'Full Transcription',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -483,9 +493,13 @@ class _TranscriptionCompleteDialogState
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: SelectableText(
-                    widget.previewText,
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.right,
+                    widget.romanUrduPreviewText ?? widget.previewText,
+                    textDirection: widget.romanUrduPreviewText != null
+                        ? TextDirection.ltr
+                        : TextDirection.rtl,
+                    textAlign: widget.romanUrduPreviewText != null
+                        ? TextAlign.left
+                        : TextAlign.right,
                     style: TextStyle(
                       fontSize: 16,
                       color: theme.colorScheme.onSurface,

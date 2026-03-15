@@ -28,6 +28,12 @@ class ApiConfig {
   static String asrResultSrt(String fileId) => '/asr/result/$fileId/srt';
   static const String asrLanguages = '/asr/languages';
 
+  // Transliteration Endpoints
+  static const String transliterateText = '/transliterate/text';
+  static String transliterateFile(String fileId) => '/transliterate/$fileId/anonymous';
+  static String transliterateResult(String fileId) => '/transliterate/result/$fileId';
+  static String transliterateResultSrt(String fileId) => '/transliterate/result/$fileId/srt';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
