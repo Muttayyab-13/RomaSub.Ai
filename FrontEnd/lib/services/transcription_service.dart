@@ -20,12 +20,14 @@ class TranscriptionService {
   Future<TranscriptionModel> transcribe(
     String fileId, {
     String language = 'ur',
+    bool autoCleanup = false,
   }) async {
     try {
       final response = await _client.dio.post(
         ApiConfig.asrTranscribe(fileId),
-        queryParameters: {
+        data: {
           'language': language,
+          'auto_cleanup': autoCleanup,
         },
         options: Options(
           receiveTimeout: const Duration(minutes: 10), // Allow up to 10 minutes for transcription

@@ -11,6 +11,9 @@ import '../../screens/projects/projects_screen.dart';
 import '../../screens/exports/exports_screen.dart';
 import '../../screens/feedback/feedback_screen.dart';
 import '../../screens/settings/settings_screen.dart';
+import '../../screens/editor/subtitle_editor_screen.dart';
+import '../../screens/realtime/realtime_viewer_screen.dart';
+import '../../models/transcription_model.dart';
 
 class AppRoutes {
   // Route names
@@ -23,6 +26,8 @@ class AppRoutes {
   static const String exports = '/exports';
   static const String feedback = '/feedback';
   static const String settings = '/settings';
+  static const String editor = '/editor';
+  static const String realtimeViewer = '/realtime-viewer';
   static const String forgotPasswordEmail = '/forgot-password';
   static const String forgotPasswordOtp = '/forgot-password/verify';
   static const String forgotPasswordReset = '/forgot-password/reset';
@@ -54,6 +59,18 @@ class AppRoutes {
         return _buildRoute(ForgotPasswordResetScreen());
       case settings:
         return _buildRoute(SettingsScreen());
+      case editor:
+        final args = routeSettings.arguments as Map<String, dynamic>;
+        return _buildRoute(SubtitleEditorScreen(
+          fileId: args['fileId'] as String,
+          transcription: args['transcription'] as TranscriptionModel?,
+        ));
+      case realtimeViewer:
+        final args = routeSettings.arguments as Map<String, dynamic>;
+        return _buildRoute(RealtimeViewerScreen(
+          fileId: args['fileId'] as String,
+          filename: args['filename'] as String,
+        ));
       default:
         return _buildRoute(LoginScreen());
     }

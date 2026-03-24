@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:media_kit/media_kit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'core/constants/app_strings.dart';
@@ -10,6 +11,9 @@ import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize media_kit for video playback
+  MediaKit.ensureInitialized();
 
   // Initialize window manager for desktop platforms
   if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {

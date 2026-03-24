@@ -34,6 +34,34 @@ class ApiConfig {
   static String transliterateResult(String fileId) => '/transliterate/result/$fileId';
   static String transliterateResultSrt(String fileId) => '/transliterate/result/$fileId/srt';
 
+  // Subtitle Endpoints
+  static String subtitleCreate(String fileId) => '/subtitles/create/$fileId';
+  static String subtitleProject(String subtitleId) => '/subtitles/$subtitleId';
+  static String subtitleSegment(String subtitleId, int segmentId) =>
+      '/subtitles/$subtitleId/segments/$segmentId';
+  static String subtitleAddSegment(String subtitleId) =>
+      '/subtitles/$subtitleId/segments';
+  static String subtitleBulkUpdate(String subtitleId) =>
+      '/subtitles/$subtitleId/bulk-update';
+  static String subtitleFixOverlaps(String subtitleId) =>
+      '/subtitles/$subtitleId/fix-overlaps';
+  static String subtitleExport(String subtitleId) =>
+      '/subtitles/$subtitleId/export';
+
+  // Media Streaming
+  static String mediaStream(String fileId) => '/media/$fileId/stream';
+
+  /// Full URL for video streaming (used by media_kit player)
+  static String mediaStreamUrl(String fileId) => '$baseUrl/media/$fileId/stream';
+
+  // Realtime Streaming Endpoints
+  static String realtimeStream(String fileId) => '/realtime/stream/$fileId';
+  static String realtimeSeek(String fileId) => '/realtime/seek/$fileId';
+  static String realtimeStatus(String fileId) => '/realtime/status/$fileId';
+
+  /// Full URL for SSE stream (used by Dio stream client)
+  static String realtimeStreamUrl(String fileId) => '$baseUrl/realtime/stream/$fileId';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

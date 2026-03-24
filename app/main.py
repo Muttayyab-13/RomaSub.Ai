@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from app.database import init_db
-from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router
+from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router, subtitle_router, realtime_router
 from app.config import settings
 
 # Configure logging
@@ -147,6 +147,8 @@ app.include_router(media_router)
 app.include_router(asr_router)
 app.include_router(user_router)
 app.include_router(transliteration_router)
+app.include_router(subtitle_router)
+app.include_router(realtime_router)
 
 
 # Root endpoint
@@ -165,7 +167,9 @@ async def root():
             "auth": "User authentication and registration",
             "media": "Video/audio file upload and processing",
             "asr": "Automatic speech recognition with Whisper",
-            "transliteration": "Urdu to Roman Urdu transliteration with M2M100"
+            "transliteration": "Urdu to Roman Urdu transliteration with M2M100",
+            "subtitles": "Subtitle editing, export (SRT/VTT/TXT), and project management",
+            "realtime": "Real-time subtitle streaming with SSE and seek reprioritization"
         }
     }
 

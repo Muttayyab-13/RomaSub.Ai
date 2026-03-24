@@ -3,10 +3,13 @@ Media Router for RomaSub.AI
 Handles video/audio file uploads and audio extraction
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Annotated, Optional
 from pydantic import BaseModel
+import os
+import mimetypes
 
 from app.database import get_db
 from app.services import media as media_service
@@ -224,3 +227,88 @@ async def delete_file(file_id: str):
         )
 
     return {"success": True, "message": "File deleted successfully"}
+
+
+@router.get("/{file_id}/stream")
+async def stream_file(file_id: str, request: Request):
+    """
+    Stream a video/audio file with HTTP Range support for seeking.
+
+    Used by the frontend video player to load media files.
+    Supports partial content (Range headers) for efficient seeking.
+    """
+    file_info = media_service.get_file_info(file_id)
+
+    if not file_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+
+    file_path = file_info["file_path"]
+
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File no longer exists on disk"
+        )
+
+    file_size = os.path.getsize(file_path)
+    content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+
+    # Parse Range header
+    range_header = request.headers.get("range")
+
+    if range_header:
+        # Parse "bytes=start-end"
+        range_spec = range_header.replace("bytes=", "")
+        parts = range_spec.split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if parts[1] else file_size - 1
+
+        # Clamp end
+        end = min(end, file_size - 1)
+        content_length = end - start + 1
+
+        def iter_range():
+            with open(file_path, "rb") as f:
+                f.seek(start)
+                remaining = content_length
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while remaining > 0:
+                    read_size = min(chunk_size, remaining)
+                    data = f.read(read_size)
+                    if not data:
+                        break
+                    remaining -= len(data)
+                    yield data
+
+        return StreamingResponse(
+            iter_range(),
+            status_code=206,
+            media_type=content_type,
+            headers={
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+            },
+        )
+    else:
+        # Full file response
+        def iter_file():
+            with open(file_path, "rb") as f:
+                chunk_size = 1024 * 1024
+                while True:
+                    data = f.read(chunk_size)
+                    if not data:
+                        break
+                    yield data
+
+        return StreamingResponse(
+            iter_file(),
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(file_size),
+            },
+        )

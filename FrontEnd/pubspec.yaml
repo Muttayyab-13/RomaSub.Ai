@@ -48,6 +48,13 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
+  # Video Player (desktop + mobile support)
+  media_kit: ^1.1.10+1
+  media_kit_video: ^1.2.4
+  media_kit_libs_windows_video: ^1.0.9
+  media_kit_libs_linux: ^1.1.3
+  media_kit_libs_macos_video: ^1.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

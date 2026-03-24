@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/routes/app_routes.dart';
 import '../../providers/upload_provider.dart';
 import 'transcription_complete_dialog.dart';
 
@@ -610,6 +611,10 @@ void _showCompletionDialog(
 
   final transcription = uploadState.transcription!;
 
+  // Capture the navigator BEFORE context becomes stale
+  // (context is from the upload dialog which was already popped)
+  final navigatorState = Navigator.of(context, rootNavigator: true);
+
   TranscriptionCompleteDialog.show(
     context,
     filename: uploadState.currentFileName ?? 'Unknown',
@@ -627,45 +632,53 @@ void _showCompletionDialog(
           ? await notifier.downloadRomanUrduSrt()
           : await notifier.downloadSrt();
 
-      if (srtContent != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('SRT downloaded successfully!'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+      if (srtContent != null) {
+        // Use a post-frame callback to show snackbar after dialog is dismissed
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final scaffoldMessenger = ScaffoldMessenger.maybeOf(navigatorState.context);
+          scaffoldMessenger?.showSnackBar(
+            SnackBar(
+              content: const Text('SRT downloaded successfully!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
             ),
-          ),
-        );
+          );
+        });
       }
 
       // Reset state
       ref.read(uploadNotifierProvider.notifier).reset();
     },
     onViewDetails: () {
-      // TODO: Navigate to project details/viewer screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('View details coming soon!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // Reset state
-      ref.read(uploadNotifierProvider.notifier).reset();
+      // Dialog already pops itself before calling this callback
+      final fileId = uploadState.uploadResponse?.fileId;
+      final filename = uploadState.currentFileName ?? 'Unknown';
+      if (fileId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorState.pushNamed(AppRoutes.realtimeViewer, arguments: {
+            'fileId': fileId,
+            'filename': filename,
+          });
+        });
+        ref.read(uploadNotifierProvider.notifier).reset();
+      }
     },
     onEdit: () {
-      // TODO: Navigate to subtitle editor screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Subtitle editor coming soon!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // Reset state
-      ref.read(uploadNotifierProvider.notifier).reset();
+      // Dialog already pops itself before calling this callback
+      final transcription = uploadState.transcription;
+      final fileId = uploadState.uploadResponse?.fileId;
+      if (transcription != null && fileId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorState.pushNamed(AppRoutes.editor, arguments: {
+            'fileId': fileId,
+            'transcription': transcription,
+          });
+        });
+        ref.read(uploadNotifierProvider.notifier).reset();
+      }
     },
   );
 }
