@@ -143,21 +143,21 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
                             Expanded(
                               child: Row(
                                 children: [
-                                  // Left: Video preview (40%)
+                                  // Left: Video preview (50%)
                                   const Expanded(
-                                    flex: 4,
+                                    flex: 5,
                                     child: VideoPreviewPanel(),
                                   ),
 
-                                  // Center: Subtitle list (30%)
+                                  // Center: Subtitle list (25%)
                                   const Expanded(
                                     flex: 3,
                                     child: SubtitleListPanel(),
                                   ),
 
-                                  // Right: Text editor (30%)
+                                  // Right: Text editor (25%)
                                   const Expanded(
-                                    flex: 3,
+                                    flex: 2,
                                     child: TextEditorPanel(),
                                   ),
                                 ],

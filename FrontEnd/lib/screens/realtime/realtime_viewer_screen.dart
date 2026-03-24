@@ -130,6 +130,14 @@ class _RealtimeViewerScreenState extends ConsumerState<RealtimeViewerScreen> {
       ),
       child: Row(
         children: [
+          // Back button
+          IconButton(
+            icon: Icon(Icons.arrow_back_rounded,
+                size: 20, color: AppColors.getTextPrimary(isDark)),
+            tooltip: 'Back to Dashboard',
+            onPressed: () => Navigator.of(context).pop(),
+            splashRadius: 18,
+          ),
           Icon(Icons.live_tv_rounded,
               size: AppSizes.iconSm,
               color: AppColors.getTextSecondary(isDark)),

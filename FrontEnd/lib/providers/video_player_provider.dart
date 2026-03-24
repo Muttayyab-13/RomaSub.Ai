@@ -78,7 +78,13 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
       await _disposePlayer();
 
       final player = Player();
-      final controller = VideoController(player);
+      final controller = VideoController(
+        player,
+        configuration: const VideoControllerConfiguration(
+          // Disable hardware acceleration to fix blue/corrupted video on Linux
+          enableHardwareAcceleration: false,
+        ),
+      );
       _playerRef = player;
 
       state = state.copyWith(
@@ -173,12 +179,18 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
 
   @override
   void dispose() {
-    // Cancel subscriptions synchronously, dispose player in background
+    // Cancel subscriptions synchronously
     for (final sub in _subscriptions) {
       sub.cancel();
     }
     _subscriptions.clear();
-    _playerRef?.dispose();
+    onSeekCallback = null;
+    // Dispose player safely - catch errors since Flutter engine may already be shutting down
+    try {
+      _playerRef?.dispose();
+    } catch (_) {
+      // Ignore disposal errors during app shutdown
+    }
     _playerRef = null;
     super.dispose();
   }

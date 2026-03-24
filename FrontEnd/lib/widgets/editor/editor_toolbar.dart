@@ -27,6 +27,16 @@ class EditorToolbar extends ConsumerWidget {
       ),
       child: Row(
         children: [
+          // Back/Close button
+          IconButton(
+            icon: Icon(Icons.arrow_back_rounded,
+                size: 20, color: AppColors.getTextPrimary(isDark)),
+            tooltip: 'Back to Dashboard',
+            onPressed: () => Navigator.of(context).pop(),
+            splashRadius: 18,
+          ),
+          const SizedBox(width: AppSizes.xs),
+
           // Project name
           Icon(
             Icons.movie_edit,

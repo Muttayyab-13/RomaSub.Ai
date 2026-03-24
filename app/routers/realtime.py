@@ -35,18 +35,36 @@ async def stream_subtitles(file_id: str, language: str = "ur"):
     """
     Server-Sent Events endpoint for real-time subtitle streaming.
 
-    Flow:
-    1. Extracts audio from the uploaded file
-    2. Computes chunk plan (30s chunks with 2s overlap)
-    3. Processes chunks via priority queue (buffer first, then sequential)
-    4. Streams SSE events: chunk_ready, buffer_ready, stream_complete
+    Fast-path: If batch transcription already completed for this file,
+    emits all existing segments instantly without re-processing.
+
+    Slow-path: Extracts audio, chunks it, processes via priority queue,
+    streams SSE events as each chunk completes.
 
     Use POST /realtime/seek/{file_id} to reprioritize for seeking.
     """
+    from app.services.asr import get_transcription_result
+
     # Validate file exists
     file_info = media_service.get_file_info(file_id)
     if not file_info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
+
+    # ===== FAST PATH: batch transcription already done =====
+    existing = get_transcription_result(file_id)
+    if existing and existing.get("status") == "completed":
+        logger.info("Session %s: fast-path — using existing transcription", file_id)
+        return StreamingResponse(
+            _emit_cached_results(file_id, existing),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    # ===== SLOW PATH: chunked processing =====
 
     # Extract audio if needed (reuse existing service)
     success, audio_path = media_service.extract_audio(file_id)
@@ -118,6 +136,68 @@ async def stream_subtitles(file_id: str, language: str = "ur"):
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         },
+    )
+
+
+# ============================================================================
+# Fast-Path: Emit Cached Results
+# ============================================================================
+
+async def _emit_cached_results(file_id: str, transcription: dict):
+    """
+    When batch transcription already completed, emit all segments instantly
+    as SSE events without re-processing through Whisper/M2M100.
+    """
+    urdu_segments = transcription.get("segments", [])
+    roman_segments = transcription.get("roman_urdu_segments", [])
+    duration = transcription.get("audio_duration_seconds", 0.0)
+
+    # Build segments matching the subtitle schema format
+    segments = []
+    for i, urdu_seg in enumerate(urdu_segments):
+        roman_seg = roman_segments[i] if i < len(roman_segments) else {}
+        segments.append({
+            "id": i,
+            "start": urdu_seg.get("start", 0.0),
+            "end": urdu_seg.get("end", 0.0),
+            "urdu_text": urdu_seg.get("text", ""),
+            "roman_urdu_text": roman_seg.get("roman_urdu_text", ""),
+            "is_edited": False,
+        })
+
+    max_end = max((s["end"] for s in segments), default=0.0) if segments else 0.0
+
+    # Emit all segments as a single chunk_ready
+    chunk_ready_data = json.dumps({
+        "chunk_index": 0,
+        "segments": segments,
+        "processed_through": max_end,
+        "chunks_done": 1,
+        "chunks_total": 1,
+    })
+    yield f"event: chunk_ready\ndata: {chunk_ready_data}\n\n"
+
+    # Immediately emit buffer_ready
+    buffer_data = json.dumps({
+        "playback_start": True,
+        "processed_seconds": max_end,
+        "total_duration": duration or max_end,
+        "chunks_ready": 1,
+        "total_chunks": 1,
+    })
+    yield f"event: buffer_ready\ndata: {buffer_data}\n\n"
+
+    # Immediately emit stream_complete
+    complete_data = json.dumps({
+        "total_segments": len(segments),
+        "total_duration": duration or max_end,
+        "processing_time_seconds": 0.0,
+    })
+    yield f"event: stream_complete\ndata: {complete_data}\n\n"
+
+    logger.info(
+        "Session %s: fast-path complete — %d cached segments emitted instantly",
+        file_id, len(segments),
     )
 
 

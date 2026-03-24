@@ -308,6 +308,40 @@ class UploadProgressDialog extends ConsumerWidget {
                 ),
               ),
 
+              // "Watch Live" shortcut during transcription/transliteration
+              if (uploadState.phase == UploadPhase.transcribing ||
+                  uploadState.phase == UploadPhase.transliterating ||
+                  uploadState.phase == UploadPhase.extractingAudio)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.lg,
+                    vertical: AppSizes.sm,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        final fileId = uploadState.uploadResponse?.fileId;
+                        final filename = uploadState.currentFileName ?? 'Unknown';
+                        if (fileId != null) {
+                          Navigator.of(context).pop();
+                          AppRoutes.to(context, AppRoutes.realtimeViewer, arguments: {
+                            'fileId': fileId,
+                            'filename': filename,
+                          });
+                          ref.read(uploadNotifierProvider.notifier).reset();
+                        }
+                      },
+                      icon: const Icon(Icons.live_tv_rounded, size: 18),
+                      label: const Text('Skip wait — Watch with Live Subtitles'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.success,
+                        padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+                      ),
+                    ),
+                  ),
+                ),
+
               // Action buttons
               if (!uploadState.isProcessing ||
                   uploadState.phase == UploadPhase.completed)
