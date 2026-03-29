@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/api/api_client.dart';
+import '../../services/api/api_config.dart';
 import '../../widgets/sidebar/sidebar.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -16,6 +19,7 @@ class FeedbackScreen extends ConsumerStatefulWidget {
 class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _feedbackController = TextEditingController();
   int _rating = 0;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -23,7 +27,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     super.dispose();
   }
 
-  void _submitFeedback() {
+  Future<void> _submitFeedback() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -34,24 +38,51 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(AppStrings.feedbackThanks),
-        backgroundColor: Colors.green,
-      ),
-    );
+    setState(() => _submitting = true);
 
-    setState(() {
-      _rating = 0;
-      _feedbackController.clear();
-    });
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.dio.post(
+        ApiConfig.feedbackSubmit,
+        data: {
+          'rating': _rating,
+          'comment': _feedbackController.text.isNotEmpty
+              ? _feedbackController.text
+              : null,
+          'feedback_type': 'general',
+        },
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.feedbackThanks),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        setState(() {
+          _rating = 0;
+          _feedbackController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit feedback: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider).isDark;
 
-    // Theme-aware colors
     final bgColor = Theme.of(context).scaffoldBackgroundColor;
     final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
     final textPrimary = isDark ? Colors.white : Colors.black;
@@ -77,14 +108,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isDark ? Colors.black : Colors.grey)
-                            .withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    border: Border(bottom: BorderSide(color: borderColor)),
                   ),
                   child: Row(
                     children: [
@@ -97,13 +121,6 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         ),
                       ),
                       const Spacer(),
-                      IconButton(
-                        icon: Icon(
-                          Icons.notifications_outlined,
-                          color: textPrimary,
-                        ),
-                        onPressed: () {},
-                      ),
                     ],
                   ),
                 ),
@@ -135,9 +152,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           padding: const EdgeInsets.all(AppSizes.lg),
                           decoration: BoxDecoration(
                             color: cardBg,
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusLg,
-                            ),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                             border: Border.all(color: borderColor),
                           ),
                           child: Column(
@@ -194,15 +209,11 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                                       ? Colors.grey.shade800
                                       : Colors.grey.shade100,
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppSizes.radiusMd,
-                                    ),
+                                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                                     borderSide: BorderSide(color: borderColor),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppSizes.radiusMd,
-                                    ),
+                                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                                     borderSide: BorderSide(color: borderColor),
                                   ),
                                 ),
@@ -212,14 +223,19 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                               SizedBox(
                                 width: 200,
                                 child: ElevatedButton.icon(
-                                  onPressed: _submitFeedback,
-                                  icon: Icon(
-                                    Icons.send,
-                                    size: AppSizes.iconSm,
-                                    color: buttonText,
-                                  ),
+                                  onPressed: _submitting ? null : _submitFeedback,
+                                  icon: _submitting
+                                      ? SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: buttonText,
+                                          ),
+                                        )
+                                      : Icon(Icons.send, size: AppSizes.iconSm, color: buttonText),
                                   label: Text(
-                                    AppStrings.submitFeedback,
+                                    _submitting ? 'Submitting...' : AppStrings.submitFeedback,
                                     style: TextStyle(color: buttonText),
                                   ),
                                   style: ElevatedButton.styleFrom(

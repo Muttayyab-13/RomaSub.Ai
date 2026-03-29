@@ -126,6 +126,49 @@ def get_project_by_file(file_id: str) -> Optional[Dict]:
     return None
 
 
+def list_all_projects() -> List[Dict]:
+    """List all subtitle projects (summary without full segments)."""
+    projects = []
+    for project in _subtitle_projects.values():
+        projects.append({
+            "subtitle_id": project["subtitle_id"],
+            "file_id": project["file_id"],
+            "project_name": project["project_name"],
+            "original_filename": project["original_filename"],
+            "segment_count": project["segment_count"],
+            "file_duration": project.get("file_duration"),
+            "created_at": project["created_at"],
+            "updated_at": project["updated_at"],
+        })
+    # Sort by created_at descending (newest first)
+    projects.sort(key=lambda p: p["created_at"], reverse=True)
+    return projects
+
+
+# In-memory export history
+_export_history: List[Dict] = []
+
+
+def record_export(subtitle_id: str, fmt: str, filename: str) -> Dict:
+    """Record an export in the history."""
+    project = get_project(subtitle_id)
+    record = {
+        "id": str(uuid.uuid4()),
+        "subtitle_id": subtitle_id,
+        "project_name": project["project_name"] if project else "Unknown",
+        "filename": filename,
+        "format": fmt,
+        "created_at": datetime.now().isoformat(),
+    }
+    _export_history.insert(0, record)  # newest first
+    return record
+
+
+def list_exports() -> List[Dict]:
+    """List all export history."""
+    return _export_history
+
+
 # ============================================================================
 # Segment Editing
 # ============================================================================

@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from app.database import init_db
-from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router, subtitle_router, realtime_router
+from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router, subtitle_router, realtime_router, feedback_router
 from app.config import settings
 
 # Configure logging
@@ -149,6 +149,7 @@ app.include_router(user_router)
 app.include_router(transliteration_router)
 app.include_router(subtitle_router)
 app.include_router(realtime_router)
+app.include_router(feedback_router)
 
 
 # Root endpoint

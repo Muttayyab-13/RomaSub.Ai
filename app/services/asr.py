@@ -109,7 +109,11 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
             audio_path,
             language=language,
             task="transcribe",
-            verbose=False  # Set to True for detailed output
+            verbose=False,
+            word_timestamps=True,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.5,
+            compression_ratio_threshold=2.4,
         )
 
         end_time = datetime.now()

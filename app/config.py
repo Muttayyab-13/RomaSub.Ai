@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     mailersend_sender_name: str = "RomaSub.AI"
     
     # Whisper ASR
-    whisper_model: str = "small"
+    whisper_model: str = "medium"
 
     # Transliteration (M2M100)
     m2m100_model_path: str = "models/m2m100_ur_to_rur"
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     transliteration_device: str = "auto"
     
     # File Upload
-    max_file_size_mb: int = 500
+    max_file_size_mb: int = 2048
     allowed_video_extensions: str = "mp4,avi,mkv,mov,webm"
     allowed_audio_extensions: str = "mp3,wav,m4a,flac,ogg"
     

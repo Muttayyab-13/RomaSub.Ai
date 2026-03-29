@@ -42,6 +42,7 @@ def init_db():
     """
     # Import all models to register them with Base
     from app.models import user  # noqa
+    from app.models import feedback  # noqa
     
     # Create all tables
     Base.metadata.create_all(bind=engine)

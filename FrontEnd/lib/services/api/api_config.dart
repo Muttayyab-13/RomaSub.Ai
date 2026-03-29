@@ -62,12 +62,20 @@ class ApiConfig {
   /// Full URL for SSE stream (used by Dio stream client)
   static String realtimeStreamUrl(String fileId) => '$baseUrl/realtime/stream/$fileId';
 
+  // Projects & Exports listing
+  static const String projectsList = '/subtitles/list/projects';
+  static const String exportsList = '/subtitles/list/exports';
+
+  // Feedback
+  static const String feedbackSubmit = '/feedback/submit';
+  static const String feedbackList = '/feedback/list';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // File Upload Limits
-  static const int maxFileSizeMB = 500;
+  static const int maxFileSizeMB = 2048;
   static const List<String> allowedVideoExtensions = [
     'mp4',
     'avi',

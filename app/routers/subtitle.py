@@ -221,9 +221,24 @@ async def export_subtitles(subtitle_id: str, format: str = "srt"):
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
+    # Record in export history
+    subtitle_service.record_export(subtitle_id, format, filename)
+
     return ExportResponse(
         subtitle_id=subtitle_id,
         format=format,
         content=content,
         filename=filename,
     )
+
+
+@router.get("/list/projects")
+async def list_projects():
+    """List all subtitle projects (summary, no full segments)."""
+    return {"success": True, "projects": subtitle_service.list_all_projects()}
+
+
+@router.get("/list/exports")
+async def list_exports():
+    """List export history."""
+    return {"success": True, "exports": subtitle_service.list_exports()}

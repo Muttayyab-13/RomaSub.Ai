@@ -91,34 +91,60 @@ def transliterate_text(urdu_text: str) -> str:
     Returns:
         Roman Urdu transliterated text
     """
+    results = transliterate_batch([urdu_text])
+    return results[0]
+
+
+def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
+    """
+    Transliterate a list of Urdu texts to Roman Urdu in batches.
+
+    Args:
+        texts: List of Urdu text strings
+        batch_size: Number of texts to process at once (default: 8)
+
+    Returns:
+        List of Roman Urdu transliterated texts
+    """
     import torch
 
     model, tokenizer, device = get_m2m100_model_and_tokenizer()
-
     tokenizer.src_lang = "ur"
-    inputs = tokenizer(
-        urdu_text,
-        return_tensors="pt",
-        max_length=128,
-        truncation=True
-    )
-    inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    with torch.no_grad():
-        generated = model.generate(
-            **inputs,
-            forced_bos_token_id=ROMAN_UR_TOKEN_ID,
-            max_length=200,
-            num_beams=5,
-            early_stopping=True
+    all_results = []
+
+    for i in range(0, len(texts), batch_size):
+        batch_texts = texts[i:i + batch_size]
+
+        inputs = tokenizer(
+            batch_texts,
+            return_tensors="pt",
+            max_length=128,
+            truncation=True,
+            padding=True,
         )
+        inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    return tokenizer.decode(generated[0], skip_special_tokens=True)
+        with torch.no_grad():
+            generated = model.generate(
+                **inputs,
+                forced_bos_token_id=ROMAN_UR_TOKEN_ID,
+                max_length=200,
+                num_beams=4,
+                early_stopping=True,
+            )
+
+        decoded = tokenizer.batch_decode(generated, skip_special_tokens=True)
+        all_results.extend(decoded)
+
+        print(f"[TRANSLITERATION] Batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size} done")
+
+    return all_results
 
 
 def transliterate_segments(segments: List[Dict]) -> List[Dict]:
     """
-    Transliterate all segments from ASR output.
+    Transliterate all segments from ASR output using batched inference.
 
     Args:
         segments: List of ASR segment dicts with id, start, end, text
@@ -126,16 +152,17 @@ def transliterate_segments(segments: List[Dict]) -> List[Dict]:
     Returns:
         List of transliterated segment dicts with urdu_text and roman_urdu_text
     """
-    transliterated = []
+    texts = [seg["text"] for seg in segments]
+    roman_texts = transliterate_batch(texts)
 
-    for segment in segments:
-        roman_urdu = transliterate_text(segment["text"])
+    transliterated = []
+    for segment, roman_urdu in zip(segments, roman_texts):
         transliterated.append({
             "id": segment["id"],
             "start": segment["start"],
             "end": segment["end"],
             "urdu_text": segment["text"],
-            "roman_urdu_text": roman_urdu
+            "roman_urdu_text": roman_urdu,
         })
 
     return transliterated
