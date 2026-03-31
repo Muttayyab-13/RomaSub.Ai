@@ -34,9 +34,13 @@ class VideoPreviewPanel extends ConsumerWidget {
                       children: [
                         // Video
                         Center(
-                          child: Video(
-                            controller: playerState.controller!,
-                            controls: NoVideoControls,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) => Video(
+                              controller: playerState.controller!,
+                              controls: NoVideoControls,
+                              width: constraints.maxWidth,
+                              height: constraints.maxHeight,
+                            ),
                           ),
                         ),
 

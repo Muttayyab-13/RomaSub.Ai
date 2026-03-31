@@ -648,6 +648,8 @@ void _showCompletionDialog(
   // Capture the navigator BEFORE context becomes stale
   // (context is from the upload dialog which was already popped)
   final navigatorState = Navigator.of(context, rootNavigator: true);
+  // Capture notifier before dialog callbacks run, since ref may be disposed by then
+  final uploadNotifier = ref.read(uploadNotifierProvider.notifier);
 
   TranscriptionCompleteDialog.show(
     context,
@@ -661,10 +663,9 @@ void _showCompletionDialog(
     romanUrduPreviewText: transcription.romanUrduText,
     onDownload: () async {
       // Download Roman Urdu SRT file (fallback to Urdu SRT)
-      final notifier = ref.read(uploadNotifierProvider.notifier);
       final srtContent = transcription.hasRomanUrdu
-          ? await notifier.downloadRomanUrduSrt()
-          : await notifier.downloadSrt();
+          ? await uploadNotifier.downloadRomanUrduSrt()
+          : await uploadNotifier.downloadSrt();
 
       if (srtContent != null) {
         // Use a post-frame callback to show snackbar after dialog is dismissed
@@ -684,7 +685,7 @@ void _showCompletionDialog(
       }
 
       // Reset state
-      ref.read(uploadNotifierProvider.notifier).reset();
+      uploadNotifier.reset();
     },
     onViewDetails: () {
       // Dialog already pops itself before calling this callback
@@ -697,7 +698,7 @@ void _showCompletionDialog(
             'filename': filename,
           });
         });
-        ref.read(uploadNotifierProvider.notifier).reset();
+        uploadNotifier.reset();
       }
     },
     onEdit: () {
@@ -711,7 +712,7 @@ void _showCompletionDialog(
             'transcription': transcription,
           });
         });
-        ref.read(uploadNotifierProvider.notifier).reset();
+        uploadNotifier.reset();
       }
     },
   );

@@ -83,6 +83,10 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
         configuration: const VideoControllerConfiguration(
           // Disable hardware acceleration to fix blue/corrupted video on Linux
           enableHardwareAcceleration: false,
+          // Set initial texture size to avoid 1x1 default which crashes
+          // mpv's mp_image_crop assertion with software rendering on Linux
+          width: 640,
+          height: 480,
         ),
       );
       _playerRef = player;

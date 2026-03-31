@@ -262,6 +262,8 @@ class _RealtimeViewerScreenState extends ConsumerState<RealtimeViewerScreen> {
                   child: Video(
                     controller: playerState.controller!,
                     controls: NoVideoControls,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
                   ),
                 ),
                 if (playerState.isBuffering)
