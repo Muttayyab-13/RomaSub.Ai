@@ -305,7 +305,7 @@ def _process_single_chunk(
     5. Transliterate with M2M100 (reuse lazy-loaded model)
     6. Cleanup temp chunk file
     """
-    from app.services.asr import get_whisper_model
+    from app.services.asr import transcribe_chunk
     from app.services.transliteration import transliterate_text
 
     chunk = session.chunks[chunk_index]
@@ -324,22 +324,8 @@ def _process_single_chunk(
 
     try:
         # 2. Transcribe with Whisper
-        model = get_whisper_model()
-        result = model.transcribe(
-            chunk_audio_path,
-            language=language,
-            task="transcribe",
-            verbose=False,
-        )
-
-        raw_segments = []
-        for seg in result.get("segments", []):
-            raw_segments.append({
-                "id": seg["id"],
-                "start": seg["start"],
-                "end": seg["end"],
-                "text": seg["text"].strip(),
-            })
+        result = transcribe_chunk(chunk_audio_path, language=language)
+        raw_segments = result["segments"]
 
         # 3. Offset timestamps to absolute position
         segments = chunker_service.offset_segments(raw_segments, chunk["start"])

@@ -58,6 +58,43 @@ def get_whisper_model():
     return _whisper_model
 
 
+def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
+    """
+    Transcribe an audio file/chunk and return segments.
+    Used by both full-file transcription and realtime chunked processing.
+
+    Args:
+        audio_path: Path to audio file
+        language: Language code (default: 'ur')
+
+    Returns:
+        Dict with 'text' and 'segments' keys
+    """
+    model = get_whisper_model()
+
+    result = model.transcribe(
+        audio_path,
+        language=language,
+        task="transcribe",
+        verbose=False,
+        word_timestamps=True,
+        condition_on_previous_text=False,
+        no_speech_threshold=0.5,
+        compression_ratio_threshold=2.4,
+    )
+
+    segments = []
+    for seg in result.get("segments", []):
+        segments.append({
+            "id": seg["id"],
+            "start": seg["start"],
+            "end": seg["end"],
+            "text": seg["text"].strip(),
+        })
+
+    return {"text": result["text"], "segments": segments}
+
+
 # ============================================================================
 # Transcription Functions
 # ============================================================================
@@ -93,8 +130,8 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
     print(f"{'='*60}")
 
     try:
-        # Load Whisper model
-        model = get_whisper_model()
+        # Ensure model is loaded
+        get_whisper_model()
 
         # Get audio duration
         duration = media_service.get_audio_duration(audio_path)
@@ -105,35 +142,19 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
         print("[ASR] Transcribing... (this may take a while)")
         start_time = datetime.now()
 
-        result = model.transcribe(
-            audio_path,
-            language=language,
-            task="transcribe",
-            verbose=False,
-            word_timestamps=True,
-            condition_on_previous_text=False,
-            no_speech_threshold=0.5,
-            compression_ratio_threshold=2.4,
-        )
+        result = transcribe_chunk(audio_path, language=language)
 
         end_time = datetime.now()
         processing_time = (end_time - start_time).total_seconds()
 
-        # Extract segments with timestamps
-        segments = []
-        for segment in result.get("segments", []):
-            segments.append({
-                "id": segment["id"],
-                "start": segment["start"],
-                "end": segment["end"],
-                "text": segment["text"].strip()
-            })
+        segments = result["segments"]
+        full_text = result["text"]
 
         # Create result object
         transcription_result = {
             "file_id": file_id,
             "language": language,
-            "text": result["text"],
+            "text": full_text,
             "segments": segments,
             "segment_count": len(segments),
             "processing_time_seconds": processing_time,
@@ -170,7 +191,7 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
         print(f"Processing time: {processing_time:.2f} seconds")
         print(f"Segments found: {len(segments)}")
         print(f"\n--- Full Transcription ---")
-        print(result["text"])
+        print(full_text)
         print(f"\n--- Segments with Timestamps ---")
         for seg in segments[:10]:  # Show first 10 segments
             print(f"[{seg['start']:.2f}s - {seg['end']:.2f}s]: {seg['text']}")

@@ -95,17 +95,14 @@ def transliterate_text(urdu_text: str) -> str:
     return results[0]
 
 
-def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
+def _m2m100_batch(texts: List[str], batch_size: int = 8) -> List[str]:
     """
-    Transliterate a list of Urdu texts to Roman Urdu in batches.
-
-    Args:
-        texts: List of Urdu text strings
-        batch_size: Number of texts to process at once (default: 8)
-
-    Returns:
-        List of Roman Urdu transliterated texts
+    Raw M2M100 batch inference (no loanword processing).
+    Takes Urdu texts and returns Roman Urdu texts.
     """
+    if not texts:
+        return []
+
     import torch
 
     model, tokenizer, device = get_m2m100_model_and_tokenizer()
@@ -140,6 +137,26 @@ def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
         print(f"[TRANSLITERATION] Batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size} done")
 
     return all_results
+
+
+def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
+    """
+    Transliterate a list of Urdu texts to Roman Urdu in batches.
+    Uses loanword-aware pipeline: pre-process → M2M100 → post-process.
+
+    Args:
+        texts: List of Urdu text strings
+        batch_size: Number of texts to process at once (default: 8)
+
+    Returns:
+        List of Roman Urdu transliterated texts
+    """
+    from app.services.loanword_processor import process_batch
+
+    def m2m100_fn(urdu_chunks: List[str]) -> List[str]:
+        return _m2m100_batch(urdu_chunks, batch_size)
+
+    return process_batch(texts, m2m100_fn)
 
 
 def transliterate_segments(segments: List[Dict]) -> List[Dict]:
