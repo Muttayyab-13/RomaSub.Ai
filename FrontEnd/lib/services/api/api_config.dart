@@ -1,7 +1,11 @@
 /// API configuration with base URL and endpoint definitions
 class ApiConfig {
-  // Base URL - change to production URL when deploying
-  static const String baseUrl = 'http://localhost:8000';
+  // Base URL - set via --dart-define=BASE_URL=http://<IP>:8000
+  // Defaults to localhost for local development
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'http://localhost:8000',
+  );
 
   // Authentication Endpoints
   static const String authRegister = '/auth/register';

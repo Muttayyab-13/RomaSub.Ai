@@ -8,13 +8,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: romasub_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-romasub_password}
       POSTGRES_DB: romasub_ai
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -35,7 +33,7 @@ services:
         condition: service_healthy
     environment:
       # Database Configuration
-      DATABASE_URL: postgresql://postgres:romasub_password@db:5432/romasub_ai
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-romasub_password}@db:5432/romasub_ai
 
       # JWT Configuration
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-this-in-production}
@@ -52,7 +50,7 @@ services:
       MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME:-RomaSub.AI}
 
       # Whisper Configuration
-      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_MODEL: ${WHISPER_MODEL:-large}
 
       # File Upload Configuration
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
@@ -61,6 +59,8 @@ services:
     volumes:
       - upload_data:/tmp/romasub_uploads
       - static_data:/app/uploads
+      - ./models:/app/models
+      - whisper_cache:/root/.cache/whisper
     ports:
       - "8000:8000"
     networks:
@@ -72,6 +72,8 @@ volumes:
   upload_data:
     driver: local
   static_data:
+    driver: local
+  whisper_cache:
     driver: local
 
 networks:
