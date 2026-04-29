@@ -12,6 +12,7 @@ output. The user always sees a result.
 
 import json
 import logging
+import time
 
 from app.config import settings
 
@@ -122,10 +123,24 @@ def refine_segments(segments: list[dict]) -> list[dict]:
     No-op when settings.enable_llm_refine is False, the API key is empty,
     or segments is empty. Returns segments unchanged on any failure.
     """
-    if not settings.enable_llm_refine or not settings.anthropic_api_key:
+    if not settings.enable_llm_refine:
+        logger.info(
+            "Claude refiner: SKIPPED (enable_llm_refine=False) — %d segment(s) "
+            "passed through unchanged. Set ENABLE_LLM_REFINE=true in .env to enable.",
+            len(segments),
+        )
+        return segments
+
+    if not settings.anthropic_api_key:
+        logger.warning(
+            "Claude refiner: SKIPPED (ANTHROPIC_API_KEY is empty) — %d segment(s) "
+            "passed through unchanged.",
+            len(segments),
+        )
         return segments
 
     if not segments:
+        logger.info("Claude refiner: SKIPPED (empty segments list).")
         return segments
 
     pairs = [
@@ -136,9 +151,19 @@ def refine_segments(segments: list[dict]) -> list[dict]:
     try:
         import anthropic
     except ImportError:
-        logger.warning("Claude refiner: 'anthropic' package not installed; skipping refine.")
+        logger.warning(
+            "Claude refiner: SKIPPED ('anthropic' package not installed) — "
+            "%d segment(s) passed through unchanged.",
+            len(segments),
+        )
         return segments
 
+    logger.info(
+        "Claude refiner: CALLING %s on %d segment(s)...",
+        settings.claude_refine_model, len(pairs),
+    )
+
+    t0 = time.time()
     try:
         client = _get_client()
         response = client.messages.create(
@@ -155,11 +180,21 @@ def refine_segments(segments: list[dict]) -> list[dict]:
             }],
         )
     except anthropic.APIError as e:
-        logger.warning("Claude refiner: API error, using m2m100 output: %s", e)
+        logger.warning(
+            "Claude refiner: FAILED (Anthropic API error after %.2fs) — falling back "
+            "to m2m100 output for %d segment(s). Error: %s",
+            time.time() - t0, len(pairs), e,
+        )
         return segments
     except Exception as e:
-        logger.warning("Claude refiner: unexpected error, using m2m100 output: %s", e)
+        logger.warning(
+            "Claude refiner: FAILED (unexpected %s after %.2fs) — falling back "
+            "to m2m100 output for %d segment(s). Error: %s",
+            type(e).__name__, time.time() - t0, len(pairs), e,
+        )
         return segments
+
+    elapsed = time.time() - t0
 
     text = ""
     for block in response.content:
@@ -168,7 +203,30 @@ def refine_segments(segments: list[dict]) -> list[dict]:
 
     refined = _parse_response(text, len(pairs))
     if refined is None:
+        logger.warning(
+            "Claude refiner: FAILED (response parse/validation failed after %.2fs) — "
+            "falling back to m2m100 output for %d segment(s).",
+            elapsed, len(pairs),
+        )
         return segments
+
+    changed = sum(1 for old, new in zip([p["roman"] for p in pairs], refined) if old != new)
+    usage = response.usage
+    logger.info(
+        "Claude refiner: SUCCESS — refined %d/%d segment(s) in %.2fs "
+        "(input=%d, output=%d, cache_write=%d, cache_read=%d)",
+        changed, len(pairs), elapsed,
+        usage.input_tokens, usage.output_tokens,
+        getattr(usage, "cache_creation_input_tokens", 0) or 0,
+        getattr(usage, "cache_read_input_tokens", 0) or 0,
+    )
+    if changed > 0:
+        for old, new in zip([p["roman"] for p in pairs], refined):
+            if old != new:
+                logger.info("Claude refiner: sample diff: %r -> %r", old, new)
+                break
+    else:
+        logger.info("Claude refiner: no changes — Claude returned identical Roman Urdu.")
 
     for seg, new_roman in zip(segments, refined):
         seg["roman_urdu_text"] = new_roman
