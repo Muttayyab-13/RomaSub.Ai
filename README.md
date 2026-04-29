@@ -1,6 +1,8 @@
 # RomaSub.AI Backend
 
-Roman Urdu Captions Generator - Backend API
+Roman Urdu Captions Generator — Backend API.
+
+Pipeline: Urdu audio → Whisper ASR → loanword/name detection → urduhack normalization → fine-tuned M2M100 (Urdu→Roman Urdu) → loanword reconstruction → fuzzy postprocess → optional Claude Haiku 4.5 refinement → SRT/VTT/streaming output.
 
 ## Project Structure
 
@@ -69,6 +71,15 @@ Copy `.env.example` to `.env` and fill in your values:
 cp .env.example .env
 ```
 
+Transliteration-related settings (all optional, off by default):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ENABLE_DIACRITICS` | `false` | Reserved stub for a future Urdu diacritizer; currently a no-op (logs a warning when `true`). |
+| `ENABLE_LLM_REFINE` | `false` | When `true`, the M2M100 output for each chunk is passed to Claude for polishing. Falls back silently to raw M2M100 on any failure. |
+| `CLAUDE_REFINE_MODEL` | `claude-haiku-4-5` | Anthropic model ID used by the refiner. Override to `claude-sonnet-4-6` for higher quality at ~3× cost. |
+| `ANTHROPIC_API_KEY` | *(empty)* | Required when `ENABLE_LLM_REFINE=true`. The account must have non-zero credit. |
+
 ### 5. Run Database Migrations
 
 The tables will be created automatically on first run.
@@ -105,13 +116,40 @@ streamlit run demo/demo_ui.py
 - `GET /media/{file_id}` - Get file info
 
 ### ASR (Module 3)
-- `POST /asr/transcribe/{file_id}` - Transcribe uploaded file
+- `POST /asr/transcribe/{file_id}` - Transcribe uploaded file (auto-transliterates to Roman Urdu)
 - `GET /asr/result/{task_id}` - Get transcription result
+
+### Transliteration (Module 6)
+- `POST /transliteration/{file_id}` - Re-run Urdu→Roman Urdu transliteration on an existing transcription
+- `GET /transliteration/{file_id}` - Get the latest transliteration result
+
+### Realtime (SSE streaming)
+- `GET /realtime/stream/{file_id}?language=ur` - Server-Sent-Events stream of `chunk_ready` / `buffer_ready` / `stream_complete` events as each audio chunk is ASR'd, transliterated, and (if enabled) refined.
+
+### Subtitles
+- `GET /subtitle/{file_id}/srt` - Download SRT subtitle file
+- `GET /subtitle/{file_id}/vtt` - Download WebVTT subtitle file
+
+## Transliteration Pipeline
+
+Each Urdu audio segment from Whisper passes through the following layers before being emitted to the client:
+
+1. **Loanword & name detection** (`app/services/loanword_processor.py`) — splits the segment into Urdu-only chunks and English loanwords/Pakistani names found in `app/data/loanword_dict.json` and `app/data/names_dict.json`. Loanwords are bypassed and reinserted at their original positions later.
+2. **Urdu normalization** (`app/services/urdu_preprocessor.py`) — folds Arabic-presentation-form characters (`ﮨﮯ` → `ہے`), normalizes combine forms, and removes stray diacritics via `urduhack` so M2M100 sees a canonical script.
+3. **M2M100 transliteration** (`app/services/transliteration.py`) — fine-tuned `m2m100_ur_to_rur` model produces draft Roman Urdu for each Urdu-only chunk.
+4. **Reconstruction** — interleaves the transliterated chunks with the bypassed loanwords/names at the original positions.
+5. **Fuzzy postprocess** — `rapidfuzz` snaps mangled English-looking words back to known dictionary entries (score ≥ 80).
+6. **Claude refinement (optional)** (`app/services/llm_refiner.py`) — if `ENABLE_LLM_REFINE=true`, sends `(urdu, roman)` pairs to Claude Haiku 4.5 for polishing. Refine is purely additive: every failure path (API error, parse failure, length mismatch, missing dep) logs one `WARNING` and returns the raw M2M100 output unchanged.
+
+Every refine call is logged with a `Claude refiner:` prefix — grep for it to see `SKIPPED` (with reason), `CALLING`, `SUCCESS` (with token usage and a before/after sample), or `FAILED` (with error type) on each chunk.
 
 ## Technologies Used
 
-- FastAPI 0.110+
-- PostgreSQL 15+
-- OpenAI Whisper (small model)
-- FFmpeg (for audio extraction)
-- MailerSend (for email OTP)
+- **Web**: FastAPI 0.110+, Pydantic v2, PostgreSQL 15+
+- **ASR**: OpenAI Whisper (medium model, configurable via `WHISPER_MODEL`)
+- **Transliteration**: Fine-tuned M2M100 (`facebook/m2m100_418M`) via Hugging Face `transformers`
+- **Urdu normalization**: `urduhack` (leaf import — no TensorFlow dependency at runtime)
+- **Refinement**: Anthropic Claude API (Haiku 4.5 by default)
+- **Fuzzy matching**: `rapidfuzz`
+- **Media**: FFmpeg, `pydub`, `ffmpeg-python`
+- **Email**: MailerSend (for OTP)
