@@ -29,6 +29,10 @@ transformers>=4.45.0
 sentencepiece
 safetensors
 rapidfuzz
+# Urdu normalization. We use the leaf import `urduhack.normalization.character`
+# so TensorFlow is NOT required at runtime. If a TF-free install is needed:
+# `pip install --no-deps urduhack regex` (regex is the only real dep).
+urduhack>=1.0.3
 
 # Media processing
 ffmpeg-python

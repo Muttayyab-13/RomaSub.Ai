@@ -152,9 +152,11 @@ def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
         List of Roman Urdu transliterated texts
     """
     from app.services.loanword_processor import process_batch
+    from app.services.urdu_preprocessor import preprocess_urdu_chunks
 
     def m2m100_fn(urdu_chunks: List[str]) -> List[str]:
-        return _m2m100_batch(urdu_chunks, batch_size)
+        normalized = preprocess_urdu_chunks(urdu_chunks)
+        return _m2m100_batch(normalized, batch_size)
 
     return process_batch(texts, m2m100_fn)
 

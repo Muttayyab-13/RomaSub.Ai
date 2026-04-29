@@ -56,7 +56,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         logger.warning("Make sure PostgreSQL is running and database exists")
-    
+
+    # Eager-load Urdu pre-processor so first request doesn't pay init latency
+    try:
+        from app.services.urdu_preprocessor import load_diacritizer
+        load_diacritizer()
+    except Exception as e:
+        logger.warning(f"Urdu preprocessor init failed: {e}")
+
     # Log configuration
     logger.info(f"Whisper Model: {settings.whisper_model}")
     logger.info(f"M2M100 Model: {settings.m2m100_model_path}")

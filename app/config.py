@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     m2m100_model_path: str = "models/m2m100_ur_to_rur"
     m2m100_tokenizer_path: str = "models/m2m100_tokenizer"
     transliteration_device: str = "auto"
+
+    # Urdu pre-processing (normalization always on; diacritization stub for future)
+    enable_diacritics: bool = False
     
     # File Upload
     max_file_size_mb: int = 2048
