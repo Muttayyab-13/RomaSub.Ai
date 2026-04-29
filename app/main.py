@@ -64,6 +64,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Urdu preprocessor init failed: {e}")
 
+    # Eager-init Claude refiner (no-op if enable_llm_refine is False)
+    try:
+        from app.services.llm_refiner import init_refiner
+        init_refiner()
+    except Exception as e:
+        logger.warning(f"Claude refiner init failed: {e}")
+
     # Log configuration
     logger.info(f"Whisper Model: {settings.whisper_model}")
     logger.info(f"M2M100 Model: {settings.m2m100_model_path}")

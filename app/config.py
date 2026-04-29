@@ -38,6 +38,11 @@ class Settings(BaseSettings):
 
     # Urdu pre-processing (normalization always on; diacritization stub for future)
     enable_diacritics: bool = False
+
+    # Claude refinement layer (post-m2m100 polish)
+    enable_llm_refine: bool = False
+    claude_refine_model: str = "claude-haiku-4-5"
+    anthropic_api_key: str = ""
     
     # File Upload
     max_file_size_mb: int = 2048

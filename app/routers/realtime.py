@@ -346,6 +346,16 @@ def _process_single_chunk(
         for i, seg in enumerate(segments):
             seg["id"] = i
 
+        # Optional LLM refine pass (no-op when disabled; falls back on failure)
+        try:
+            from app.services.llm_refiner import refine_segments
+            refine_segments(segments)
+        except Exception as e:
+            logger.warning(
+                "Session %s: chunk %d refine failed, using raw m2m100: %s",
+                session.file_id, chunk_index, str(e),
+            )
+
         logger.info(
             "Session %s: chunk %d done — %d segments",
             session.file_id, chunk_index, len(segments),

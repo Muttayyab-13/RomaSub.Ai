@@ -184,6 +184,12 @@ def transliterate_segments(segments: List[Dict]) -> List[Dict]:
             "roman_urdu_text": roman_urdu,
         })
 
+    try:
+        from app.services.llm_refiner import refine_segments
+        refine_segments(transliterated)
+    except Exception as e:
+        logger.warning(f"LLM refine failed, returning raw m2m100 output: {e}")
+
     return transliterated
 
 

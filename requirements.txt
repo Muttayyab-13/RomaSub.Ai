@@ -33,6 +33,8 @@ rapidfuzz
 # so TensorFlow is NOT required at runtime. If a TF-free install is needed:
 # `pip install --no-deps urduhack regex` (regex is the only real dep).
 urduhack>=1.0.3
+# Claude API for post-m2m100 LLM refinement
+anthropic>=0.40.0
 
 # Media processing
 ffmpeg-python
