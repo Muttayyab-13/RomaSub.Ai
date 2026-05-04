@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     enable_diacritics: bool = False
 
     # Claude refinement layer (post-m2m100 polish)
-    enable_llm_refine: bool = False
+    enable_llm_refine: bool = True
     claude_refine_model: str = "claude-haiku-4-5"
     anthropic_api_key: str = ""
     
