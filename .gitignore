@@ -127,8 +127,8 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# AI Models (large binary files)
-models/
+# AI Models (large binary files) - root only, not app/models/ Python source
+/models/
 
 # Environments
 .env
