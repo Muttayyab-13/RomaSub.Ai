@@ -50,7 +50,7 @@ services:
       MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME:-RomaSub.AI}
 
       # Whisper Configuration
-      WHISPER_MODEL: ${WHISPER_MODEL:-large}
+      WHISPER_MODEL: ${WHISPER_MODEL:-medium}
 
       # File Upload Configuration
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
