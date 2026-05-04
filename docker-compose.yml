@@ -52,6 +52,11 @@ services:
       # Whisper Configuration
       WHISPER_MODEL: ${WHISPER_MODEL:-medium}
 
+      # Claude Refinement Layer (Optional)
+      ENABLE_LLM_REFINE: ${ENABLE_LLM_REFINE:-true}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_REFINE_MODEL: ${CLAUDE_REFINE_MODEL:-claude-haiku-4-5}
+
       # File Upload Configuration
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
       ALLOWED_VIDEO_EXTENSIONS: mp4,avi,mkv,mov,webm
