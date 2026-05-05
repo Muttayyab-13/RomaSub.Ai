@@ -20,8 +20,8 @@ google-auth-oauthlib
 # Email (MailerSend)
 mailersend
 
-# Whisper ASR
-openai-whisper
+# Whisper ASR (faster-whisper uses CTranslate2 — 4-8x faster on CPU than openai-whisper)
+faster-whisper
 torch
 
 # Transliteration (M2M100)

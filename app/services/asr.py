@@ -35,11 +35,11 @@ _transcription_results: Dict[str, Dict] = {}
 
 def get_whisper_model():
     """
-    Load Whisper model (lazy loading).
+    Load Whisper model (lazy loading) via faster-whisper / CTranslate2.
     Model is loaded once and reused for all transcriptions.
 
     Returns:
-        Loaded Whisper model instance
+        Loaded WhisperModel instance
     """
     global _whisper_model
 
@@ -48,10 +48,21 @@ def get_whisper_model():
         print("[ASR] This may take a moment on first run...")
 
         import torch
-        import whisper
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[ASR] Using device: {device}")
-        _whisper_model = whisper.load_model(settings.whisper_model, device=device)
+        from faster_whisper import WhisperModel
+
+        if torch.cuda.is_available():
+            device = "cuda"
+            compute_type = "float16"
+        else:
+            device = "cpu"
+            compute_type = "int8"
+
+        print(f"[ASR] Using device: {device} (compute_type={compute_type})")
+        _whisper_model = WhisperModel(
+            settings.whisper_model,
+            device=device,
+            compute_type=compute_type,
+        )
 
         print(f"[ASR] Whisper model loaded successfully!")
 
@@ -72,27 +83,31 @@ def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
     """
     model = get_whisper_model()
 
-    result = model.transcribe(
+    segments_iter, _info = model.transcribe(
         audio_path,
         language=language,
         task="transcribe",
-        verbose=False,
+        beam_size=5,
         word_timestamps=True,
         condition_on_previous_text=False,
         no_speech_threshold=0.5,
         compression_ratio_threshold=2.4,
+        vad_filter=True,
     )
 
     segments = []
-    for seg in result.get("segments", []):
+    text_parts = []
+    for i, seg in enumerate(segments_iter):
+        text = seg.text.strip()
         segments.append({
-            "id": seg["id"],
-            "start": seg["start"],
-            "end": seg["end"],
-            "text": seg["text"].strip(),
+            "id": i,
+            "start": float(seg.start),
+            "end": float(seg.end),
+            "text": text,
         })
+        text_parts.append(text)
 
-    return {"text": result["text"], "segments": segments}
+    return {"text": " ".join(text_parts), "segments": segments}
 
 
 # ============================================================================
