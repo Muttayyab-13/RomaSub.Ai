@@ -25,7 +25,7 @@ This is a **Final Year Project** for Bachelor of Software Engineering at COMSATS
 - **Authentication:** JWT (python-jose), bcrypt, Google OAuth
 - **ASR:** OpenAI Whisper (small model)
 - **Audio Processing:** FFmpeg, pydub
-- **Email:** MailerSend API
+- **Email:** Brevo transactional API (REST via `requests`)
 
 ### Frontend (Planned - Flutter)
 - Flutter 3.10+ for cross-platform desktop (Windows, macOS)
@@ -56,7 +56,7 @@ romasub_ai/
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── auth_service.py  # Authentication business logic
-│   │   ├── email_service.py # MailerSend OTP email service
+│   │   ├── email_service.py # Brevo OTP email service (REST)
 │   │   ├── media_service.py # File upload and audio extraction
 │   │   └── asr_service.py   # Whisper ASR transcription
 │   └── utils/
@@ -225,10 +225,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=1440
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
-# MailerSend (optional)
-MAILERSEND_API_KEY=
-MAILERSEND_SENDER_EMAIL=noreply@domain.com
-MAILERSEND_SENDER_NAME=RomaSub.AI
+# Brevo (optional — transactional email)
+BREVO_API_KEY=
+BREVO_SENDER_EMAIL=noreply@domain.com
+BREVO_SENDER_NAME=RomaSub.AI
 
 # Whisper
 WHISPER_MODEL=small
@@ -269,7 +269,7 @@ CREATE DATABASE romasub_ai;
 
 4. **Whisper Model**: Using "small" model for balance of speed and accuracy. Can be changed via `WHISPER_MODEL` env var.
 
-5. **OTP via Console**: If MailerSend is not configured, OTPs are printed to console for testing.
+5. **OTP via Console**: If Brevo is not configured, OTPs are printed to console for testing.
 
 ---
 

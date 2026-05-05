@@ -83,7 +83,7 @@ Edit `.env`:
 | `WHISPER_MODEL` | no | `small` (default), `medium`, or `large` (slower, more accurate) |
 | `MAX_FILE_SIZE_MB` | no | default 2048 |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | no | only for Google login |
-| `MAILERSEND_API_KEY` | no | only if you need OTP password reset emails |
+| `BREVO_API_KEY` | no | only if you need OTP password reset emails (get one at app.brevo.com/settings/keys/api) |
 | `ENABLE_LLM_REFINE` | no | set `true` to polish output with Claude Haiku |
 | `ANTHROPIC_API_KEY` | iff `ENABLE_LLM_REFINE=true` | account must have credit |
 | `CLAUDE_REFINE_MODEL` | no | default `claude-haiku-4-5` |

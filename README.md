@@ -152,4 +152,4 @@ Every refine call is logged with a `Claude refiner:` prefix — grep for it to s
 - **Refinement**: Anthropic Claude API (Haiku 4.5 by default)
 - **Fuzzy matching**: `rapidfuzz`
 - **Media**: FFmpeg, `pydub`, `ffmpeg-python`
-- **Email**: MailerSend (for OTP)
+- **Email**: Brevo (transactional API for OTP)

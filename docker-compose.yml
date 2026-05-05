@@ -44,10 +44,10 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
 
-      # MailerSend Configuration (Optional)
-      MAILERSEND_API_KEY: ${MAILERSEND_API_KEY:-}
-      MAILERSEND_SENDER_EMAIL: ${MAILERSEND_SENDER_EMAIL:-noreply@romasub.ai}
-      MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME:-RomaSub.AI}
+      # Brevo Configuration (Optional — transactional email)
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-noreply@romasub.ai}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-RomaSub.AI}
 
       # Whisper Configuration
       WHISPER_MODEL: ${WHISPER_MODEL:-medium}

@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
     
-    # MailerSend
-    mailersend_api_key: str = ""
-    mailersend_sender_email: str = "noreply@romasub.ai"
-    mailersend_sender_name: str = "RomaSub.AI"
+    # Brevo (transactional email — see app/services/email.py)
+    brevo_api_key: str = ""
+    brevo_sender_email: str = "noreply@romasub.me"
+    brevo_sender_name: str = "RomaSub.AI"
     
     # Whisper ASR
     whisper_model: str = "medium"

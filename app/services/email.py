@@ -1,15 +1,20 @@
 """
 Email Service for RomaSub.AI
-Handles sending OTP emails via MailerSend API
+Handles sending OTP emails via the Brevo transactional email API.
 
 Pure functions for email operations.
 """
 
-from mailersend import MailerSendClient, EmailBuilder
+import requests
 from app.config import settings
 import logging
 import base64
 import os
+
+# Brevo transactional email endpoint (verified against
+# https://developers.brevo.com/reference/send-transac-email)
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_TIMEOUT_SECONDS = 10
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -198,8 +203,8 @@ def send_otp_email(to_email: str, to_name: str, otp: str, purpose: str = "passwo
     """
     try:
         # Check if API key is configured
-        if not settings.mailersend_api_key:
-            logger.warning("MailerSend API key not configured. OTP: %s", otp)
+        if not settings.brevo_api_key:
+            logger.warning("Brevo API key not configured. OTP: %s", otp)
             print(f"\n{'='*50}")
             print(f"EMAIL OTP (API not configured)")
             print(f"To: {to_email}")
@@ -217,22 +222,42 @@ def send_otp_email(to_email: str, to_name: str, otp: str, purpose: str = "passwo
             html_content = get_email_verify_template(to_name, otp)
             text_content = f"Your email verification OTP is: {otp}. This code expires in 15 minutes."
 
-        # Create MailerSend client (v2.0.0 API)
-        client = MailerSendClient(api_key=settings.mailersend_api_key)
+        # Send via Brevo REST API. camelCase field names are required by Brevo
+        # (htmlContent / textContent / messageId).
+        response = requests.post(
+            BREVO_API_URL,
+            headers={
+                "api-key": settings.brevo_api_key,
+                "content-type": "application/json",
+                "accept": "application/json",
+            },
+            json={
+                "sender": {
+                    "email": settings.brevo_sender_email,
+                    "name": settings.brevo_sender_name,
+                },
+                "to": [{"email": to_email, "name": to_name}],
+                "subject": subject,
+                "htmlContent": html_content,
+                "textContent": text_content,
+            },
+            timeout=BREVO_TIMEOUT_SECONDS,
+        )
 
-        # Build email using EmailBuilder
-        email = (EmailBuilder()
-            .from_email(settings.mailersend_sender_email, settings.mailersend_sender_name)
-            .to(to_email, to_name)
-            .subject(subject)
-            .html(html_content)
-            .text(text_content)
-            .build())
+        if response.status_code != 201:
+            # Most common cause is unverified sender domain (400) or bad key (401).
+            logger.error(
+                "Brevo send failed for %s: HTTP %s — %s",
+                to_email, response.status_code, response.text,
+            )
+            print(f"\n{'='*50}")
+            print(f"EMAIL SENDING FAILED - OTP for {to_email}: {otp}")
+            print(f"Brevo HTTP {response.status_code}: {response.text}")
+            print(f"{'='*50}\n")
+            return False
 
-        # Send email
-        response = client.emails.send(email)
-
-        logger.info("OTP email sent to %s, response: %s", to_email, response)
+        message_id = response.json().get("messageId", "<unknown>")
+        logger.info("OTP email sent to %s, messageId: %s", to_email, message_id)
         return True
 
     except Exception as e:
