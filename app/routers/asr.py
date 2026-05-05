@@ -200,7 +200,21 @@ async def get_transcription_as_srt(file_id: str):
         )
     
     srt_content = asr_service.format_as_srt(result["segments"])
-    
+
+    # Record this download so it appears on the Recent Exports page.
+    try:
+        from app.services import subtitle as subtitle_service
+        original = result.get("original_filename") or f"file_{file_id}"
+        base = original.rsplit(".", 1)[0]
+        subtitle_service.record_export(
+            subtitle_id=None,
+            fmt="srt",
+            filename=f"{base}_urdu.srt",
+            file_id=file_id,
+        )
+    except Exception:
+        pass
+
     return SRTResponse(
         file_id=file_id,
         srt_content=srt_content

@@ -130,6 +130,10 @@ celerybeat.pid
 # AI Models (large binary files) - root only, not app/models/ Python source
 /models/
 
+# Runtime state for subtitle projects/exports (per-environment data)
+app/data/subtitle_state.json
+app/data/subtitle_state.json.tmp
+
 # Environments
 .env
 .venv

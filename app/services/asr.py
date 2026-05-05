@@ -150,9 +150,11 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
         segments = result["segments"]
         full_text = result["text"]
 
-        # Create result object
+        # Create result object — stash original_filename so it survives the
+        # auto-cleanup step that wipes file_info from the registry.
         transcription_result = {
             "file_id": file_id,
+            "original_filename": file_info.get("original_filename"),
             "language": language,
             "text": full_text,
             "segments": segments,
@@ -200,6 +202,20 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
         print(f"{'='*60}\n")
 
         logger.info("Transcription completed for file: %s", file_id)
+
+        # Auto-create a subtitle project so it shows up in Recent Projects
+        # even if the user never opens the editor. Idempotent: returns the
+        # existing project if create_project has already been called for this
+        # file_id (e.g. when the editor is opened later).
+        try:
+            from app.services import subtitle as subtitle_service
+            subtitle_service.create_project(
+                file_id=file_id,
+                original_filename=file_info.get("original_filename") or f"file_{file_id}",
+                duration=duration,
+            )
+        except Exception as e:
+            logger.warning("Auto-create subtitle project failed: %s", e)
 
         # Auto-cleanup: Delete temporary files after transcription
         if auto_cleanup:

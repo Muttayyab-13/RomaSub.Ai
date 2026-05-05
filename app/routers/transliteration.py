@@ -203,6 +203,22 @@ async def get_transliteration_as_srt(file_id: str):
 
     srt_content = transliteration_service.format_roman_urdu_srt(result["segments"])
 
+    # Record this Roman-Urdu SRT download in the Recent Exports list.
+    try:
+        from app.services import subtitle as subtitle_service
+        from app.services import asr as asr_service
+        asr_result = asr_service.get_transcription_result(file_id) or {}
+        original = asr_result.get("original_filename") or f"file_{file_id}"
+        base = original.rsplit(".", 1)[0]
+        subtitle_service.record_export(
+            subtitle_id=None,
+            fmt="srt",
+            filename=f"{base}_roman_urdu.srt",
+            file_id=file_id,
+        )
+    except Exception:
+        pass
+
     return SRTResponse(
         file_id=file_id,
         srt_content=srt_content

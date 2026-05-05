@@ -2,9 +2,12 @@
 Subtitle Service for RomaSub.AI
 Handles subtitle project creation, editing, and export
 
-Pure functions for subtitle operations with in-memory project storage.
+State lives in module-level dicts and is persisted to a JSON file on disk
+so projects + export history survive server restarts.
 """
 
+import json
+import os
 import uuid
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
@@ -20,11 +23,65 @@ logger = logging.getLogger(__name__)
 # Module-level state for subtitle projects
 # ============================================================================
 
-# In-memory storage for subtitle projects (temporary)
+# In-memory storage for subtitle projects
 _subtitle_projects: Dict[str, Dict] = {}
 
 # Maps file_id -> subtitle_id for quick lookup
 _file_to_subtitle: Dict[str, str] = {}
+
+# Export history (newest first). Declared up here so persistence can
+# load/save it alongside the projects.
+_export_history: List[Dict] = []
+
+
+# ============================================================================
+# JSON persistence (so projects/exports survive restarts)
+# ============================================================================
+
+_STATE_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "data", "subtitle_state.json"
+)
+
+
+def _save_state() -> None:
+    """Persist projects, file mapping and export history to disk atomically."""
+    try:
+        os.makedirs(os.path.dirname(_STATE_FILE), exist_ok=True)
+        payload = {
+            "subtitle_projects": _subtitle_projects,
+            "file_to_subtitle": _file_to_subtitle,
+            "export_history": _export_history,
+        }
+        tmp_path = _STATE_FILE + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, _STATE_FILE)
+    except Exception as e:
+        logger.warning("Failed to persist subtitle state: %s", e)
+
+
+def _load_state() -> None:
+    """Load projects + export history from disk on startup."""
+    if not os.path.exists(_STATE_FILE):
+        return
+    try:
+        with open(_STATE_FILE, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        _subtitle_projects.update(payload.get("subtitle_projects", {}))
+        _file_to_subtitle.update(payload.get("file_to_subtitle", {}))
+        _export_history.extend(payload.get("export_history", []))
+        logger.info(
+            "Loaded subtitle state: %d projects, %d exports",
+            len(_subtitle_projects),
+            len(_export_history),
+        )
+    except Exception as e:
+        logger.warning("Failed to load subtitle state: %s", e)
+
+
+# Load persisted state at import time so the lists are populated for the
+# first /subtitles/list/projects request.
+_load_state()
 
 
 # ============================================================================
@@ -108,6 +165,7 @@ def create_project(
 
     _subtitle_projects[subtitle_id] = project
     _file_to_subtitle[file_id] = subtitle_id
+    _save_state()
 
     logger.info("Subtitle project created: %s for file: %s", subtitle_id, file_id)
     return True, "Project created", project
@@ -145,27 +203,39 @@ def list_all_projects() -> List[Dict]:
     return projects
 
 
-# In-memory export history
-_export_history: List[Dict] = []
+def record_export(
+    subtitle_id: Optional[str],
+    fmt: str,
+    filename: str,
+    file_id: Optional[str] = None,
+) -> Dict:
+    """Record an export in the history.
 
+    If `subtitle_id` is None and `file_id` is provided, look up the project
+    via the file mapping. This lets the dashboard's /asr/result/{id}/srt and
+    /transliterate/result/{id}/srt download endpoints record exports without
+    needing a subtitle_id.
+    """
+    if not subtitle_id and file_id:
+        subtitle_id = _file_to_subtitle.get(file_id)
 
-def record_export(subtitle_id: str, fmt: str, filename: str) -> Dict:
-    """Record an export in the history."""
-    project = get_project(subtitle_id)
+    project = get_project(subtitle_id) if subtitle_id else None
     record = {
         "id": str(uuid.uuid4()),
         "subtitle_id": subtitle_id,
+        "file_id": file_id or (project["file_id"] if project else None),
         "project_name": project["project_name"] if project else "Unknown",
         "filename": filename,
         "format": fmt,
         "created_at": datetime.now().isoformat(),
     }
     _export_history.insert(0, record)  # newest first
+    _save_state()
     return record
 
 
 def list_exports() -> List[Dict]:
-    """List all export history."""
+    """List all export history (newest first)."""
     return _export_history
 
 
@@ -247,6 +317,7 @@ def update_segment(
 
     segment["is_edited"] = True
     project["updated_at"] = datetime.now().isoformat()
+    _save_state()
 
     return True, "Segment updated", segment
 
@@ -292,6 +363,7 @@ def add_segment(
     _resequence_ids(project["segments"])
     project["segment_count"] = len(project["segments"])
     project["updated_at"] = datetime.now().isoformat()
+    _save_state()
 
     return True, "Segment added", new_segment
 
@@ -315,6 +387,7 @@ def delete_segment(subtitle_id: str, segment_id: int) -> Tuple[bool, str]:
     _resequence_ids(project["segments"])
     project["segment_count"] = len(project["segments"])
     project["updated_at"] = datetime.now().isoformat()
+    _save_state()
 
     return True, "Segment deleted"
 
@@ -337,6 +410,7 @@ def bulk_update(subtitle_id: str, segments: List[Dict]) -> Tuple[bool, str, Dict
     project["segments"] = segments
     project["segment_count"] = len(segments)
     project["updated_at"] = datetime.now().isoformat()
+    _save_state()
 
     return True, "Segments updated", project
 
@@ -377,6 +451,7 @@ def fix_overlaps(subtitle_id: str) -> Tuple[bool, str, List[Dict]]:
 
     _resequence_ids(segments)
     project["updated_at"] = datetime.now().isoformat()
+    _save_state()
 
     return True, f"Fixed {fixes} overlap(s)", segments
 
