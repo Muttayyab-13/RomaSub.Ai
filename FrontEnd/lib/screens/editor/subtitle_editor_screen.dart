@@ -155,9 +155,11 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
                                     child: SubtitleListPanel(),
                                   ),
 
-                                  // Right: Text editor (25%)
+                                  // Right: Text editor (~27% — needs enough
+                                  // width for two side-by-side TimingAdjuster
+                                  // fields showing HH:MM:SS,mmm timestamps).
                                   const Expanded(
-                                    flex: 2,
+                                    flex: 3,
                                     child: TextEditorPanel(),
                                   ),
                                 ],
