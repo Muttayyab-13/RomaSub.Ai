@@ -65,7 +65,7 @@ services:
       - upload_data:/tmp/romasub_uploads
       - static_data:/app/uploads
       - ./models:/app/models
-      - whisper_cache:/root/.cache/whisper
+      - whisper_cache:/root/.cache/huggingface
     ports:
       - "8000:8000"
     networks:
