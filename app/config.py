@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     
     # Whisper ASR
     whisper_model: str = "medium"
+    # Engine: True = faster-whisper (CTranslate2, default), False = legacy
+    # openai-whisper. Flip to false via USE_FASTER_WHISPER=false for rollback.
+    use_faster_whisper: bool = True
+    # Device override. "auto" picks cuda if torch.cuda.is_available() else cpu.
+    whisper_device: str = "auto"
+    # CTranslate2 compute_type. "auto" picks float16 on cuda, int8 on cpu.
+    # Other valid values: "float32", "float16", "int8_float16", "int8".
+    # Only consulted when use_faster_whisper=True.
+    whisper_compute_type: str = "auto"
 
     # Transliteration (M2M100)
     m2m100_model_path: str = "models/m2m100_ur_to_rur"

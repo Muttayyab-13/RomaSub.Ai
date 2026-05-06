@@ -267,7 +267,7 @@ CREATE DATABASE romasub_ai;
 
 3. **Anonymous Endpoints**: `/anonymous` endpoints exist for testing without authentication. Remove or secure in production.
 
-4. **Whisper Model**: Using "small" model for balance of speed and accuracy. Can be changed via `WHISPER_MODEL` env var.
+4. **Whisper Engine + Model**: `faster-whisper` (CTranslate2) by default with the `medium` model — auto-selects `float16` on CUDA, `int8` on CPU. ~4× faster on GPU, ~2–3× faster on CPU vs vanilla `openai-whisper` at identical accuracy (fp16). Override via `WHISPER_MODEL`, `WHISPER_DEVICE`, `WHISPER_COMPUTE_TYPE`. Roll back to legacy `openai-whisper` with `USE_FASTER_WHISPER=false`.
 
 5. **OTP via Console**: If Brevo is not configured, OTPs are printed to console for testing.
 

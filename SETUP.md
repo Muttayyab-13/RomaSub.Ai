@@ -56,9 +56,9 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-This pulls `torch`, `openai-whisper`, `transformers`, `urduhack`, `anthropic`, `fastapi`, `streamlit`, etc. First-time `torch` install is ~2 GB.
+This pulls `torch`, `faster-whisper`, `openai-whisper` (legacy rollback path), `transformers`, `urduhack`, `anthropic`, `fastapi`, `streamlit`, etc. First-time `torch` install is ~2 GB.
 
-First Whisper run will auto-download the model (`small` by default, ~460 MB) into `~/.cache/whisper/`.
+First ASR run downloads the Whisper model. With the default engine (`faster-whisper`) the `medium` model is ~1.5 GB and lands in `~/.cache/huggingface/hub/`. The legacy `openai-whisper` engine (enabled via `USE_FASTER_WHISPER=false`) caches at `~/.cache/whisper/` instead.
 
 ## 5. PostgreSQL database
 
@@ -80,7 +80,10 @@ Edit `.env`:
 |---|---|---|
 | `DATABASE_URL` | yes | e.g. `postgresql://postgres:your_password@localhost:5432/romasub_ai` |
 | `SECRET_KEY` | yes | any long random string |
-| `WHISPER_MODEL` | no | `small` (default), `medium`, or `large` (slower, more accurate) |
+| `WHISPER_MODEL` | no | `small`, `medium` (default), or `large` (slower, more accurate) |
+| `USE_FASTER_WHISPER` | no | `true` (default) → CTranslate2 engine (~4× faster GPU fp16, ~2–3× faster CPU int8). `false` → legacy openai-whisper (instant rollback). |
+| `WHISPER_DEVICE` | no | `auto` (default), `cuda`, or `cpu`. Auto picks `cuda` when available. |
+| `WHISPER_COMPUTE_TYPE` | no | `auto` (default), `float16`, `int8_float16`, `int8`, `float32`. Auto picks `float16` on cuda, `int8` on cpu. Only used when `USE_FASTER_WHISPER=true`. |
 | `MAX_FILE_SIZE_MB` | no | default 2048 |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | no | only for Google login |
 | `BREVO_API_KEY` | no | only if you need OTP password reset emails (get one at app.brevo.com/settings/keys/api) |
@@ -144,6 +147,8 @@ The app expects the backend at `http://localhost:8000` (or whatever is configure
 | `ffmpeg not found` | install ffmpeg system-wide (§1) |
 | `psycopg2` build fails | install `libpq-dev` and `build-essential` (§1) |
 | `Could not load model models/m2m100_ur_to_rur` | model wasn't placed correctly (§3) |
-| Whisper OOM on `large` | drop `WHISPER_MODEL` to `small` or `medium` |
+| Whisper OOM on `large` | drop `WHISPER_MODEL` to `medium` (default) or use `WHISPER_COMPUTE_TYPE=int8_float16` to roughly halve VRAM |
+| `faster-whisper` wheel install fails | flip to legacy engine: `USE_FASTER_WHISPER=false` (no code changes needed) |
+| First ASR call slow / hangs | first run downloads ~1.5 GB from HuggingFace; subsequent runs use the local cache. Pre-warm with `python -c "from app.services.asr import get_whisper_model; get_whisper_model()"` |
 | `urduhack` pulls TensorFlow | already pinned to leaf import; reinstall with `pip install --no-deps urduhack regex` |
 | Claude refine logs `SKIPPED` | check `ENABLE_LLM_REFINE=true` and `ANTHROPIC_API_KEY` is set & has credit |

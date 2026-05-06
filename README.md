@@ -146,7 +146,7 @@ Every refine call is logged with a `Claude refiner:` prefix — grep for it to s
 ## Technologies Used
 
 - **Web**: FastAPI 0.110+, Pydantic v2, PostgreSQL 15+
-- **ASR**: OpenAI Whisper (medium model, configurable via `WHISPER_MODEL`)
+- **ASR**: `faster-whisper` (CTranslate2) with the `medium` model by default — auto-picks fp16 on CUDA / int8 on CPU. Legacy `openai-whisper` retained as env-gated rollback (`USE_FASTER_WHISPER=false`). Configurable via `WHISPER_MODEL`, `WHISPER_DEVICE`, `WHISPER_COMPUTE_TYPE`.
 - **Transliteration**: Fine-tuned M2M100 (`facebook/m2m100_418M`) via Hugging Face `transformers`
 - **Urdu normalization**: `urduhack` (leaf import — no TensorFlow dependency at runtime)
 - **Refinement**: Anthropic Claude API (Haiku 4.5 by default)

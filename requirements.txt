@@ -20,6 +20,11 @@ google-auth-oauthlib
 # Email (Brevo transactional API via REST — uses `requests` listed below)
 
 # Whisper ASR
+# Default engine: faster-whisper (CTranslate2-based, ~4x faster on GPU fp16,
+# ~2-3x faster on CPU int8, identical accuracy at fp16/fp32). The legacy
+# openai-whisper path is kept for one release as an env-gated rollback —
+# set USE_FASTER_WHISPER=false to use it.
+faster-whisper>=1.0.0
 openai-whisper
 torch
 

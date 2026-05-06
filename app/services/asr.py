@@ -1,6 +1,7 @@
 """
 ASR Service for RomaSub.AI
-Handles speech recognition using OpenAI Whisper
+Handles speech recognition using faster-whisper (CTranslate2) by default,
+with a legacy openai-whisper rollback path gated by USE_FASTER_WHISPER.
 
 Pure functions for ASR operations with in-memory result storage.
 """
@@ -33,18 +34,76 @@ _transcription_results: Dict[str, Dict] = {}
 # Whisper Model Management
 # ============================================================================
 
+def _resolve_device_and_compute_type() -> Tuple[str, str]:
+    """
+    Resolve effective device and CTranslate2 compute_type from settings.
+
+    Defaults: cuda+float16 when CUDA is available, else cpu+int8 — matching
+    the existing torch.cuda.is_available() pattern used elsewhere in the app.
+    Explicit settings.whisper_device / settings.whisper_compute_type override.
+    """
+    import torch
+
+    device_pref = (settings.whisper_device or "auto").lower()
+    ct_pref = (settings.whisper_compute_type or "auto").lower()
+
+    cuda_avail = torch.cuda.is_available()
+    if device_pref == "auto":
+        device = "cuda" if cuda_avail else "cpu"
+    elif device_pref == "cuda" and not cuda_avail:
+        logger.warning("WHISPER_DEVICE=cuda but CUDA unavailable; falling back to cpu")
+        device = "cpu"
+    else:
+        device = device_pref
+
+    if ct_pref == "auto":
+        compute_type = "float16" if device == "cuda" else "int8"
+    else:
+        compute_type = ct_pref
+
+    return device, compute_type
+
+
 def get_whisper_model():
     """
     Load Whisper model (lazy loading).
     Model is loaded once and reused for all transcriptions.
 
+    Engine is selected by settings.use_faster_whisper:
+      - True  (default): faster-whisper (CTranslate2). Downloads from
+                         HuggingFace into ~/.cache/huggingface/hub/ on first run.
+      - False: legacy openai-whisper. Cache at ~/.cache/whisper/.
+
     Returns:
-        Loaded Whisper model instance
+        Loaded Whisper model instance (faster_whisper.WhisperModel or
+        whisper.Whisper, depending on settings.use_faster_whisper).
     """
     global _whisper_model
 
-    if _whisper_model is None:
-        print(f"\n[ASR] Loading Whisper model: {settings.whisper_model}")
+    if _whisper_model is not None:
+        return _whisper_model
+
+    if settings.use_faster_whisper:
+        device, compute_type = _resolve_device_and_compute_type()
+        cpu_threads = int(os.cpu_count() or 4) if device == "cpu" else 0
+
+        print(f"\n[ASR] Loading faster-whisper model: {settings.whisper_model}")
+        print(f"[ASR] device={device}  compute_type={compute_type}  cpu_threads={cpu_threads or 'n/a'}")
+        print("[ASR] First run downloads ~1.5 GB from HuggingFace (Systran/faster-whisper-*)")
+
+        from faster_whisper import WhisperModel
+        _whisper_model = WhisperModel(
+            settings.whisper_model,
+            device=device,
+            compute_type=compute_type,
+            cpu_threads=cpu_threads,
+            num_workers=1,
+        )
+        print("[ASR] faster-whisper model loaded successfully!")
+    else:
+        # Legacy rollback path. Set USE_FASTER_WHISPER=false to land here.
+        print(f"\n[ASR] Loading openai-whisper model: {settings.whisper_model}")
+        print("[ASR] (legacy engine — set USE_FASTER_WHISPER=true for faster-whisper)")
         print("[ASR] This may take a moment on first run...")
 
         import torch
@@ -52,8 +111,7 @@ def get_whisper_model():
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"[ASR] Using device: {device}")
         _whisper_model = whisper.load_model(settings.whisper_model, device=device)
-
-        print(f"[ASR] Whisper model loaded successfully!")
+        print("[ASR] openai-whisper model loaded successfully!")
 
     return _whisper_model
 
@@ -68,10 +126,46 @@ def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
         language: Language code (default: 'ur')
 
     Returns:
-        Dict with 'text' and 'segments' keys
+        Dict with 'text' and 'segments' keys.
+        Segments are dicts of shape {id, start, end, text} — this contract is
+        consumed by chunker_service.offset_segments / trim_overlap_segments and
+        transliteration_service, so it must stay stable across engines.
     """
     model = get_whisper_model()
 
+    if settings.use_faster_whisper:
+        # faster-whisper returns (generator, info). Materialize and reshape
+        # into the dict contract callers expect. vad_filter replaces the older
+        # no_speech_threshold heuristic and is especially helpful for the 30s
+        # chunks with 2s overlap produced by chunker_service — silent overlap
+        # regions otherwise tend to produce hallucinated repeats on medium.
+        segments_iter, _info = model.transcribe(
+            audio_path,
+            language=language,
+            task="transcribe",
+            word_timestamps=True,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.5,
+            compression_ratio_threshold=2.4,
+            vad_filter=True,
+            vad_parameters={"min_silence_duration_ms": 500},
+        )
+
+        segments: List[Dict] = []
+        text_parts: List[str] = []
+        for i, seg in enumerate(segments_iter):
+            text = (seg.text or "").strip()
+            segments.append({
+                "id": i,
+                "start": float(seg.start),
+                "end": float(seg.end),
+                "text": text,
+            })
+            text_parts.append(text)
+
+        return {"text": " ".join(text_parts), "segments": segments}
+
+    # Legacy openai-whisper path (USE_FASTER_WHISPER=false).
     result = model.transcribe(
         audio_path,
         language=language,
