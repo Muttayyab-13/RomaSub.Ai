@@ -4,12 +4,15 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
+import '../core/config/oauth_config.dart';
 
 /// Google OAuth service for Windows desktop application
 /// Uses authorization code flow with local HTTP server
 class GoogleOAuthDesktopService {
-  static const String clientId =
-      '670826496672-pb3a7uqhlnidff25bq2k7qkkteskjmsr.apps.googleusercontent.com';
+  /// Pulled from `OAuthConfig.googleClientId` so it stays in lockstep with
+  /// the backend's `GOOGLE_CLIENT_ID` env value (the auth code is exchanged
+  /// server-side and Google requires the same client on both ends).
+  static const String clientId = OAuthConfig.googleClientId;
 
   static const String redirectUri = 'http://localhost:8080/auth/callback';
   static const String scope = 'email profile openid';

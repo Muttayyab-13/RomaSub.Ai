@@ -8,6 +8,7 @@ import '../services/user_service.dart';
 import '../services/storage_service.dart';
 import '../services/api/api_exception.dart';
 import '../services/google_oauth_desktop_service.dart';
+import '../core/config/oauth_config.dart';
 
 /// Auth state class representing the current authentication status
 class AuthState {
@@ -412,8 +413,11 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
         // Use google_sign_in for Web, Android, iOS
         try {
           googleSignIn = GoogleSignIn(
+            // On web the plugin needs the client ID at construction time.
+            // On Android/iOS the platform reads it from
+            // google-services.json / GoogleService-Info.plist, so leave null.
+            clientId: kIsWeb ? OAuthConfig.googleClientId : null,
             scopes: ['email', 'profile'],
-            // Client ID can be set here or via meta tag in index.html
           );
         } catch (e) {
           googleSignIn = null;
