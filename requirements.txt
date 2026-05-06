@@ -49,3 +49,8 @@ pydantic-settings
 # Demo UI
 streamlit
 requests
+
+# M2M100 evaluation scripts (scripts/run_raw_m2m100.py)
+sacrebleu
+jiwer
+datasets
