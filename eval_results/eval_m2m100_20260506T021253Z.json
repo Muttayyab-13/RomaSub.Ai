@@ -1,0 +1,48 @@
+{
+  "run_config": {
+    "timestamp_utc": "20260506T021253Z",
+    "dataset": "Mavkif/Roman-Urdu-Parl-split",
+    "split": "test",
+    "max_samples": 100,
+    "batch_size": 8,
+    "num_beams": 4,
+    "mode": "both",
+    "model_path": "models/m2m100_ur_to_rur",
+    "tokenizer_path": "models/m2m100_tokenizer",
+    "transliteration_device_setting": "auto",
+    "enable_llm_refine_setting": false,
+    "enable_loanword_dict_setting": false,
+    "note_on_pipeline_mode": "pipeline mode runs transliterate_batch. With enable_loanword_dict=True it does loanword/names substitution → urduhack normalize → M2M100 → reconstruct → fuzzy post-process. With enable_loanword_dict=False it skips the dict layer (just urduhack normalize → M2M100). Claude LLM refinement is NOT applied — refine_segments is segment-only and intentionally skipped here for determinism."
+  },
+  "metrics": {
+    "raw": {
+      "bleu": 98.87,
+      "char_bleu": 99.12,
+      "chrf": 99.05,
+      "wer": 0.86,
+      "cer": 0.63,
+      "exact_match": 96.0,
+      "char4_precision": 98.68,
+      "char4_recall": 98.75,
+      "char4_f1": 98.71,
+      "valid_pairs": 100
+    },
+    "pipeline": {
+      "bleu": 98.87,
+      "char_bleu": 99.12,
+      "chrf": 99.05,
+      "wer": 0.86,
+      "cer": 0.63,
+      "exact_match": 96.0,
+      "char4_precision": 98.68,
+      "char4_recall": 98.75,
+      "char4_f1": 98.71,
+      "valid_pairs": 100
+    }
+  },
+  "timings_seconds": {
+    "raw_seconds": 58.86,
+    "pipeline_seconds": 48.13
+  },
+  "n_samples": 100
+}

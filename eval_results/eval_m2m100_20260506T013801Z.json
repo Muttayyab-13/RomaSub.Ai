@@ -1,0 +1,47 @@
+{
+  "run_config": {
+    "timestamp_utc": "20260506T013801Z",
+    "dataset": "Mavkif/Roman-Urdu-Parl-split",
+    "split": "test",
+    "max_samples": 16,
+    "batch_size": 8,
+    "num_beams": 4,
+    "mode": "both",
+    "model_path": "models/m2m100_ur_to_rur",
+    "tokenizer_path": "models/m2m100_tokenizer",
+    "transliteration_device_setting": "auto",
+    "enable_llm_refine_setting": false,
+    "note_on_pipeline_mode": "pipeline mode runs transliterate_batch (loanword + normalize + M2M100 + post-process). Claude LLM refinement is NOT applied — refine_segments is segment-only and intentionally skipped here for determinism."
+  },
+  "metrics": {
+    "raw": {
+      "bleu": 100.0,
+      "char_bleu": 100.0,
+      "chrf": 100.0,
+      "wer": 0.0,
+      "cer": 0.0,
+      "exact_match": 100.0,
+      "char4_precision": 100.0,
+      "char4_recall": 100.0,
+      "char4_f1": 100.0,
+      "valid_pairs": 16
+    },
+    "pipeline": {
+      "bleu": 87.11,
+      "char_bleu": 95.51,
+      "chrf": 94.13,
+      "wer": 5.19,
+      "cer": 1.85,
+      "exact_match": 81.25,
+      "char4_precision": 95.51,
+      "char4_recall": 95.13,
+      "char4_f1": 95.31,
+      "valid_pairs": 16
+    }
+  },
+  "timings_seconds": {
+    "raw_seconds": 12.39,
+    "pipeline_seconds": 8.01
+  },
+  "n_samples": 16
+}
