@@ -24,6 +24,7 @@ google-auth-oauthlib
 # ~2-3x faster on CPU int8, identical accuracy at fp16/fp32). The legacy
 # openai-whisper path is kept for one release as an env-gated rollback —
 # set USE_FASTER_WHISPER=false to use it.
+
 faster-whisper>=1.0.0
 openai-whisper
 torch
@@ -50,6 +51,7 @@ static_ffmpeg
 python-dotenv
 pydantic
 pydantic-settings
+pydantic[email]
 
 # Demo UI
 streamlit
