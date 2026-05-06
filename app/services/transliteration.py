@@ -142,7 +142,13 @@ def _m2m100_batch(texts: List[str], batch_size: int = 8) -> List[str]:
 def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
     """
     Transliterate a list of Urdu texts to Roman Urdu in batches.
-    Uses loanword-aware pipeline: pre-process → M2M100 → post-process.
+
+    Path depends on `settings.enable_loanword_dict`:
+      * True  — full pipeline: loanword/names dict substitution → urduhack
+                normalization → M2M100 → reconstruction → fuzzy post-process.
+      * False — bypass the dictionary layer entirely. Just urduhack normalize
+                each text, then run M2M100. Use this when the dict content is
+                unverified (see scripts/audit_loanword_dict.py).
 
     Args:
         texts: List of Urdu text strings
@@ -151,8 +157,16 @@ def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
     Returns:
         List of Roman Urdu transliterated texts
     """
-    from app.services.loanword_processor import process_batch
     from app.services.urdu_preprocessor import preprocess_urdu_chunks
+
+    if not settings.enable_loanword_dict:
+        # Direct path: normalize then run the model. No dict, no reconstruction,
+        # no fuzzy post-processing. Equivalent to scripts/eval_m2m100.py's
+        # raw mode plus urduhack normalization.
+        normalized = preprocess_urdu_chunks(texts)
+        return _m2m100_batch(normalized, batch_size)
+
+    from app.services.loanword_processor import process_batch
 
     def m2m100_fn(urdu_chunks: List[str]) -> List[str]:
         normalized = preprocess_urdu_chunks(urdu_chunks)

@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     # Urdu pre-processing (normalization always on; diacritization stub for future)
     enable_diacritics: bool = False
 
+    # Loanword/names dictionary substitution layer (loanword_processor.process_batch).
+    # When True, Urdu words found in app/data/loanword_dict.json + names_dict.json
+    # are replaced with their English value BEFORE the model runs and stitched
+    # back at the end. When False, the model handles all words directly.
+    # Disable when the dictionary content is unverified — see
+    # scripts/audit_loanword_dict.py and scripts/loanword_dict_audit.md.
+    enable_loanword_dict: bool = True
+
     # Claude refinement layer (post-m2m100 polish)
     enable_llm_refine: bool = True
     claude_refine_model: str = "claude-haiku-4-5"
