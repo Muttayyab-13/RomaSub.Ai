@@ -45,6 +45,7 @@ static_ffmpeg
 python-dotenv
 pydantic
 pydantic-settings
+pydantic[Email]
 
 # Demo UI
 streamlit
