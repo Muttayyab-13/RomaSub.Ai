@@ -266,6 +266,12 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
 
   @override
   void dispose() {
+    // DIAGNOSTIC: confirms whether autoDispose / widget teardown is killing the
+    // notifier (and therefore the player). If this log fires right after
+    // `player.open() returned`, the cause is the autoDispose race during the
+    // editor's loading state, not a libmpv error.
+    debugPrint('[VideoPlayer] StateNotifier.dispose() called '
+        '(player=${_playerRef != null ? "present" : "null"})');
     // Cancel subscriptions synchronously
     for (final sub in _subscriptions) {
       sub.cancel();
