@@ -15,6 +15,8 @@ class EditorToolbar extends ConsumerWidget {
     final editorState = ref.watch(editorNotifierProvider);
     final editorNotifier = ref.read(editorNotifierProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isVideoSource =
+        _isVideoSource(editorState.project?.originalFilename ?? '');
 
     return Container(
       height: 48,
@@ -132,11 +134,30 @@ class EditorToolbar extends ConsumerWidget {
 
           // Export dropdown
           PopupMenuButton<String>(
-            onSelected: (format) => _handleExport(context, ref, format),
+            onSelected: (value) {
+              if (value == 'video_hardsub') {
+                _handleVideoExport(context, ref, 'hardsub');
+              } else if (value == 'video_softsub') {
+                _handleVideoExport(context, ref, 'softsub');
+              } else {
+                _handleExport(context, ref, value);
+              }
+            },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'srt', child: Text('Export as SRT')),
               const PopupMenuItem(value: 'vtt', child: Text('Export as VTT')),
               const PopupMenuItem(value: 'txt', child: Text('Export as TXT')),
+              if (isVideoSource) ...[
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'video_hardsub',
+                  child: Text('Video — burned-in captions'),
+                ),
+                const PopupMenuItem(
+                  value: 'video_softsub',
+                  child: Text('Video — toggleable captions'),
+                ),
+              ],
             ],
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -208,6 +229,76 @@ class EditorToolbar extends ConsumerWidget {
       }
     }
   }
+
+  bool _isVideoSource(String filename) {
+    if (!filename.contains('.')) return false;
+    final ext = filename.split('.').last.toLowerCase();
+    return const {'mp4', 'avi', 'mkv', 'mov', 'webm'}.contains(ext);
+  }
+
+  Future<void> _handleVideoExport(
+    BuildContext context,
+    WidgetRef ref,
+    String mode,
+  ) async {
+    final editorNotifier = ref.read(editorNotifierProvider.notifier);
+
+    // Block the UI with a progress dialog while FFmpeg renders.
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _VideoExportProgressDialog(),
+    );
+
+    ({List<int> bytes, String filename})? result;
+    try {
+      result = await editorNotifier.exportVideo(mode);
+    } finally {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+
+    if (result == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Video export failed'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final dir = await getDownloadsDirectory() ??
+          await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/${result.filename}';
+      await File(filePath).writeAsBytes(result.bytes);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Exported to: $filePath'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
 }
 
 class _ToolbarButton extends StatelessWidget {
@@ -236,6 +327,35 @@ class _ToolbarButton extends StatelessWidget {
           : AppColors.getTextSecondary(isDark).withValues(alpha: 0.4),
       onPressed: enabled ? onPressed : null,
       splashRadius: 18,
+    );
+  }
+}
+
+class _VideoExportProgressDialog extends StatelessWidget {
+  const _VideoExportProgressDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: const AlertDialog(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+            SizedBox(width: 16),
+            Flexible(
+              child: Text(
+                'Rendering video with captions…\nThis can take a few minutes.',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
