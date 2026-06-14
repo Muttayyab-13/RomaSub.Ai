@@ -55,3 +55,6 @@ requests
 sacrebleu
 jiwer
 datasets
+
+# Testing
+pytest
