@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 VALID_MODES = ("hardsub", "softsub")
 
+_SUFFIXES = {"hardsub": "subtitled", "softsub": "softsubs"}
+
 # Error messages — the router maps these to HTTP status codes.
 MSG_BAD_MODE = "Unsupported mode. Use hardsub or softsub"
 MSG_PROJECT_NOT_FOUND = "Project not found"
@@ -33,8 +35,10 @@ MSG_FFMPEG_MISSING = "FFmpeg not found. Please install FFmpeg."
 
 def build_output_filename(original_filename: str, mode: str) -> str:
     """Build a friendly download filename for the rendered MP4."""
+    suffix = _SUFFIXES.get(mode)
+    if suffix is None:
+        raise ValueError(f"Unsupported mode: {mode}")
     base = original_filename.rsplit(".", 1)[0]
-    suffix = "subtitled" if mode == "hardsub" else "softsubs"
     return f"{base}_roman_{suffix}.mp4"
 
 
@@ -43,10 +47,11 @@ def build_ffmpeg_command(
 ) -> List[str]:
     """Build the FFmpeg argument list for the requested mode."""
     if mode == "hardsub":
+        escaped_srt = srt_path.replace("\\", "\\\\").replace("'", "\\'").replace(":", "\\:")
         return [
             "ffmpeg", "-y",
             "-i", input_path,
-            "-vf", f"subtitles={srt_path}",
+            "-vf", f"subtitles='{escaped_srt}'",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             "-c:a", "aac",
             "-movflags", "+faststart",
