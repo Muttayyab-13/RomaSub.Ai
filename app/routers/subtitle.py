@@ -3,12 +3,17 @@ Subtitle Router for RomaSub.AI
 Handles subtitle project CRUD, editing, and export operations
 """
 
+import os
+
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import FileResponse
 from typing import Optional
+from starlette.background import BackgroundTask
 
 from app.services import subtitle as subtitle_service
 from app.services import media as media_service
 from app.services import asr as asr_service
+from app.services import video_export as video_export_service
 from app.schemas.subtitle import (
     CreateSubtitleRequest,
     UpdateSegmentRequest,
@@ -229,6 +234,44 @@ async def export_subtitles(subtitle_id: str, format: str = "srt"):
         format=format,
         content=content,
         filename=filename,
+    )
+
+
+@router.get("/{subtitle_id}/export-video")
+async def export_video(subtitle_id: str, mode: str = "hardsub"):
+    """
+    Download the project's video with Roman Urdu captions attached.
+
+    - **mode**: `hardsub` (captions burned into the pixels) or `softsub`
+      (captions as a toggleable track). Output is always MP4.
+    """
+    success, message, output_path, filename = (
+        video_export_service.export_video_with_subtitles(subtitle_id, mode)
+    )
+
+    if not success:
+        if message in (
+            video_export_service.MSG_PROJECT_NOT_FOUND,
+            video_export_service.MSG_SOURCE_MISSING,
+        ):
+            code = status.HTTP_404_NOT_FOUND
+        elif message in (
+            video_export_service.MSG_RENDER_FAILED,
+            video_export_service.MSG_FFMPEG_MISSING,
+        ):
+            code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        else:
+            code = status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=code, detail=message)
+
+    fmt = "mp4-hardsub" if mode == "hardsub" else "mp4-softsub"
+    subtitle_service.record_export(subtitle_id, fmt, filename)
+
+    return FileResponse(
+        output_path,
+        media_type="video/mp4",
+        filename=filename,
+        background=BackgroundTask(os.remove, output_path),
     )
 
 
