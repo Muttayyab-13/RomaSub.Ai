@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api/api_client.dart';
@@ -183,7 +185,7 @@ class SubtitleService {
   String? _filenameFromHeaders(Headers headers) {
     final disposition = headers.value('content-disposition');
     if (disposition == null) return null;
-    final match = RegExp('filename="?([^"]+)"?').firstMatch(disposition);
+    final match = RegExp(r'filename="?([^";]+)"?').firstMatch(disposition);
     return match?.group(1);
   }
 
@@ -197,9 +199,20 @@ class SubtitleService {
       final statusCode = e.response!.statusCode;
       final data = e.response!.data;
 
+      // Binary (ResponseType.bytes) requests deliver error bodies as raw
+      // bytes, so decode them to JSON before reading the `detail` message.
+      dynamic parsed = data;
+      if (parsed is List<int>) {
+        try {
+          parsed = jsonDecode(utf8.decode(parsed));
+        } catch (_) {
+          parsed = null;
+        }
+      }
+
       String message = 'Operation failed';
-      if (data is Map<String, dynamic>) {
-        message = data['detail'] as String? ?? message;
+      if (parsed is Map<String, dynamic>) {
+        message = parsed['detail'] as String? ?? message;
       }
 
       if (statusCode == 400) return ValidationException(message, data);
