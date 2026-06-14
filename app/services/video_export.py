@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 VALID_MODES = ("hardsub", "softsub")
 
+# Hard ceiling so a hung FFmpeg can't pin a request worker forever.
+VIDEO_EXPORT_TIMEOUT_SECONDS = 1800
+
 _SUFFIXES = {"hardsub": "subtitled", "softsub": "softsubs"}
 
 # Error messages — the router maps these to HTTP status codes.
@@ -31,6 +34,7 @@ MSG_SOURCE_MISSING = "Source video no longer available. Please re-upload."
 MSG_NOT_VIDEO = "Video export requires a video file"
 MSG_RENDER_FAILED = "Video rendering failed"
 MSG_FFMPEG_MISSING = "FFmpeg not found. Please install FFmpeg."
+MSG_EXPORT_OK = "Export successful"
 
 
 def build_output_filename(original_filename: str, mode: str) -> str:
@@ -123,19 +127,30 @@ def export_video_with_subtitles(subtitle_id: str, mode: str) -> Tuple[bool, str,
         fh.write(srt_content)
 
     command = build_ffmpeg_command(input_path, srt_path, output_path, mode)
-    logger.info("Video export FFmpeg command: %s", " ".join(command))
+    logger.info("Rendering video export (mode=%s, token=%s)", mode, token)
+    logger.debug("Video export FFmpeg command: %s", " ".join(command))
 
     try:
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=VIDEO_EXPORT_TIMEOUT_SECONDS,
+        )
     except FileNotFoundError:
         return False, MSG_FFMPEG_MISSING, "", ""
+    except subprocess.TimeoutExpired:
+        logger.error("Video export timed out after %ss", VIDEO_EXPORT_TIMEOUT_SECONDS)
+        _safe_remove(output_path)
+        return False, MSG_RENDER_FAILED, "", ""
     finally:
         _safe_remove(srt_path)
 
     if result.returncode != 0 or not os.path.exists(output_path):
-        logger.error("Video export failed (rc=%s): %s", result.returncode, result.stderr)
+        stderr_tail = result.stderr[-2000:] if result.stderr else ""
+        logger.error("Video export failed (rc=%s): %s", result.returncode, stderr_tail)
         _safe_remove(output_path)
         return False, MSG_RENDER_FAILED, "", ""
 
     download_filename = build_output_filename(project["original_filename"], mode)
-    return True, "Export successful", output_path, download_filename
+    return True, MSG_EXPORT_OK, output_path, download_filename
