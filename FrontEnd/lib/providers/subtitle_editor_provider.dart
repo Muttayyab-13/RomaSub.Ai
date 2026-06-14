@@ -474,6 +474,27 @@ class EditorNotifier extends StateNotifier<EditorState> {
     }
   }
 
+  /// Render and download the project's video with captions.
+  ///
+  /// [mode] is `hardsub` or `softsub`. Returns the bytes + filename, or null
+  /// on failure (error is recorded in state).
+  Future<({List<int> bytes, String filename})?> exportVideo(String mode) async {
+    if (state.project == null) return null;
+
+    // Save first so the rendered video reflects the latest edits.
+    if (state.hasUnsavedChanges) await save();
+
+    try {
+      return await _subtitleService.downloadVideoWithCaptions(
+        state.project!.subtitleId,
+        mode,
+      );
+    } catch (e) {
+      state = state.copyWith(error: () => 'Video export failed: $e');
+      return null;
+    }
+  }
+
   // ===== Playback Sync =====
 
   /// Find the segment index at the given playback time using binary search
