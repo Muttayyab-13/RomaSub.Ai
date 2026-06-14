@@ -4,6 +4,7 @@ Handles subtitle project CRUD, editing, and export operations
 """
 
 import os
+import logging
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
@@ -26,6 +27,8 @@ from app.schemas.subtitle import (
 )
 
 router = APIRouter(prefix="/subtitles", tags=["Subtitles"])
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -265,14 +268,21 @@ async def export_video(subtitle_id: str, mode: str = "hardsub"):
         raise HTTPException(status_code=code, detail=message)
 
     fmt = "mp4-hardsub" if mode == "hardsub" else "mp4-softsub"
-    subtitle_service.record_export(subtitle_id, fmt, filename)
-
-    return FileResponse(
+    response = FileResponse(
         output_path,
         media_type="video/mp4",
         filename=filename,
         background=BackgroundTask(os.remove, output_path),
     )
+    # Record history as a best-effort side effect: don't lose the rendered
+    # download (or leak its temp file) just because the history write failed.
+    try:
+        subtitle_service.record_export(subtitle_id, fmt, filename)
+    except Exception:
+        logger.warning(
+            "Failed to record video export for %s", subtitle_id, exc_info=True
+        )
+    return response
 
 
 @router.get("/list/projects")
