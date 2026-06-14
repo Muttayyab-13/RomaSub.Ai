@@ -153,6 +153,40 @@ class SubtitleService {
     }
   }
 
+  /// Download the project's video with Roman Urdu captions attached.
+  ///
+  /// [mode] is `hardsub` (burned-in) or `softsub` (toggleable track).
+  /// Returns the raw MP4 bytes and a suggested filename.
+  Future<({List<int> bytes, String filename})> downloadVideoWithCaptions(
+    String subtitleId,
+    String mode,
+  ) async {
+    try {
+      final response = await _client.dio.get<List<int>>(
+        ApiConfig.subtitleExportVideo(subtitleId),
+        queryParameters: {'mode': mode},
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: ApiConfig.videoExportTimeout,
+          headers: {'Accept': 'video/mp4'},
+        ),
+      );
+      final bytes = response.data ?? <int>[];
+      final filename =
+          _filenameFromHeaders(response.headers) ?? 'subtitled_video.mp4';
+      return (bytes: bytes, filename: filename);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  String? _filenameFromHeaders(Headers headers) {
+    final disposition = headers.value('content-disposition');
+    if (disposition == null) return null;
+    final match = RegExp('filename="?([^"]+)"?').firstMatch(disposition);
+    return match?.group(1);
+  }
+
   ApiException _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {

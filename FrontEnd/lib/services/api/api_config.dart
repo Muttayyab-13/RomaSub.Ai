@@ -51,6 +51,8 @@ class ApiConfig {
       '/subtitles/$subtitleId/fix-overlaps';
   static String subtitleExport(String subtitleId) =>
       '/subtitles/$subtitleId/export';
+  static String subtitleExportVideo(String subtitleId) =>
+      '/subtitles/$subtitleId/export-video';
 
   // Media Streaming
   static String mediaStream(String fileId) => '/media/$fileId/stream';
@@ -77,6 +79,8 @@ class ApiConfig {
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
+  // Video render can take minutes; use a much longer receive timeout.
+  static const Duration videoExportTimeout = Duration(minutes: 10);
 
   // File Upload Limits
   static const int maxFileSizeMB = 2048;
