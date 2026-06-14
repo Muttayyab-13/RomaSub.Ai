@@ -210,14 +210,15 @@ class SubtitleService {
         }
       }
 
-      String message = 'Operation failed';
-      if (parsed is Map<String, dynamic>) {
-        message = parsed['detail'] as String? ?? message;
-      }
+      final detail =
+          parsed is Map<String, dynamic> ? parsed['detail'] as String? : null;
+      final message = detail ?? 'Operation failed';
 
       if (statusCode == 400) return ValidationException(message, data);
       if (statusCode == 401) return UnauthorizedException(message);
-      if (statusCode == 404) return ServerException('Project not found', 404);
+      // Prefer the server's actionable detail (e.g. "Source video no longer
+      // available. Please re-upload.") over a generic label when present.
+      if (statusCode == 404) return ServerException(detail ?? 'Project not found', 404);
       if (statusCode != null && statusCode >= 500) {
         return ServerException('Server error', statusCode);
       }

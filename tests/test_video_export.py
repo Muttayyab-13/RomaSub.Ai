@@ -23,7 +23,9 @@ def test_build_ffmpeg_command_hardsub_burns_subtitles():
 def test_build_ffmpeg_command_softsub_muxes_track_without_reencode():
     cmd = build_ffmpeg_command("in.mp4", "subs.srt", "out.mp4", "softsub")
     assert cmd.count("-i") == 2          # video input + srt input
-    assert cmd.count("-map") == 2        # map all of input 0, plus the srt
+    # video + optional audio from input 0, plus the srt from input 1
+    assert cmd.count("-map") == 3
+    assert "0:v" in cmd and "0:a?" in cmd
     assert "mov_text" in cmd
     assert "copy" in cmd                 # stream copy = no re-encode
     assert cmd[-1] == "out.mp4"

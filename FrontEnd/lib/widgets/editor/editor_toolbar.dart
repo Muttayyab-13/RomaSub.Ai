@@ -259,18 +259,10 @@ class EditorToolbar extends ConsumerWidget {
       }
     }
 
-    if (result == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video export failed'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
+    // On failure exportVideo records the (detailed) error in editor state,
+    // which the screen surfaces as an error banner — matching how text
+    // exports report failures. Avoid a duplicate snackbar here.
+    if (result == null) return;
 
     try {
       final dir = await getDownloadsDirectory() ??

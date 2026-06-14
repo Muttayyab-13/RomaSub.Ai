@@ -66,7 +66,10 @@ def build_ffmpeg_command(
             "ffmpeg", "-y",
             "-i", input_path,
             "-i", srt_path,
-            "-map", "0", "-map", "1",
+            # Map the source video + (optional) audio plus the new subtitle
+            # track only — avoid copying pre-existing subtitle/data streams
+            # (e.g. from an MKV) that MP4 / mov_text can't hold.
+            "-map", "0:v", "-map", "0:a?", "-map", "1",
             "-c", "copy",
             "-c:s", "mov_text",
             "-movflags", "+faststart",
