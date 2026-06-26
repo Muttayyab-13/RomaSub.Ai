@@ -156,6 +156,7 @@ def create_project(
         "file_id": file_id,
         "project_name": project_name or original_filename,
         "original_filename": original_filename,
+        "is_video": media_service.is_video_file(original_filename),
         "segments": segments,
         "segment_count": len(segments),
         "file_duration": duration,
@@ -193,6 +194,10 @@ def list_all_projects() -> List[Dict]:
             "file_id": project["file_id"],
             "project_name": project["project_name"],
             "original_filename": project["original_filename"],
+            "is_video": project.get(
+                "is_video",
+                media_service.is_video_file(project["original_filename"]),
+            ),
             "segment_count": project["segment_count"],
             "file_duration": project.get("file_duration"),
             "created_at": project["created_at"],

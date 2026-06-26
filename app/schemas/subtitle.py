@@ -115,6 +115,7 @@ class SubtitleProjectResponse(BaseModel):
     file_duration: Optional[float] = None
     created_at: str
     updated_at: str
+    is_video: bool = False
 
 
 class SegmentResponse(BaseModel):
