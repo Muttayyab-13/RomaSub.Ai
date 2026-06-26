@@ -95,6 +95,7 @@ class SubtitleProject {
   final String fileId;
   final String projectName;
   final String originalFilename;
+  final bool isVideo;
   final List<EditableSegment> segments;
   final int segmentCount;
   final double? fileDuration;
@@ -106,6 +107,7 @@ class SubtitleProject {
     required this.fileId,
     required this.projectName,
     required this.originalFilename,
+    required this.isVideo,
     required this.segments,
     required this.segmentCount,
     this.fileDuration,
@@ -113,13 +115,25 @@ class SubtitleProject {
     required this.updatedAt,
   });
 
+  static const Set<String> _videoExtensions = {
+    'mp4', 'avi', 'mkv', 'mov', 'webm',
+  };
+
+  static bool _deriveIsVideo(String filename) {
+    if (!filename.contains('.')) return false;
+    return _videoExtensions.contains(filename.split('.').last.toLowerCase());
+  }
+
   factory SubtitleProject.fromJson(Map<String, dynamic> json) {
     final segmentsList = json['segments'] as List<dynamic>? ?? [];
+    final originalFilename = json['original_filename'] as String? ?? '';
     return SubtitleProject(
       subtitleId: json['subtitle_id'] as String,
       fileId: json['file_id'] as String,
       projectName: json['project_name'] as String? ?? '',
-      originalFilename: json['original_filename'] as String? ?? '',
+      originalFilename: originalFilename,
+      isVideo: (json['is_video'] as bool?) ??
+          _deriveIsVideo(originalFilename),
       segments: segmentsList
           .map((s) => EditableSegment.fromJson(s as Map<String, dynamic>))
           .toList(),
@@ -136,6 +150,7 @@ class SubtitleProject {
       'file_id': fileId,
       'project_name': projectName,
       'original_filename': originalFilename,
+      'is_video': isVideo,
       'segments': segments.map((s) => s.toJson()).toList(),
       'segment_count': segmentCount,
       'file_duration': fileDuration,
