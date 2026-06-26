@@ -75,6 +75,19 @@ class MediaService {
     }
   }
 
+  /// Returns whether the media file for [fileId] still exists on the server.
+  /// 404 -> false (file was cleaned up / lost). Other errors -> true
+  /// (don't punish the user for a transient network hiccup).
+  Future<bool> isMediaAvailable(String fileId) async {
+    try {
+      await _client.dio.get(ApiConfig.mediaInfo(fileId));
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return false;
+      return true;
+    }
+  }
+
   /// Get file information by file_id
   Future<Map<String, dynamic>> getFileInfo(String fileId) async {
     try {
