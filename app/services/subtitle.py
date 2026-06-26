@@ -12,6 +12,7 @@ import uuid
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
 
+from app.config import settings
 from app.services import asr as asr_service
 from app.services import media as media_service
 import logging
@@ -38,9 +39,7 @@ _export_history: List[Dict] = []
 # JSON persistence (so projects/exports survive restarts)
 # ============================================================================
 
-_STATE_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "data", "subtitle_state.json"
-)
+_STATE_FILE = os.path.join(settings.state_dir, "subtitle_state.json")
 
 
 def _save_state() -> None:

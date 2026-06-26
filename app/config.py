@@ -63,7 +63,14 @@ class Settings(BaseSettings):
     # Was previously /tmp/romasub_uploads, which is wiped on reboot and left
     # recents projects pointing at missing files.
     media_upload_dir: str = os.path.join(_PROJECT_ROOT, "uploads", "media")
-    
+
+    # Directory for durable runtime JSON state (subtitle_state.json +
+    # file_registry.json). Defaults to app/data alongside the bundled
+    # loanword/names dictionaries for local dev. In containers point this at a
+    # mounted volume (e.g. STATE_DIR=/app/var/state) so state survives redeploys
+    # WITHOUT a volume shadowing the image-baked dictionaries.
+    state_dir: str = os.path.join(_PROJECT_ROOT, "app", "data")
+
     @property
     def allowed_extensions(self) -> List[str]:
         """Get all allowed file extensions"""
@@ -85,5 +92,6 @@ class Settings(BaseSettings):
 # Create global settings instance
 settings = Settings()
 
-# Ensure media upload directory exists
+# Ensure media upload + runtime state directories exist
 os.makedirs(settings.media_upload_dir, exist_ok=True)
+os.makedirs(settings.state_dir, exist_ok=True)

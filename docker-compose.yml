@@ -65,18 +65,19 @@ services:
       # media_data volume mount (/app/uploads) so files survive redeploys —
       # otherwise "recents" projects point at media that no longer exists.
       MEDIA_UPLOAD_DIR: ${MEDIA_UPLOAD_DIR:-/app/uploads/media}
+      # Where durable runtime JSON state lives (subtitle_state.json +
+      # file_registry.json). Kept SEPARATE from /app/app/data so the state
+      # volume never shadows the image-baked loanword/names dictionaries —
+      # editing those + rebuilding "just works" with no volume recreation.
+      STATE_DIR: ${STATE_DIR:-/app/var/state}
     volumes:
       # Durable uploaded media (videos/audio + extracted audio). The backend
       # writes to /app/uploads/media (MEDIA_UPLOAD_DIR), which sits inside this.
       - media_data:/app/uploads
-      # Durable runtime JSON state that backs the "recents" feature: subtitle
-      # projects (subtitle_state.json) + the media file registry
-      # (file_registry.json), both written to /app/app/data.
-      # NOTE: this dir also ships the loanword/names dictionaries baked into the
-      # image; Docker seeds them into the volume on first creation. If you edit
-      # those dictionaries and rebuild, recreate the volume (docker compose down
-      # -v) so the new dictionaries are seeded.
-      - app_data:/app/app/data
+      # Durable runtime JSON state behind "recents": subtitle projects +
+      # media file registry. Mounted at STATE_DIR, separate from the baked
+      # dictionaries in /app/app/data.
+      - app_data:/app/var/state
       - ./models:/app/models
       - whisper_cache:/root/.cache/whisper
     ports:
@@ -91,7 +92,7 @@ volumes:
   # upload_data (/tmp) + static_data volumes.
   media_data:
     driver: local
-  # Runtime JSON state: subtitle projects + media file registry.
+  # Runtime JSON state (mounted at STATE_DIR): subtitle projects + file registry.
   app_data:
     driver: local
   whisper_cache:

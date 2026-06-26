@@ -29,11 +29,9 @@ logger = logging.getLogger(__name__)
 _file_registry: Dict[str, Dict] = {}
 
 # JSON persistence so the registry survives server restarts (mirrors the
-# subtitle service's subtitle_state.json). Files themselves live in
-# settings.media_upload_dir.
-_FILE_REGISTRY_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "data", "file_registry.json"
-)
+# subtitle service's subtitle_state.json). Lives in settings.state_dir; the
+# media files themselves live in settings.media_upload_dir.
+_FILE_REGISTRY_FILE = os.path.join(settings.state_dir, "file_registry.json")
 
 
 def _save_registry() -> None:

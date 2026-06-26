@@ -40,10 +40,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Create directories that back the persistent named volumes (see
 # docker-compose.yml): media uploads at /app/uploads/media and runtime JSON
-# state at /app/app/data. Both are mounted as volumes so their contents survive
-# container redeploys.
+# state at /app/var/state (STATE_DIR). Both are mounted as volumes so their
+# contents survive container redeploys. The loanword/names dictionaries ship
+# inside the image at /app/app/data (via COPY app/) and are intentionally NOT
+# volume-mounted, so rebuilds pick up dictionary edits with no volume recreate.
 RUN mkdir -p /app/uploads/media && \
-    mkdir -p /app/app/data
+    mkdir -p /app/var/state
 
 # Copy application code
 COPY app/ /app/app/
