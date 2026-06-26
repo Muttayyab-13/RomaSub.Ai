@@ -61,9 +61,22 @@ services:
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
       ALLOWED_VIDEO_EXTENSIONS: mp4,avi,mkv,mov,webm
       ALLOWED_AUDIO_EXTENSIONS: mp3,wav,m4a,flac,ogg
+      # Where uploaded media is stored inside the container. Must live under the
+      # media_data volume mount (/app/uploads) so files survive redeploys —
+      # otherwise "recents" projects point at media that no longer exists.
+      MEDIA_UPLOAD_DIR: ${MEDIA_UPLOAD_DIR:-/app/uploads/media}
     volumes:
-      - upload_data:/tmp/romasub_uploads
-      - static_data:/app/uploads
+      # Durable uploaded media (videos/audio + extracted audio). The backend
+      # writes to /app/uploads/media (MEDIA_UPLOAD_DIR), which sits inside this.
+      - media_data:/app/uploads
+      # Durable runtime JSON state that backs the "recents" feature: subtitle
+      # projects (subtitle_state.json) + the media file registry
+      # (file_registry.json), both written to /app/app/data.
+      # NOTE: this dir also ships the loanword/names dictionaries baked into the
+      # image; Docker seeds them into the volume on first creation. If you edit
+      # those dictionaries and rebuild, recreate the volume (docker compose down
+      # -v) so the new dictionaries are seeded.
+      - app_data:/app/app/data
       - ./models:/app/models
       - whisper_cache:/root/.cache/whisper
     ports:
@@ -74,9 +87,12 @@ services:
 volumes:
   postgres_data:
     driver: local
-  upload_data:
+  # Uploaded media files (durable across redeploys). Supersedes the old
+  # upload_data (/tmp) + static_data volumes.
+  media_data:
     driver: local
-  static_data:
+  # Runtime JSON state: subtitle projects + media file registry.
+  app_data:
     driver: local
   whisper_cache:
     driver: local

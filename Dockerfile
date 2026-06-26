@@ -38,10 +38,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Create necessary directories
-RUN mkdir -p /tmp/romasub_uploads && \
-    mkdir -p /app/uploads && \
-    chmod 777 /tmp/romasub_uploads
+# Create directories that back the persistent named volumes (see
+# docker-compose.yml): media uploads at /app/uploads/media and runtime JSON
+# state at /app/app/data. Both are mounted as volumes so their contents survive
+# container redeploys.
+RUN mkdir -p /app/uploads/media && \
+    mkdir -p /app/app/data
 
 # Copy application code
 COPY app/ /app/app/
