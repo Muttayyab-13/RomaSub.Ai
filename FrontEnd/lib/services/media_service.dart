@@ -85,6 +85,10 @@ class MediaService {
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return false;
       return true;
+    } catch (_) {
+      // Non-DioException: be permissive so a transient/unexpected error
+      // never blocks playback or hangs the editor on "Loading video...".
+      return true;
     }
   }
 
