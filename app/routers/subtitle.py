@@ -80,7 +80,10 @@ async def create_subtitle_project(file_id: str, request: CreateSubtitleRequest =
         file_duration=project.get("file_duration"),
         created_at=project["created_at"],
         updated_at=project["updated_at"],
-        is_video=media_service.is_video_file(project["original_filename"]),
+        is_video=project.get(
+            "is_video",
+            media_service.is_video_file(project["original_filename"]),
+        ),
     )
 
 
@@ -101,7 +104,10 @@ async def get_subtitle_project(subtitle_id: str):
         file_duration=project.get("file_duration"),
         created_at=project["created_at"],
         updated_at=project["updated_at"],
-        is_video=media_service.is_video_file(project["original_filename"]),
+        is_video=project.get(
+            "is_video",
+            media_service.is_video_file(project["original_filename"]),
+        ),
     )
 
 
@@ -197,7 +203,10 @@ async def bulk_update_segments(subtitle_id: str, request: BulkUpdateRequest):
         file_duration=project.get("file_duration"),
         created_at=project["created_at"],
         updated_at=project["updated_at"],
-        is_video=media_service.is_video_file(project["original_filename"]),
+        is_video=project.get(
+            "is_video",
+            media_service.is_video_file(project["original_filename"]),
+        ),
     )
 
 

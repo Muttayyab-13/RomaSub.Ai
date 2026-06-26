@@ -15,6 +15,10 @@ def test_is_video_file_handles_dotted_names():
     assert media_service.is_video_file("WhatsApp Video 2026-03-29 at 4.32.01 PM.mp4") is True
 
 
+def test_is_video_file_true_for_uppercase_extension():
+    assert media_service.is_video_file("clip.MP4") is True
+
+
 def test_schema_accepts_is_video_field():
     from app.schemas.subtitle import SubtitleProjectResponse
     resp = SubtitleProjectResponse(
@@ -33,9 +37,21 @@ def test_schema_accepts_is_video_field():
 
 def test_list_projects_includes_is_video():
     from app.services import subtitle as subtitle_service
-    items = subtitle_service.list_all_projects()
-    for item in items:
-        assert "is_video" in item
-        assert item["is_video"] == subtitle_service.media_service.is_video_file(
-            item["original_filename"]
-        )
+    sid = "test-sid-isvideo"
+    subtitle_service._subtitle_projects[sid] = {
+        "subtitle_id": sid,
+        "file_id": "fid-x",
+        "project_name": "p",
+        "original_filename": "clip.mp4",  # legacy dict: no is_video key
+        "segments": [],
+        "segment_count": 0,
+        "file_duration": None,
+        "created_at": "now",
+        "updated_at": "now",
+    }
+    try:
+        items = subtitle_service.list_all_projects()
+        match = next(i for i in items if i["subtitle_id"] == sid)
+        assert match["is_video"] is True
+    finally:
+        subtitle_service._subtitle_projects.pop(sid, None)
