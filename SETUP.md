@@ -82,6 +82,8 @@ Edit `.env`:
 | `SECRET_KEY` | yes | any long random string |
 | `WHISPER_MODEL` | no | `small` (default), `medium`, or `large` (slower, more accurate) |
 | `MAX_FILE_SIZE_MB` | no | default 2048 |
+| `MEDIA_UPLOAD_DIR` | no | where uploaded media is stored; default `<repo>/uploads/media` (Docker: `/app/uploads/media`). Must be durable — see §9 |
+| `STATE_DIR` | no | where runtime JSON state lives (`subtitle_state.json`, `file_registry.json`); default `<repo>/app/data` (Docker: `/app/var/state`). Must be durable — see §9 |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | no | only for Google login |
 | `BREVO_API_KEY` | no | only if you need OTP password reset emails (get one at app.brevo.com/settings/keys/api) |
 | `ENABLE_LLM_REFINE` | no | set `true` to polish output with Claude Haiku |
@@ -118,6 +120,33 @@ cp .env.docker .env       # or copy your .env from §6
 docker compose up --build
 ```
 Postgres + backend on `localhost:8000`. Models still need to be in `./models/` (mounted into the container).
+
+### Data persistence (named volumes)
+
+Uploaded media and runtime state survive container restarts **and redeploys**
+(`docker compose down && up --build`) via named volumes:
+
+| Volume | Mounted at | Holds | `.env` override |
+|---|---|---|---|
+| `media_data` | `/app/uploads` | uploaded videos/audio + extracted audio (`MEDIA_UPLOAD_DIR=/app/uploads/media`) | `MEDIA_UPLOAD_DIR` |
+| `app_data` | `/app/var/state` | `subtitle_state.json` + `file_registry.json` (`STATE_DIR=/app/var/state`) | `STATE_DIR` |
+| `postgres_data` | postgres data dir | the database | — |
+| `whisper_cache` | `/root/.cache/whisper` | downloaded Whisper weights | — |
+
+Why it matters: subtitle **projects** persist, so opening one from *recents*
+later must still find its media file. Earlier versions stored uploads in `/tmp`
+(wiped on reboot) with no volume for the registry, so recents projects pointed
+at missing files. These volumes fix that. If a media file is genuinely gone, the
+editor now shows a "media unavailable — re-upload" message instead of hanging.
+
+Notes:
+- The loanword/names dictionaries are baked into the image at `/app/app/data`
+  and are **not** volume-mounted — `STATE_DIR` is deliberately kept separate, so
+  editing those dictionaries and rebuilding takes effect with no volume recreate.
+- To start completely fresh (drop all uploads + state + database):
+  `docker compose down -v`.
+- Without Docker, the same dirs default to `<repo>/uploads/media` and
+  `<repo>/app/data`; override `MEDIA_UPLOAD_DIR` / `STATE_DIR` to relocate them.
 
 ## 10. Optional — Flutter frontend
 
