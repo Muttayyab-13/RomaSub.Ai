@@ -410,6 +410,7 @@ def rehydrate_from_disk() -> int:
             continue
 
         audio_sidecar = os.path.join(media_dir, f"{stem}_audio.wav")
+        has_audio = os.path.exists(audio_sidecar)
         _file_registry[stem] = {
             "file_id": stem,
             "original_filename": name,
@@ -417,8 +418,8 @@ def rehydrate_from_disk() -> int:
             "file_size": os.path.getsize(full_path),
             "extension": ext.lower(),
             "is_video": is_video_file(name),
-            "audio_path": audio_sidecar if os.path.exists(audio_sidecar) else None,
-            "status": "uploaded",
+            "audio_path": audio_sidecar if has_audio else None,
+            "status": "audio_ready" if has_audio else "uploaded",
         }
         added += 1
 
