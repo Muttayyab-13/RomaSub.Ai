@@ -16,6 +16,7 @@ class VideoPlayerState {
   final bool isBuffering;
   final bool isInitialized;
   final String? error;
+  final bool mediaUnavailable;
 
   VideoPlayerState({
     this.player,
@@ -28,6 +29,7 @@ class VideoPlayerState {
     this.isBuffering = false,
     this.isInitialized = false,
     this.error,
+    this.mediaUnavailable = false,
   });
 
   double get positionSeconds => position.inMilliseconds / 1000.0;
@@ -44,6 +46,7 @@ class VideoPlayerState {
     bool? isBuffering,
     bool? isInitialized,
     String? error,
+    bool? mediaUnavailable,
   }) {
     return VideoPlayerState(
       player: player ?? this.player,
@@ -56,6 +59,7 @@ class VideoPlayerState {
       isBuffering: isBuffering ?? this.isBuffering,
       isInitialized: isInitialized ?? this.isInitialized,
       error: error,
+      mediaUnavailable: mediaUnavailable ?? this.mediaUnavailable,
     );
   }
 
@@ -206,6 +210,15 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
       debugPrint(st.toString());
       state = state.copyWith(error: 'Failed to load video: $e');
     }
+  }
+
+  /// Mark the project's media as gone from the server so the UI can show a
+  /// clear "re-upload" message instead of an endless "Loading video...".
+  void markUnavailable() {
+    state = state.copyWith(
+      mediaUnavailable: true,
+      error: 'Media unavailable',
+    );
   }
 
   void play() => state.player?.play();
