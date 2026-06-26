@@ -152,7 +152,7 @@ async def get_file_info(file_id: str):
     """
     file_info = media_service.get_file_info(file_id)
 
-    if not file_info:
+    if not file_info or not os.path.exists(file_info["file_path"]):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found"
