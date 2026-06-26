@@ -383,5 +383,52 @@ def cleanup_file(file_id: str) -> bool:
         return False
 
 
-# Load persisted registry at import time so streaming works after a restart.
+def rehydrate_from_disk() -> int:
+    """
+    Rebuild registry entries for media files present on disk but missing from
+    the in-memory registry (e.g. after the registry JSON was lost but the
+    durable media files survived). Returns the number of entries added.
+
+    Files are named "{file_id}.{ext}"; extracted audio is "{file_id}_audio.wav".
+    original_filename is best-effort (the on-disk name) - streaming only needs
+    file_path, and the frontend already has the real name from the project.
+    """
+    media_dir = settings.media_upload_dir
+    if not os.path.isdir(media_dir):
+        return 0
+
+    added = 0
+    for name in os.listdir(media_dir):
+        if name.endswith("_audio.wav"):
+            continue
+        stem, dot, ext = name.partition(".")
+        if not dot or not stem or stem in _file_registry:
+            continue
+
+        full_path = os.path.join(media_dir, name)
+        if not os.path.isfile(full_path):
+            continue
+
+        audio_sidecar = os.path.join(media_dir, f"{stem}_audio.wav")
+        _file_registry[stem] = {
+            "file_id": stem,
+            "original_filename": name,
+            "file_path": full_path,
+            "file_size": os.path.getsize(full_path),
+            "extension": ext.lower(),
+            "is_video": is_video_file(name),
+            "audio_path": audio_sidecar if os.path.exists(audio_sidecar) else None,
+            "status": "uploaded",
+        }
+        added += 1
+
+    if added:
+        logger.info("Rehydrated %d media registry entries from disk", added)
+        _save_registry()
+    return added
+
+
+# Load persisted registry, then rehydrate any durable files the registry
+# missed, so streaming works after a restart even if the JSON was lost.
 _load_registry()
+rehydrate_from_disk()
