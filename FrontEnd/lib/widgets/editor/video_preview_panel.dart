@@ -60,23 +60,33 @@ class VideoPreviewPanel extends ConsumerWidget {
                       ],
                     )
                   : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.videocam_off_rounded,
-                            size: AppSizes.iconXl,
-                            color: Colors.white38,
-                          ),
-                          const SizedBox(height: AppSizes.sm),
-                          Text(
-                            playerState.error ?? 'Loading video...',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: AppSizes.fontSm,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.lg),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              playerState.mediaUnavailable
+                                  ? Icons.cloud_off_rounded
+                                  : Icons.videocam_off_rounded,
+                              size: AppSizes.iconXl,
+                              color: Colors.white38,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: AppSizes.sm),
+                            Text(
+                              playerState.mediaUnavailable
+                                  ? 'This project\'s media file is no longer '
+                                      'available. Please re-upload the video to '
+                                      'edit or export captions.'
+                                  : (playerState.error ?? 'Loading video...'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: AppSizes.fontSm,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
             ),

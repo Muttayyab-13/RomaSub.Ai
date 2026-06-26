@@ -8,6 +8,7 @@ import '../../models/transcription_model.dart';
 import '../../providers/subtitle_editor_provider.dart';
 import '../../providers/video_player_provider.dart';
 import '../../services/api/api_config.dart';
+import '../../services/media_service.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/editor/editor_toolbar.dart';
 import '../../widgets/editor/video_preview_panel.dart';
@@ -54,6 +55,16 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
           widget.fileId,
           widget.transcription,
         );
+
+    // If the media file no longer exists on the server (e.g. an old recents
+    // project whose temp file was cleaned up), show a clear message instead
+    // of letting the player spin forever.
+    final available =
+        await ref.read(mediaServiceProvider).isMediaAvailable(widget.fileId);
+    if (!available) {
+      ref.read(videoPlayerNotifierProvider.notifier).markUnavailable();
+      return;
+    }
 
     // Initialize video player with streaming URL
     final videoUrl = ApiConfig.mediaStreamUrl(widget.fileId);
