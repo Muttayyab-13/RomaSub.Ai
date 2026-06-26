@@ -6,6 +6,7 @@ Pure functions for media operations with in-memory file registry.
 """
 
 import os
+import json
 import uuid
 import subprocess
 from pathlib import Path
@@ -26,6 +27,38 @@ logger = logging.getLogger(__name__)
 
 # In-memory storage for file metadata (temporary files only)
 _file_registry: Dict[str, Dict] = {}
+
+# JSON persistence so the registry survives server restarts (mirrors the
+# subtitle service's subtitle_state.json). Files themselves live in
+# settings.media_upload_dir.
+_FILE_REGISTRY_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "data", "file_registry.json"
+)
+
+
+def _save_registry() -> None:
+    """Persist the file registry to disk atomically."""
+    try:
+        os.makedirs(os.path.dirname(_FILE_REGISTRY_FILE), exist_ok=True)
+        tmp_path = _FILE_REGISTRY_FILE + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(_file_registry, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, _FILE_REGISTRY_FILE)
+    except Exception as e:
+        logger.warning("Failed to persist file registry: %s", e)
+
+
+def _load_registry() -> None:
+    """Load the file registry from disk on startup."""
+    if not os.path.exists(_FILE_REGISTRY_FILE):
+        return
+    try:
+        with open(_FILE_REGISTRY_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _file_registry.update(data)
+        logger.info("Loaded file registry: %d entries", len(_file_registry))
+    except Exception as e:
+        logger.warning("Failed to load file registry: %s", e)
 
 
 # ============================================================================
@@ -154,6 +187,7 @@ async def save_upload_file(upload_file: UploadFile) -> Tuple[bool, str, Dict]:
         }
 
         _file_registry[file_id] = file_info
+        _save_registry()
 
         logger.info("File uploaded: %s (%s bytes)", file_id, file_size)
         print(f"\n[UPLOAD] File saved: {file_path}")
@@ -207,6 +241,7 @@ def extract_audio(file_id: str) -> Tuple[bool, str]:
     if not file_info["is_video"]:
         file_info["audio_path"] = file_info["file_path"]
         file_info["status"] = "audio_ready"
+        _save_registry()
         print(f"\n[AUDIO] File is already audio: {file_info['file_path']}")
         return True, file_info["file_path"]
 
@@ -250,6 +285,7 @@ def extract_audio(file_id: str) -> Tuple[bool, str]:
         # Update file info in memory
         file_info["audio_path"] = audio_path
         file_info["status"] = "audio_ready"
+        _save_registry()
 
         audio_size = os.path.getsize(audio_path)
         print(f"[AUDIO] Extraction complete: {audio_size / (1024*1024):.2f} MB")
@@ -337,6 +373,7 @@ def cleanup_file(file_id: str) -> bool:
 
         # Remove from registry
         del _file_registry[file_id]
+        _save_registry()
 
         logger.info("Cleaned up files for: %s", file_id)
         return True
@@ -344,3 +381,7 @@ def cleanup_file(file_id: str) -> bool:
     except Exception as e:
         logger.error("Cleanup failed for %s: %s", file_id, str(e))
         return False
+
+
+# Load persisted registry at import time so streaming works after a restart.
+_load_registry()
