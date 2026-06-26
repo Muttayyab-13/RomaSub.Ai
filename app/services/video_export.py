@@ -118,10 +118,10 @@ def export_video_with_subtitles(subtitle_id: str, mode: str) -> Tuple[bool, str,
     if not input_path or not os.path.exists(input_path):
         return False, MSG_SOURCE_MISSING, "", ""
 
-    os.makedirs(settings.temp_upload_dir, exist_ok=True)
+    os.makedirs(settings.media_upload_dir, exist_ok=True)
     token = uuid.uuid4().hex
-    srt_path = os.path.join(settings.temp_upload_dir, f"{token}.srt")
-    output_path = os.path.join(settings.temp_upload_dir, f"{token}_{mode}.mp4")
+    srt_path = os.path.join(settings.media_upload_dir, f"{token}.srt")
+    output_path = os.path.join(settings.media_upload_dir, f"{token}_{mode}.mp4")
 
     # Reuse the existing formatter — it already renders roman_urdu_text with a
     # fallback to urdu_text, which is exactly the caption rule we want.

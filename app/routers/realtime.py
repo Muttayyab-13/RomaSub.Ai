@@ -319,7 +319,7 @@ def _process_single_chunk(
     chunk_audio_path = chunker_service.extract_chunk_audio(
         session.audio_path,
         chunk,
-        settings.temp_upload_dir,
+        settings.media_upload_dir,
     )
 
     try:

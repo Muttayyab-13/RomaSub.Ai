@@ -115,10 +115,10 @@ async def save_upload_file(upload_file: UploadFile) -> Tuple[bool, str, Dict]:
     ext = get_file_extension(upload_file.filename)
 
     # Ensure upload directory exists
-    os.makedirs(settings.temp_upload_dir, exist_ok=True)
+    os.makedirs(settings.media_upload_dir, exist_ok=True)
 
     # Create file path
-    file_path = os.path.join(settings.temp_upload_dir, f"{file_id}.{ext}")
+    file_path = os.path.join(settings.media_upload_dir, f"{file_id}.{ext}")
 
     try:
         # Save file in chunks
@@ -216,7 +216,7 @@ def extract_audio(file_id: str) -> Tuple[bool, str]:
 
     # Generate audio output path
     audio_path = os.path.join(
-        settings.temp_upload_dir,
+        settings.media_upload_dir,
         f"{file_id}_audio.wav"
     )
 

@@ -7,6 +7,8 @@ from pydantic_settings import BaseSettings
 from typing import List
 import os
 
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
@@ -57,8 +59,10 @@ class Settings(BaseSettings):
     allowed_video_extensions: str = "mp4,avi,mkv,mov,webm"
     allowed_audio_extensions: str = "mp3,wav,m4a,flac,ogg"
     
-    # Temp directory for uploaded files
-    temp_upload_dir: str = "/tmp/romasub_uploads"
+    # Durable directory for uploaded media files (survives restarts/reboots).
+    # Was previously /tmp/romasub_uploads, which is wiped on reboot and left
+    # recents projects pointing at missing files.
+    media_upload_dir: str = os.path.join(_PROJECT_ROOT, "uploads", "media")
     
     @property
     def allowed_extensions(self) -> List[str]:
@@ -81,5 +85,5 @@ class Settings(BaseSettings):
 # Create global settings instance
 settings = Settings()
 
-# Ensure temp directory exists
-os.makedirs(settings.temp_upload_dir, exist_ok=True)
+# Ensure media upload directory exists
+os.makedirs(settings.media_upload_dir, exist_ok=True)

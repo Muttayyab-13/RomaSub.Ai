@@ -133,6 +133,9 @@ celerybeat.pid
 # Runtime state for subtitle projects/exports (per-environment data)
 app/data/subtitle_state.json
 app/data/subtitle_state.json.tmp
+app/data/file_registry.json
+app/data/file_registry.json.tmp
+uploads/media/
 
 # Environments
 .env
@@ -272,3 +275,4 @@ web/.dart_tool/
 google-services.json
 GoogleService-Info.plist
 *.pem
+.gstack/

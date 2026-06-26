@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"M2M100 Model: {settings.m2m100_model_path}")
     logger.info(f"Transliteration Device: {settings.transliteration_device}")
     logger.info(f"Max File Size: {settings.max_file_size_mb}MB")
-    logger.info(f"Temp Upload Dir: {settings.temp_upload_dir}")
+    logger.info(f"Media Upload Dir: {settings.media_upload_dir}")
     
     logger.info("="*60)
     logger.info("Server ready! API docs at: http://localhost:8000/docs")
