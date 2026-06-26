@@ -15,8 +15,7 @@ class EditorToolbar extends ConsumerWidget {
     final editorState = ref.watch(editorNotifierProvider);
     final editorNotifier = ref.read(editorNotifierProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isVideoSource =
-        _isVideoSource(editorState.project?.originalFilename ?? '');
+    final isVideoSource = editorState.project?.isVideo ?? false;
 
     return Container(
       height: 48,
@@ -228,12 +227,6 @@ class EditorToolbar extends ConsumerWidget {
         );
       }
     }
-  }
-
-  bool _isVideoSource(String filename) {
-    if (!filename.contains('.')) return false;
-    final ext = filename.split('.').last.toLowerCase();
-    return const {'mp4', 'avi', 'mkv', 'mov', 'webm'}.contains(ext);
   }
 
   Future<void> _handleVideoExport(
