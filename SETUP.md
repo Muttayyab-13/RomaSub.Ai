@@ -13,7 +13,7 @@ Install before cloning:
 | Git | any recent | |
 | Python | **3.11** (3.10 OK; 3.12+ may break `openai-whisper`) | |
 | PostgreSQL | 15+ | local server, or use Docker (see §9) |
-| FFmpeg | any recent | required by Whisper & `pydub` |
+| FFmpeg | any recent | required by Whisper, `pydub`, and the captioned-video export |
 | Flutter SDK | 3.8+ | **only if** you'll run the mobile/web app |
 
 Ubuntu/Debian one-liner for system deps:
@@ -135,7 +135,8 @@ The app expects the backend at `http://localhost:8000` (or whatever is configure
 3. `POST /media/upload` → upload a short Urdu `.mp3` / `.mp4`
 4. `POST /asr/transcribe/{file_id}` → returns a `task_id`
 5. `GET /asr/result/{task_id}` → final Roman Urdu output
-6. `GET /subtitle/{file_id}/srt` → downloadable subtitles
+6. `GET /asr/result/{file_id}/srt` → downloadable subtitles
+7. (video files) `POST /subtitles/create/{file_id}`, then `GET /subtitles/{subtitle_id}/export-video?mode=hardsub` → MP4 with burned-in Roman Urdu captions (`mode=softsub` for a toggleable subtitle track)
 
 ## Troubleshooting
 

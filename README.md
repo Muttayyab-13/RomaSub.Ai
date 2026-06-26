@@ -2,7 +2,7 @@
 
 Roman Urdu Captions Generator — Backend API.
 
-Pipeline: Urdu audio → Whisper ASR → loanword/name detection → urduhack normalization → fine-tuned M2M100 (Urdu→Roman Urdu) → loanword reconstruction → fuzzy postprocess → optional Claude Haiku 4.5 refinement → SRT/VTT/streaming output.
+Pipeline: Urdu audio → Whisper ASR → loanword/name detection → urduhack normalization → fine-tuned M2M100 (Urdu→Roman Urdu) → loanword reconstruction → fuzzy postprocess → optional Claude Haiku 4.5 refinement → SRT/VTT/streaming output, or a captioned-video (burned-in / soft-subtitle MP4) export.
 
 ## Project Structure
 
@@ -127,8 +127,9 @@ streamlit run demo/demo_ui.py
 - `GET /realtime/stream/{file_id}?language=ur` - Server-Sent-Events stream of `chunk_ready` / `buffer_ready` / `stream_complete` events as each audio chunk is ASR'd, transliterated, and (if enabled) refined.
 
 ### Subtitles
-- `GET /subtitle/{file_id}/srt` - Download SRT subtitle file
-- `GET /subtitle/{file_id}/vtt` - Download WebVTT subtitle file
+- `GET /subtitles/{subtitle_id}/export?format=srt|vtt|txt` - Download the edited subtitle project as SRT, WebVTT, or plain text
+- `GET /subtitles/{subtitle_id}/export-video?mode=hardsub|softsub` - Download the project's **video with Roman Urdu captions**. `hardsub` burns the captions into the picture (FFmpeg re-encode); `softsub` muxes a toggleable subtitle track into the MP4 (stream copy, no re-encode). Output is always MP4.
+- `GET /asr/result/{file_id}/srt` - Quick SRT download straight from a transcription result (used by the dashboard)
 
 ## Transliteration Pipeline
 
@@ -143,6 +144,15 @@ Each Urdu audio segment from Whisper passes through the following layers before 
 
 Every refine call is logged with a `Claude refiner:` prefix — grep for it to see `SKIPPED` (with reason), `CALLING`, `SUCCESS` (with token usage and a before/after sample), or `FAILED` (with error type) on each chunk.
 
+## Captioned Video Export
+
+The subtitle editor can export the original video with the Roman Urdu captions attached, in two modes (`app/services/video_export.py`, exposed at `GET /subtitles/{subtitle_id}/export-video?mode=`):
+
+- **`hardsub`** — captions are burned into the video pixels via an FFmpeg re-encode (`libx264` + AAC). Plays everywhere, including social platforms; slower because it re-encodes.
+- **`softsub`** — captions are muxed into the MP4 as a toggleable `mov_text` subtitle track via stream copy (no re-encode), so it is near-instant; the viewer can toggle captions on/off in players that support it.
+
+Captions use each segment's Roman Urdu text (falling back to the native Urdu text only when a segment has no Roman version), reusing the same `format_as_srt` formatter as the text exports. Only video sources are eligible — the endpoint returns `400` for audio-only files and `404` if the source video is no longer on disk. Rendering is synchronous, bounded by a 30-minute FFmpeg timeout, and the temporary SRT plus output file are cleaned up on every path. Output is always MP4.
+
 ## Technologies Used
 
 - **Web**: FastAPI 0.110+, Pydantic v2, PostgreSQL 15+
@@ -151,5 +161,5 @@ Every refine call is logged with a `Claude refiner:` prefix — grep for it to s
 - **Urdu normalization**: `urduhack` (leaf import — no TensorFlow dependency at runtime)
 - **Refinement**: Anthropic Claude API (Haiku 4.5 by default)
 - **Fuzzy matching**: `rapidfuzz`
-- **Media**: FFmpeg, `pydub`, `ffmpeg-python`
+- **Media**: FFmpeg, `pydub`, `ffmpeg-python` (FFmpeg also drives the hardsub/softsub captioned-video export)
 - **Email**: Brevo (transactional API for OTP)

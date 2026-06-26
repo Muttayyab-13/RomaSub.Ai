@@ -156,3 +156,25 @@ GET /subtitles/{subtitle_id}/export-video?mode=hardsub|softsub
 - Media metadata is in-memory; if the backend restarts between editing and export, the
   `file_id` mapping is lost and export returns 404. This matches the existing behavior
   of the video player/streaming endpoint and is acceptable for v1.
+
+## As-shipped notes (post-review deltas)
+
+The implementation follows this design; the following refinements were added during code
+review and are reflected in the shipped code:
+
+- **Render timeout.** `subprocess.run` uses a 30-minute (`1800s`) ceiling so a hung
+  FFmpeg can't pin a worker forever; a `TimeoutExpired` is treated as a render failure
+  and cleans up the partial output. The frontend Dio receive timeout is 10 minutes.
+- **Softsub stream mapping.** The softsub command maps `-map 0:v -map 0:a? -map 1`
+  (video + optional audio + the new SRT) rather than `-map 0`, so embedded subtitle/data
+  streams from an MKV source can't break `mov_text` muxing into MP4.
+- **Hardsub path escaping.** The `subtitles=` filtergraph value is single-quoted and
+  escaped (`\`, `'`, `:`) so a temp path with special characters can't break the filter.
+- **Best-effort export history.** The endpoint builds the `FileResponse` (registering the
+  temp-file cleanup) before recording the export, and the `record_export` call is wrapped
+  so a history-write failure neither discards the download nor leaks the temp file.
+- **Error surfacing.** `_handleError` decodes the JSON error body even for binary
+  (`ResponseType.bytes`) responses and surfaces the server's 404 detail (e.g. "Source
+  video no longer available. Please re-upload."). On failure the editor records the error
+  in state (shown via the editor's error banner), matching how text exports report
+  failures — no duplicate snackbar.
