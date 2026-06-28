@@ -8,7 +8,15 @@ class TranscriptionCompleteDialog extends StatefulWidget {
   final String language;
   final String previewText;
   final String? romanUrduPreviewText;
-  final VoidCallback onDownload;
+
+  /// Whether the source is a video — gates the captioned-video export options.
+  final bool isVideo;
+
+  /// Export a text subtitle format ('srt' | 'vtt' | 'txt').
+  final ValueChanged<String> onExport;
+
+  /// Render and download a captioned video ('hardsub' | 'softsub').
+  final ValueChanged<String> onExportVideo;
   final VoidCallback onViewDetails;
   final VoidCallback onEdit;
 
@@ -20,7 +28,9 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required this.language,
     required this.previewText,
     this.romanUrduPreviewText,
-    required this.onDownload,
+    required this.isVideo,
+    required this.onExport,
+    required this.onExportVideo,
     required this.onViewDetails,
     required this.onEdit,
   }) : super(key: key);
@@ -33,7 +43,9 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required String language,
     required String previewText,
     String? romanUrduPreviewText,
-    required VoidCallback onDownload,
+    required bool isVideo,
+    required ValueChanged<String> onExport,
+    required ValueChanged<String> onExportVideo,
     required VoidCallback onViewDetails,
     required VoidCallback onEdit,
   }) {
@@ -47,7 +59,9 @@ class TranscriptionCompleteDialog extends StatefulWidget {
         language: language,
         previewText: previewText,
         romanUrduPreviewText: romanUrduPreviewText,
-        onDownload: onDownload,
+        isVideo: isVideo,
+        onExport: onExport,
+        onExportVideo: onExportVideo,
         onViewDetails: onViewDetails,
         onEdit: onEdit,
       ),
@@ -349,38 +363,8 @@ class _TranscriptionCompleteDialogState
 
     return Column(
       children: [
-        // Primary: Download SRT
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              widget.onDownload();
-            },
-            icon: Icon(
-              Icons.download_rounded,
-              size: 20,
-              color: theme.colorScheme.onPrimary,
-            ),
-            label: Text(
-              'Download Roman Urdu SRT',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onPrimary,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-          ),
-        ),
+        // Primary: Export menu (SRT/VTT/TXT, plus captioned video for videos)
+        _buildExportMenu(theme),
         const SizedBox(height: 12),
 
         // Secondary buttons row
@@ -439,6 +423,76 @@ class _TranscriptionCompleteDialogState
           ),
         ),
       ],
+    );
+  }
+
+  /// Full-width "Export ▾" menu mirroring the editor toolbar: text formats are
+  /// always available; captioned-video exports show only for video sources.
+  Widget _buildExportMenu(ThemeData theme) {
+    return PopupMenuButton<String>(
+      tooltip: 'Export',
+      position: PopupMenuPosition.under,
+      onSelected: (value) {
+        // Dismiss the completion dialog, then hand off to the caller. Video
+        // renders surface their own progress UI on the underlying screen.
+        Navigator.of(context).pop();
+        if (value == 'video_hardsub') {
+          widget.onExportVideo('hardsub');
+        } else if (value == 'video_softsub') {
+          widget.onExportVideo('softsub');
+        } else {
+          widget.onExport(value);
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'srt', child: Text('Export as SRT')),
+        const PopupMenuItem(value: 'vtt', child: Text('Export as VTT')),
+        const PopupMenuItem(value: 'txt', child: Text('Export as TXT')),
+        if (widget.isVideo) ...[
+          const PopupMenuDivider(),
+          const PopupMenuItem(
+            value: 'video_hardsub',
+            child: Text('Video — burned-in captions'),
+          ),
+          const PopupMenuItem(
+            value: 'video_softsub',
+            child: Text('Video — toggleable captions'),
+          ),
+        ],
+      ],
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.download_rounded,
+              size: 20,
+              color: theme.colorScheme.onPrimary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Export',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 22,
+              color: theme.colorScheme.onPrimary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

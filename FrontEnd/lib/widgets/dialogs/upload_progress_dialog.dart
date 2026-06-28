@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/routes/app_routes.dart';
@@ -661,30 +664,49 @@ void _showCompletionDialog(
         ? transcription.romanUrduText!
         : transcription.text,
     romanUrduPreviewText: transcription.romanUrduText,
-    onDownload: () async {
-      // Download Roman Urdu SRT file (fallback to Urdu SRT)
-      final srtContent = transcription.hasRomanUrdu
-          ? await uploadNotifier.downloadRomanUrduSrt()
-          : await uploadNotifier.downloadSrt();
+    isVideo: uploadState.uploadResponse?.isVideo ?? false,
+    onExport: (format) async {
+      // Text export (srt/vtt/txt): fetch from the subtitle project and save
+      // to the downloads directory, mirroring the editor's export behaviour.
+      final result = await uploadNotifier.exportText(format);
+      if (result != null) {
+        final content = result['content']!;
+        await _saveExportToDownloads(
+          navigatorState,
+          filename: result['filename']!,
+          writeFile: (path) => File(path).writeAsString(content),
+        );
+      } else {
+        _showExportError(navigatorState, uploadNotifier.lastError);
+      }
+      uploadNotifier.reset();
+    },
+    onExportVideo: (mode) async {
+      // Block with a progress dialog while FFmpeg renders (can take minutes).
+      showDialog(
+        context: navigatorState.context,
+        barrierDismissible: false,
+        builder: (_) => const _VideoExportProgressDialog(),
+      );
 
-      if (srtContent != null) {
-        // Use a post-frame callback to show snackbar after dialog is dismissed
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final scaffoldMessenger = ScaffoldMessenger.maybeOf(navigatorState.context);
-          scaffoldMessenger?.showSnackBar(
-            SnackBar(
-              content: const Text('SRT downloaded successfully!'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-              ),
-            ),
-          );
-        });
+      ({List<int> bytes, String filename})? result;
+      try {
+        result = await uploadNotifier.exportVideo(mode);
+      } finally {
+        // Dismiss the progress dialog regardless of outcome.
+        navigatorState.pop();
       }
 
-      // Reset state
+      if (result != null) {
+        final bytes = result.bytes;
+        await _saveExportToDownloads(
+          navigatorState,
+          filename: result.filename,
+          writeFile: (path) => File(path).writeAsBytes(bytes),
+        );
+      } else {
+        _showExportError(navigatorState, uploadNotifier.lastError);
+      }
       uploadNotifier.reset();
     },
     onViewDetails: () {
@@ -725,4 +747,85 @@ void showUploadProgressDialog(BuildContext context) {
     barrierDismissible: false,
     builder: (context) => const UploadProgressDialog(),
   );
+}
+
+/// Write an export to the platform downloads directory and report the result
+/// via a snackbar — shared by the text and video export flows.
+Future<void> _saveExportToDownloads(
+  NavigatorState navigatorState, {
+  required String filename,
+  required Future<void> Function(String path) writeFile,
+}) async {
+  try {
+    final dir =
+        await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+    final filePath = '${dir.path}/$filename';
+    await writeFile(filePath);
+    _showExportSnackBar(navigatorState, 'Exported to: $filePath', AppColors.success);
+  } catch (e) {
+    _showExportSnackBar(navigatorState, 'Export failed: $e', AppColors.error);
+  }
+}
+
+/// Surface an export failure, preferring the server's actionable detail
+/// (e.g. "Source video no longer available. Please re-upload.").
+void _showExportError(NavigatorState navigatorState, String? message) {
+  _showExportSnackBar(
+    navigatorState,
+    message ?? 'Export failed. Please try again.',
+    AppColors.error,
+  );
+}
+
+void _showExportSnackBar(
+  NavigatorState navigatorState,
+  String message,
+  Color color,
+) {
+  // The completion dialog has already popped, so defer to the next frame to
+  // attach the snackbar to the underlying screen's ScaffoldMessenger.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final messenger = ScaffoldMessenger.maybeOf(navigatorState.context);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        ),
+      ),
+    );
+  });
+}
+
+/// Blocking spinner shown while a captioned video renders (FFmpeg can take
+/// minutes). Mirrors the editor toolbar's export progress dialog.
+class _VideoExportProgressDialog extends StatelessWidget {
+  const _VideoExportProgressDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PopScope(
+      canPop: false,
+      child: AlertDialog(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+            SizedBox(width: 16),
+            Flexible(
+              child: Text(
+                'Rendering video with captions…\nThis can take a few minutes.',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

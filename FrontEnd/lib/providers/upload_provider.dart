@@ -3,6 +3,7 @@ import '../models/upload_response_model.dart';
 import '../models/transcription_model.dart';
 import '../services/media_service.dart';
 import '../services/transcription_service.dart';
+import '../services/subtitle_service.dart';
 import '../services/api/api_exception.dart';
 
 /// Upload state representing the current upload/transcription status
@@ -97,9 +98,13 @@ enum UploadPhase {
 class UploadNotifier extends StateNotifier<UploadState> {
   final MediaService _mediaService;
   final TranscriptionService _transcriptionService;
+  final SubtitleService _subtitleService;
 
-  UploadNotifier(this._mediaService, this._transcriptionService)
-    : super(UploadState());
+  UploadNotifier(
+    this._mediaService,
+    this._transcriptionService,
+    this._subtitleService,
+  ) : super(UploadState());
 
   /// Upload and transcribe a file
   ///
@@ -249,6 +254,54 @@ class UploadNotifier extends StateNotifier<UploadState> {
     }
   }
 
+  /// The most recent error message, for surfacing after an export attempt
+  /// (the caller may hold only this notifier, not a live `ref`).
+  String? get lastError => state.error;
+
+  /// Ensure a subtitle project exists for the uploaded file and return its id.
+  ///
+  /// `create_project` is idempotent server-side (it reuses the existing project
+  /// mapped to this file_id), so calling this per-export won't spawn duplicate
+  /// "recents" entries.
+  Future<String?> _ensureSubtitleProject() async {
+    final fileId = state.uploadResponse?.fileId;
+    if (fileId == null) return null;
+    final project = await _subtitleService.createProject(fileId);
+    return project.subtitleId;
+  }
+
+  /// Export a text subtitle format ('srt' | 'vtt' | 'txt').
+  ///
+  /// Returns `{content, filename}` or null on failure (error recorded in state).
+  Future<Map<String, String>?> exportText(String format) async {
+    try {
+      final subtitleId = await _ensureSubtitleProject();
+      if (subtitleId == null) return null;
+      return await _subtitleService.exportSubtitles(subtitleId, format);
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to export $format: ${e.toString()}',
+      );
+      return null;
+    }
+  }
+
+  /// Render and download the captioned video ('hardsub' | 'softsub').
+  ///
+  /// Returns the MP4 bytes + filename, or null on failure (error in state).
+  Future<({List<int> bytes, String filename})?> exportVideo(
+    String mode,
+  ) async {
+    try {
+      final subtitleId = await _ensureSubtitleProject();
+      if (subtitleId == null) return null;
+      return await _subtitleService.downloadVideoWithCaptions(subtitleId, mode);
+    } catch (e) {
+      state = state.copyWith(error: 'Video export failed: ${e.toString()}');
+      return null;
+    }
+  }
+
   /// Reset upload state
   void reset() {
     state = UploadState.initial();
@@ -265,5 +318,10 @@ final uploadNotifierProvider =
     StateNotifierProvider<UploadNotifier, UploadState>((ref) {
       final mediaService = ref.watch(mediaServiceProvider);
       final transcriptionService = ref.watch(transcriptionServiceProvider);
-      return UploadNotifier(mediaService, transcriptionService);
+      final subtitleService = ref.watch(subtitleServiceProvider);
+      return UploadNotifier(
+        mediaService,
+        transcriptionService,
+        subtitleService,
+      );
     });
