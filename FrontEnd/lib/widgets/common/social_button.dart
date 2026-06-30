@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import 'pressable.dart';
 
@@ -19,10 +20,10 @@ class SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Theme-aware colors
-    final bgColor = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
-    final textColor = isDark ? Colors.white : Colors.black;
-    final iconColor = isDark ? Colors.white : Colors.black;
+    final bgColor = AppColors.getCard(isDark);
+    final borderColor = AppColors.getBorder(isDark);
+    final textColor = AppColors.getPrimary(isDark);
+    final iconColor = AppColors.getPrimary(isDark);
 
     return Pressable(
       onTap: onTap,

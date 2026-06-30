@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/theme_provider.dart';
@@ -24,10 +25,10 @@ class ExportsScreen extends ConsumerWidget {
     final isDark = ref.watch(themeProvider).isDark;
     final exportsAsync = ref.watch(exportsProvider);
 
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
+    final borderColor = AppColors.getBorder(isDark);
 
     return Column(
       children: [
@@ -172,11 +173,9 @@ class _ExportTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSizes.sm),
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        color: AppColors.getCard(isDark),
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        border: Border.all(
-          color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
-        ),
+        border: Border.all(color: AppColors.getBorder(isDark)),
       ),
       child: Row(
         children: [
@@ -190,7 +189,7 @@ class _ExportTile extends StatelessWidget {
             child: Icon(
               _formatIcon(export['format'] ?? 'srt'),
               size: 20,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              color: AppColors.getTextSecondary(isDark),
             ),
           ),
           const SizedBox(width: AppSizes.md),
@@ -203,7 +202,7 @@ class _ExportTile extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: AppSizes.fontSm,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: AppColors.getPrimary(isDark),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -230,7 +229,7 @@ class _ExportTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                color: AppColors.getTextSecondary(isDark),
               ),
             ),
           ),

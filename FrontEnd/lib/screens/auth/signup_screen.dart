@@ -140,8 +140,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     // Theme-aware colors
     final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
     final textHint = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
     final checkboxColor = isDark ? Colors.grey.shade300 : Colors.black;
 
@@ -339,7 +339,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           onTap: isLoading
                               ? null
                               : () => AppRoutes.back(context),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.xs,
@@ -403,7 +405,7 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final dividerColor = AppColors.getBorder(isDark);
     final textColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
 
     return Row(

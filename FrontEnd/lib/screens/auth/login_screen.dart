@@ -69,10 +69,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        backgroundColor: AppColors.getCard(isDark),
         title: Text(
           'Email Not Verified',
-          style: TextStyle(color: isDark ? Colors.white : Colors.black),
+          style: TextStyle(color: AppColors.getPrimary(isDark)),
         ),
         content: Text(
           'Please verify your email address before logging in. '
@@ -86,9 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
+              style: TextStyle(color: AppColors.getTextSecondary(isDark)),
             ),
           ),
           ElevatedButton(
@@ -136,8 +134,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     // Theme-aware colors
     final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
     final textHint = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
     final linkColor = AppColors.getAccent(isDark);
 
@@ -270,7 +268,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onTap: isLoading
                               ? null
                               : () => AppRoutes.to(context, AppRoutes.signup),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusSm,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.xs,
@@ -335,7 +335,7 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final dividerColor = AppColors.getBorder(isDark);
     final textColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
 
     return Row(

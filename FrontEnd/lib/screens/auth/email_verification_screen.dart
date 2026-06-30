@@ -12,16 +12,15 @@ import '../../widgets/common/app_logo.dart';
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   final String email;
 
-  const EmailVerificationScreen({
-    super.key,
-    required this.email,
-  });
+  const EmailVerificationScreen({super.key, required this.email});
 
   @override
-  ConsumerState<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  ConsumerState<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> {
+class _EmailVerificationScreenState
+    extends ConsumerState<EmailVerificationScreen> {
   final _otpController = TextEditingController();
   int _resendCooldown = 0;
   Timer? _timer;
@@ -44,10 +43,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       return;
     }
 
-    final success = await ref.read(authNotifierProvider.notifier).verifyEmail(
-          widget.email,
-          _otpController.text,
-        );
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .verifyEmail(widget.email, _otpController.text);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,10 +60,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       final error = ref.read(authNotifierProvider).error;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -74,9 +69,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
   Future<void> _handleResendCode() async {
     if (_resendCooldown > 0) return;
 
-    final success = await ref.read(authNotifierProvider.notifier).resendVerificationOtp(
-          widget.email,
-        );
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resendVerificationOtp(widget.email);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,10 +85,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       final error = ref.read(authNotifierProvider).error;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -166,10 +158,12 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   textAlign: TextAlign.center,
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                     children: [
-                      const TextSpan(text: 'We\'ve sent a 6-digit verification code to\n'),
+                      const TextSpan(
+                        text: 'We\'ve sent a 6-digit verification code to\n',
+                      ),
                       TextSpan(
                         text: widget.email,
                         style: const TextStyle(

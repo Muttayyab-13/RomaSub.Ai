@@ -134,9 +134,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final firstName = authState.userName.trim().split(' ').first;
 
     // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -233,10 +233,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildUploadSection(bool isDark) {
     // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final accentBg = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
+    final accentBg = AppColors.getBorder(isDark);
     final buttonBg = AppColors.accentStrong;
     final buttonText = AppColors.onAccent;
     final borderColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
@@ -343,8 +343,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildStatusSection(bool isDark) {
     // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.xl),
@@ -413,7 +413,7 @@ class _IconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? const Color(0xFF2A2A2A) : AppColors.surface;
+    final bg = AppColors.getCard(isDark);
     final iconColor = isDark ? Colors.white : AppColors.textPrimary;
     final shadowColor = isDark
         ? Colors.black.withValues(alpha: 0.3)
@@ -462,14 +462,14 @@ class _StatusItem extends StatelessWidget {
     // Determine colors based on status
     Color backgroundColor;
     Color textColor;
-    final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final labelColor = AppColors.getTextSecondary(isDark);
 
     if (isOnline) {
       backgroundColor = Colors.green.withValues(alpha: 0.15);
       textColor = Colors.green;
     } else {
-      backgroundColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-      textColor = isDark ? Colors.white : Colors.black;
+      backgroundColor = AppColors.getBorder(isDark);
+      textColor = AppColors.getPrimary(isDark);
     }
 
     return Row(

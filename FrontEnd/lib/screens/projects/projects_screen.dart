@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
@@ -40,10 +41,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final isDark = ref.watch(themeProvider).isDark;
     final projectsAsync = ref.watch(projectsProvider);
 
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
+    final borderColor = AppColors.getBorder(isDark);
 
     return Column(
       children: [
@@ -276,11 +277,9 @@ class _ProjectTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppSizes.radiusLg),
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        color: AppColors.getCard(isDark),
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(
-          color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
-        ),
+        border: Border.all(color: AppColors.getBorder(isDark)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +289,7 @@ class _ProjectTile extends StatelessWidget {
               Icon(
                 Icons.movie_rounded,
                 size: 20,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                color: AppColors.getTextSecondary(isDark),
               ),
               const SizedBox(width: AppSizes.sm),
               Expanded(
@@ -299,7 +298,7 @@ class _ProjectTile extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: AppSizes.fontSm,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: AppColors.getPrimary(isDark),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

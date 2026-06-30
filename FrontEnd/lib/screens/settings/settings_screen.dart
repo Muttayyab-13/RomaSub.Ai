@@ -190,7 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: AppColors.getPrimary(isDark),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -290,11 +290,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildProfileCard(AuthState authState, dynamic user, bool isDark) {
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final dividerColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final cardBg = AppColors.getCard(isDark);
+    final borderColor = AppColors.getBorder(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
+    final dividerColor = AppColors.getBorder(isDark);
     final avatarBg = isDark ? Colors.grey.shade300 : Colors.black;
     final avatarText = isDark ? Colors.black : Colors.white;
     final cameraBg = isDark ? Colors.grey.shade300 : Colors.black;
@@ -421,11 +421,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSection(String title, IconData icon, Widget child, bool isDark) {
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final cardBg = AppColors.getCard(isDark);
+    final borderColor = AppColors.getBorder(isDark);
     final iconBg = isDark ? Colors.grey.shade700 : Colors.grey.shade100;
     final iconColor = isDark ? Colors.grey.shade300 : Colors.black87;
-    final textPrimary = isDark ? Colors.white : Colors.black;
+    final textPrimary = AppColors.getPrimary(isDark);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -488,14 +488,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icon(
                   Icons.edit,
                   size: 18,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: AppColors.getPrimary(isDark),
                 ),
                 label: Text(
                   'Edit Profile',
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  style: TextStyle(color: AppColors.getPrimary(isDark)),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: isDark ? Colors.white : Colors.black,
+                  foregroundColor: AppColors.getPrimary(isDark),
                   side: BorderSide(
                     color: isDark ? Colors.grey.shade600 : Colors.black,
                   ),
@@ -653,9 +653,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildInfoRow(String label, String value, bool isDark) {
-    final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final labelColor = AppColors.getTextSecondary(isDark);
     final valueBg = isDark ? Colors.grey.shade800 : Colors.grey.shade100;
-    final valueColor = isDark ? Colors.white : Colors.black;
+    final valueColor = AppColors.getPrimary(isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -718,7 +718,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white : Colors.black,
+                  color: AppColors.getPrimary(isDark),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -737,7 +737,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        color: isDark ? Colors.white : Colors.black,
+                        color: AppColors.getPrimary(isDark),
                       ),
                     ),
                     const SizedBox(height: 2),

@@ -104,6 +104,12 @@ class AppColors {
   static Color getTextHint(bool isDark) => isDark ? textHintDark : textHint;
   static Color getDivider(bool isDark) => isDark ? dividerDark : divider;
 
+  /// Elevated card/panel surface: white in light mode, the slightly-raised
+  /// `surfaceVariantDark` (#2A2A2A) in dark mode. This is the surface the
+  /// screens actually use for cards (distinct from the deeper `surfaceDark`
+  /// #1A1A1A that backs dialogs/menus in the theme).
+  static Color getCard(bool isDark) => isDark ? surfaceVariantDark : surface;
+
   /// Brand accent for FOREGROUND uses (links, icons, active indicators, focus).
   /// Contrast-safe in each mode: teal-700 on light (~5.5:1 on white), teal-400
   /// on dark (~10:1 on near-black). Use `accentColor` (teal-500) only for fills

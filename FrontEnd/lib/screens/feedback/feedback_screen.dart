@@ -82,10 +82,10 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider).isDark;
 
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    final cardBg = AppColors.getCard(isDark);
+    final textPrimary = AppColors.getPrimary(isDark);
+    final textSecondary = AppColors.getTextSecondary(isDark);
+    final borderColor = AppColors.getBorder(isDark);
     final buttonBg = AppColors.accentStrong;
     final buttonText = AppColors.onAccent;
     final starColor = isDark ? Colors.amber.shade300 : Colors.amber.shade600;

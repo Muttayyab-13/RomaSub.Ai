@@ -169,7 +169,8 @@ class UploadProgressDialog extends ConsumerWidget {
                               uploadState.transcription!.hasRomanUrdu
                                   ? uploadState.transcription!.romanUrduText!
                                   : uploadState.transcription!.text,
-                              isRomanUrdu: uploadState.transcription!.hasRomanUrdu,
+                              isRomanUrdu:
+                                  uploadState.transcription!.hasRomanUrdu,
                             );
                           },
                           borderRadius: BorderRadius.circular(
@@ -196,7 +197,9 @@ class UploadProgressDialog extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.success.withValues(alpha: 0.1,),
+                                        color: AppColors.success.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -259,7 +262,9 @@ class UploadProgressDialog extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     uploadState.transcription!.hasRomanUrdu
-                                        ? uploadState.transcription!.romanUrduText!
+                                        ? uploadState
+                                              .transcription!
+                                              .romanUrduText!
                                         : uploadState.transcription!.text,
                                     style: TextStyle(
                                       fontSize: AppSizes.fontSm,
@@ -270,7 +275,8 @@ class UploadProgressDialog extends ConsumerWidget {
                                     ),
                                     maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
-                                    textDirection: uploadState.transcription!.hasRomanUrdu
+                                    textDirection:
+                                        uploadState.transcription!.hasRomanUrdu
                                         ? TextDirection.ltr
                                         : TextDirection.rtl,
                                   ),
@@ -323,21 +329,27 @@ class UploadProgressDialog extends ConsumerWidget {
                     child: TextButton.icon(
                       onPressed: () {
                         final fileId = uploadState.uploadResponse?.fileId;
-                        final filename = uploadState.currentFileName ?? 'Unknown';
+                        final filename =
+                            uploadState.currentFileName ?? 'Unknown';
                         if (fileId != null) {
                           Navigator.of(context).pop();
-                          AppRoutes.to(context, AppRoutes.realtimeViewer, arguments: {
-                            'fileId': fileId,
-                            'filename': filename,
-                          });
+                          AppRoutes.to(
+                            context,
+                            AppRoutes.realtimeViewer,
+                            arguments: {'fileId': fileId, 'filename': filename},
+                          );
                           ref.read(uploadNotifierProvider.notifier).reset();
                         }
                       },
                       icon: const Icon(Icons.live_tv_rounded, size: 18),
-                      label: const Text('Skip wait — Watch with Live Subtitles'),
+                      label: const Text(
+                        'Skip wait — Watch with Live Subtitles',
+                      ),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.success,
-                        padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSizes.sm,
+                        ),
                       ),
                     ),
                   ),
@@ -407,8 +419,12 @@ class UploadProgressDialog extends ConsumerWidget {
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  final notifier = ref.read(uploadNotifierProvider.notifier);
-                                  final srtContent = uploadState.transcription?.hasRomanUrdu == true
+                                  final notifier = ref.read(
+                                    uploadNotifierProvider.notifier,
+                                  );
+                                  final srtContent =
+                                      uploadState.transcription?.hasRomanUrdu ==
+                                          true
                                       ? await notifier.downloadRomanUrduSrt()
                                       : await notifier.downloadSrt();
 
@@ -484,20 +500,22 @@ class UploadProgressDialog extends ConsumerWidget {
                                 ),
                               ),
                             if (uploadState.phase == UploadPhase.error)
-                              Flexible(child: ElevatedButton(
-                                onPressed: () {
-                                  ref
-                                      .read(uploadNotifierProvider.notifier)
-                                      .clearError();
-                                  Navigator.of(context).pop();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
+                              Flexible(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(uploadNotifierProvider.notifier)
+                                        .clearError();
+                                    Navigator.of(context).pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                  ),
+                                  child: const Text('Try Again'),
                                 ),
-                                child: const Text('Try Again'),
-                              )),
+                              ),
                           ],
                         ),
                 ),
@@ -554,7 +572,11 @@ class UploadProgressDialog extends ConsumerWidget {
 }
 
 /// Show full text dialog
-void _showFullTextDialog(BuildContext context, String fullText, {bool isRomanUrdu = false}) {
+void _showFullTextDialog(
+  BuildContext context,
+  String fullText, {
+  bool isRomanUrdu = false,
+}) {
   showDialog(
     context: context,
     builder: (context) => Dialog(
@@ -597,7 +619,9 @@ void _showFullTextDialog(BuildContext context, String fullText, {bool isRomanUrd
                   ),
                   const SizedBox(width: AppSizes.md),
                   Text(
-                    isRomanUrdu ? 'Roman Urdu Transliteration' : 'Full Transcription',
+                    isRomanUrdu
+                        ? 'Roman Urdu Transliteration'
+                        : 'Full Transcription',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -619,7 +643,9 @@ void _showFullTextDialog(BuildContext context, String fullText, {bool isRomanUrd
                 padding: const EdgeInsets.all(AppSizes.xl),
                 child: SelectableText(
                   fullText,
-                  textDirection: isRomanUrdu ? TextDirection.ltr : TextDirection.rtl,
+                  textDirection: isRomanUrdu
+                      ? TextDirection.ltr
+                      : TextDirection.rtl,
                   textAlign: isRomanUrdu ? TextAlign.left : TextAlign.right,
                   style: const TextStyle(
                     fontSize: 16,
@@ -713,10 +739,10 @@ void _showCompletionDialog(
       final filename = uploadState.currentFileName ?? 'Unknown';
       if (fileId != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigatorState.pushNamed(AppRoutes.realtimeViewer, arguments: {
-            'fileId': fileId,
-            'filename': filename,
-          });
+          navigatorState.pushNamed(
+            AppRoutes.realtimeViewer,
+            arguments: {'fileId': fileId, 'filename': filename},
+          );
         });
         uploadNotifier.reset();
       }
@@ -727,10 +753,10 @@ void _showCompletionDialog(
       final fileId = uploadState.uploadResponse?.fileId;
       if (transcription != null && fileId != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigatorState.pushNamed(AppRoutes.editor, arguments: {
-            'fileId': fileId,
-            'transcription': transcription,
-          });
+          navigatorState.pushNamed(
+            AppRoutes.editor,
+            arguments: {'fileId': fileId, 'transcription': transcription},
+          );
         });
         uploadNotifier.reset();
       }
@@ -756,10 +782,15 @@ Future<void> _saveExportToDownloads(
 }) async {
   try {
     final dir =
-        await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+        await getDownloadsDirectory() ??
+        await getApplicationDocumentsDirectory();
     final filePath = '${dir.path}/$filename';
     await writeFile(filePath);
-    _showExportSnackBar(navigatorState, 'Exported to: $filePath', AppColors.success);
+    _showExportSnackBar(
+      navigatorState,
+      'Exported to: $filePath',
+      AppColors.success,
+    );
   } catch (e) {
     _showExportSnackBar(navigatorState, 'Export failed: $e', AppColors.error);
   }

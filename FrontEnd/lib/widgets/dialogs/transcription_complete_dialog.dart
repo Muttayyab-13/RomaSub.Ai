@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 /// Clean and Modern Transcription Complete Dialog
 class TranscriptionCompleteDialog extends StatefulWidget {
@@ -280,7 +281,7 @@ class _TranscriptionCompleteDialogState
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade900 : const Color(0xFFF8F9FA),
+        color: isDark ? Colors.grey.shade900 : AppColors.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
@@ -350,7 +351,7 @@ class _TranscriptionCompleteDialogState
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? Colors.grey.shade900 : const Color(0xFFFAFAFA),
+            color: isDark ? Colors.grey.shade900 : AppColors.background,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: theme.dividerColor),
           ),
