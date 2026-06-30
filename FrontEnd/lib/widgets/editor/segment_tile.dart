@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../models/subtitle_project_model.dart';
+import '../common/pressable.dart';
 
 /// Single segment row in the subtitle list panel
 class SegmentTile extends StatelessWidget {
@@ -34,20 +35,19 @@ class SegmentTile extends StatelessWidget {
           ? AppColors.accentLightDark
           : AppColors.accentLight;
     } else if (isActive) {
-      backgroundColor = (isDark ? Colors.blue.shade900 : Colors.blue.shade50)
-          .withValues(alpha: 0.3);
+      // Currently-playing segment: subtle teal accent tint
+      backgroundColor = AppColors.getAccent(isDark).withValues(alpha: 0.15);
     } else {
       backgroundColor = AppColors.getSurface(isDark);
     }
 
-    return InkWell(
+    return Pressable(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.sm,
-          vertical: AppSizes.sm,
-        ),
-        decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.sm,
+        vertical: AppSizes.sm,
+      ),
+      decoration: BoxDecoration(
           color: backgroundColor,
           border: Border(
             bottom: BorderSide(
@@ -131,7 +131,6 @@ class SegmentTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

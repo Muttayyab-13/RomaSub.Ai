@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
@@ -309,26 +310,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       height: AppSizes.buttonHeight,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? Colors.grey.shade300
-                              : Colors.black,
-                          foregroundColor: isDark ? Colors.black : Colors.white,
-                        ),
                         child: isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: isDark ? Colors.black : Colors.white,
+                                  color: Colors.white,
                                 ),
                               )
                             : Text(
                                 AppStrings.createAccount,
-                                style: TextStyle(
-                                  color: isDark ? Colors.black : Colors.white,
-                                ),
+                                style: const TextStyle(color: Colors.white),
                               ),
                       ),
                     ),
@@ -342,15 +335,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           AppStrings.hasAccount,
                           style: TextStyle(color: textSecondary),
                         ),
-                        GestureDetector(
+                        InkWell(
                           onTap: isLoading
                               ? null
                               : () => AppRoutes.back(context),
-                          child: Text(
-                            AppStrings.logIn,
-                            style: TextStyle(
-                              color: isLoading ? textHint : textPrimary,
-                              fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.xs,
+                              vertical: AppSizes.sm,
+                            ),
+                            child: Text(
+                              AppStrings.logIn,
+                              style: TextStyle(
+                                color: isLoading
+                                    ? textHint
+                                    : AppColors.getAccent(isDark),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
+import '../common/pressable.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
@@ -19,9 +21,9 @@ class Sidebar extends ConsumerWidget {
     // Dark mode: sidebar is dark grey (#2A2A2A) to match cards
     final sidebarBg = isDark ? const Color(0xFF2A2A2A) : Colors.black;
     final iconColor = isDark ? Colors.grey.shade500 : const Color(0xFF9CA3AF);
-    // Active item: White pill with black icon in both modes for contrast
-    final activeIconColor = Colors.black;
-    final activeBgColor = Colors.white;
+    // Active item: teal accent pill with white icon (meets contrast on teal-700)
+    final activeIconColor = AppColors.onAccent;
+    final activeBgColor = AppColors.accentStrong;
 
     return Container(
       width: 100,
@@ -31,7 +33,7 @@ class Sidebar extends ConsumerWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.15),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -177,16 +179,16 @@ class _MenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: label,
-      child: InkWell(
+      child: Pressable(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
+        decoration: BoxDecoration(
+          color: isActive ? activeBgColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: SizedBox(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
           child: Center(
             child: Icon(
               icon,

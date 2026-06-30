@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/upload_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/sidebar/sidebar.dart';
+import '../../widgets/common/pressable.dart';
 import '../../widgets/dialogs/upload_progress_dialog.dart';
 import '../../services/api/api_config.dart';
 
@@ -148,7 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 4),
                 spreadRadius: 0,
@@ -186,13 +187,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               icon: isDark
                   ? Icons.light_mode_outlined
                   : Icons.dark_mode_outlined,
+              tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
               onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
               isDark: isDark,
             ),
             const SizedBox(width: AppSizes.md),
             _IconButton(
-              icon: Icons.notifications_outlined,
-              hasBadge: true,
+              icon: Icons.help_outline,
+              tooltip: 'Help & guide',
               isDark: isDark,
               onTap: () {
                 showDialog(
@@ -230,8 +232,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final textPrimary = isDark ? Colors.white : Colors.black;
     final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final accentBg = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final buttonText = isDark ? Colors.black : Colors.white;
+    final buttonBg = AppColors.accentStrong;
+    final buttonText = AppColors.onAccent;
     final borderColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
 
     return Column(
@@ -346,7 +348,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -393,15 +395,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 class _IconButton extends StatelessWidget {
   final IconData icon;
-  final bool hasBadge;
   final VoidCallback onTap;
   final bool isDark;
+  final String? tooltip;
 
   const _IconButton({
     required this.icon,
-    this.hasBadge = false,
     required this.onTap,
     this.isDark = false,
+    this.tooltip,
   });
 
   @override
@@ -409,47 +411,33 @@ class _IconButton extends StatelessWidget {
     final bg = isDark ? const Color(0xFF2A2A2A) : AppColors.surface;
     final iconColor = isDark ? Colors.white : AppColors.textPrimary;
     final shadowColor = isDark
-        ? Colors.black.withOpacity(0.3)
-        : Colors.black.withOpacity(0.03);
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.03);
 
-    return InkWell(
+    final button = Pressable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      child: Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SizedBox(
         width: 48,
         height: 48,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: 22),
-            if (hasBadge)
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        ),
+        child: Center(child: Icon(icon, color: iconColor, size: 22)),
       ),
     );
+
+    return tooltip == null
+        ? button
+        : Tooltip(message: tooltip!, child: button);
   }
 }
 
@@ -457,14 +445,12 @@ class _StatusItem extends StatelessWidget {
   final String label;
   final String status;
   final bool isOnline;
-  final bool isPending;
   final bool isDark;
 
   const _StatusItem({
     required this.label,
     required this.status,
     required this.isOnline,
-    this.isPending = false,
     this.isDark = false,
   });
 
@@ -475,11 +461,8 @@ class _StatusItem extends StatelessWidget {
     Color textColor;
     final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-    if (isPending) {
-      backgroundColor = Colors.amber.withOpacity(0.15);
-      textColor = Colors.amber.shade700;
-    } else if (isOnline) {
-      backgroundColor = Colors.green.withOpacity(0.15);
+    if (isOnline) {
+      backgroundColor = Colors.green.withValues(alpha: 0.15);
       textColor = Colors.green;
     } else {
       backgroundColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;

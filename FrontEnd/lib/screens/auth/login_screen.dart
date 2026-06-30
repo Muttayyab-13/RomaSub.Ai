@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
@@ -138,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final textPrimary = isDark ? Colors.white : Colors.black;
     final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final textHint = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
-    final linkColor = isDark ? Colors.grey.shade300 : Colors.black;
+    final linkColor = AppColors.getAccent(isDark);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -209,18 +210,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Forgot Password link
                     Align(
                       alignment: Alignment.centerRight,
-                      child: GestureDetector(
+                      child: InkWell(
                         onTap: isLoading
                             ? null
                             : () => AppRoutes.to(
                                 context,
                                 AppRoutes.forgotPasswordEmail,
                               ),
-                        child: Text(
-                          AppStrings.forgotPassword,
-                          style: TextStyle(
-                            color: isLoading ? textHint : linkColor,
-                            fontWeight: FontWeight.w600,
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.sm,
+                            vertical: AppSizes.sm,
+                          ),
+                          child: Text(
+                            AppStrings.forgotPassword,
+                            style: TextStyle(
+                              color: isLoading ? textHint : linkColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -233,26 +241,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       height: AppSizes.buttonHeight,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? Colors.grey.shade300
-                              : Colors.black,
-                          foregroundColor: isDark ? Colors.black : Colors.white,
-                        ),
                         child: isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: isDark ? Colors.black : Colors.white,
+                                  color: Colors.white,
                                 ),
                               )
                             : Text(
                                 AppStrings.continueBtn,
-                                style: TextStyle(
-                                  color: isDark ? Colors.black : Colors.white,
-                                ),
+                                style: const TextStyle(color: Colors.white),
                               ),
                       ),
                     ),
@@ -266,15 +266,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           AppStrings.noAccount,
                           style: TextStyle(color: textSecondary),
                         ),
-                        GestureDetector(
+                        InkWell(
                           onTap: isLoading
                               ? null
                               : () => AppRoutes.to(context, AppRoutes.signup),
-                          child: Text(
-                            AppStrings.signUp,
-                            style: TextStyle(
-                              color: isLoading ? textHint : textPrimary,
-                              fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.xs,
+                              vertical: AppSizes.sm,
+                            ),
+                            child: Text(
+                              AppStrings.signUp,
+                              style: TextStyle(
+                                color: isLoading ? textHint : linkColor,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),

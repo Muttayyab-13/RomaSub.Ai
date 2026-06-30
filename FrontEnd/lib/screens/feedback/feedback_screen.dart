@@ -88,8 +88,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     final textPrimary = isDark ? Colors.white : Colors.black;
     final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
-    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final buttonText = isDark ? Colors.black : Colors.white;
+    final buttonBg = AppColors.accentStrong;
+    final buttonText = AppColors.onAccent;
     final starColor = isDark ? Colors.amber.shade300 : Colors.amber.shade600;
 
     return Scaffold(

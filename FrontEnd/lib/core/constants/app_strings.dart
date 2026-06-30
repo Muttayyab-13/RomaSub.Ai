@@ -38,7 +38,7 @@ class AppStrings {
   static const String passwordNeedDigit =
       "Password must contain at least one digit";
   static const String passwordNeedSpecial =
-      "Password must contain at least one special character (!@#\$%^&*(),.?\":{}|<>_-+=[]\\\/;~)";
+      "Password must contain at least one special character (!@#\$%^&*(),.?\":{}|<>_-+=[]\\/;~)";
   static const String confirmPasswordRequired = "Please confirm your password";
   static const String nameRequired = "Name is required";
   static const String nameInvalid = "Name must contain at least one letter";

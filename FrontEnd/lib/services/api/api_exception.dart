@@ -11,7 +11,7 @@ abstract class ApiException implements Exception {
 
 /// Network connectivity errors (timeout, no internet, etc.)
 class NetworkException extends ApiException {
-  NetworkException(String message) : super(message);
+  NetworkException(super.message);
 }
 
 /// 401 Unauthorized - Invalid credentials or expired token
@@ -28,5 +28,5 @@ class ValidationException extends ApiException {
 
 /// Server errors (5xx) or other unexpected errors
 class ServerException extends ApiException {
-  ServerException(String message, [int? code]) : super(message, code);
+  ServerException(super.message, [super.statusCode]);
 }

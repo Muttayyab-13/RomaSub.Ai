@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/utils/validators.dart';
@@ -308,7 +309,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -351,16 +352,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: InkWell(
-                  onTap: _isUploadingImage ? null : _handlePickImage,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cameraBg,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: cardBg, width: 3),
+                child: Material(
+                  color: cameraBg,
+                  shape: CircleBorder(
+                    side: BorderSide(color: cardBg, width: 3),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: _isUploadingImage ? null : _handlePickImage,
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Center(
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: cameraIcon,
+                          size: 18,
+                        ),
+                      ),
                     ),
-                    child: Icon(Icons.camera_alt, color: cameraIcon, size: 18),
                   ),
                 ),
               ),
@@ -426,7 +436,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -541,8 +551,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: ElevatedButton(
                 onPressed: _isSavingProfile ? null : _handleSaveProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.accentStrong,
+                  foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _isSavingProfile
@@ -564,8 +574,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSecuritySection(bool isDark) {
-    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final buttonText = isDark ? Colors.black : Colors.white;
+    final buttonBg = AppColors.accentStrong;
+    final buttonText = AppColors.onAccent;
 
     return Column(
       children: [
@@ -750,8 +760,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: isDark,
                 onChanged: (_) =>
                     ref.read(themeProvider.notifier).toggleTheme(),
-                activeColor: Colors.white,
-                activeTrackColor: Colors.black,
+                activeThumbColor: Colors.white,
+                activeTrackColor: AppColors.accentColor,
                 inactiveThumbColor: Colors.black,
                 inactiveTrackColor: Colors.grey.shade300,
               ),

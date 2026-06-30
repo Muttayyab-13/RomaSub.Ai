@@ -22,7 +22,7 @@ class SubtitleService {
       final response = await _client.dio.post(
         ApiConfig.subtitleCreate(fileId),
         data: {
-          if (projectName != null) 'project_name': projectName,
+          'project_name': ?projectName,
         },
       );
       return SubtitleProject.fromJson(response.data);

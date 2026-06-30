@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_sizes.dart';
+import 'pressable.dart';
 
 class SocialButton extends StatelessWidget {
   final IconData icon;
@@ -23,32 +24,30 @@ class SocialButton extends StatelessWidget {
     final textColor = isDark ? Colors.white : Colors.black;
     final iconColor = isDark ? Colors.white : Colors.black;
 
-    return InkWell(
+    return Pressable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: AppSizes.sm + 4),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: AppSizes.iconMd),
-            const SizedBox(width: AppSizes.sm),
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: AppSizes.fontSm,
-                fontWeight: FontWeight.w500,
-              ),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.sm + 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: iconColor, size: AppSizes.iconMd),
+          const SizedBox(width: AppSizes.sm),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: AppSizes.fontSm,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -162,7 +162,6 @@ class _ExportTile extends StatelessWidget {
     final filename = export['filename'] ?? 'Unknown';
     final format = (export['format'] ?? 'srt').toString().toUpperCase();
     final projectName = export['project_name'] ?? '';
-    final createdAt = export['created_at'] ?? '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.sm),

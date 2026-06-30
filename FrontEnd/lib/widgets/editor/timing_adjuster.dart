@@ -54,10 +54,17 @@ class TimingAdjuster extends StatelessWidget {
                     final newVal = (value - 0.1).clamp(0.0, double.infinity);
                     onChanged(newVal);
                   },
-                  child: Icon(
-                    Icons.remove_rounded,
-                    size: 16,
-                    color: AppColors.getTextSecondary(isDark),
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.remove_rounded,
+                        size: 16,
+                        color: AppColors.getTextSecondary(isDark),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -79,10 +86,17 @@ class TimingAdjuster extends StatelessWidget {
                   onTap: () {
                     onChanged(value + 0.1);
                   },
-                  child: Icon(
-                    Icons.add_rounded,
-                    size: 16,
-                    color: AppColors.getTextSecondary(isDark),
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.add_rounded,
+                        size: 16,
+                        color: AppColors.getTextSecondary(isDark),
+                      ),
+                    ),
                   ),
                 ),
               ],

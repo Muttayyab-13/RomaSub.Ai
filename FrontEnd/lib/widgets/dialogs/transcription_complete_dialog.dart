@@ -21,7 +21,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
   final VoidCallback onEdit;
 
   const TranscriptionCompleteDialog({
-    Key? key,
+    super.key,
     required this.filename,
     required this.duration,
     required this.segmentCount,
@@ -33,7 +33,7 @@ class TranscriptionCompleteDialog extends StatefulWidget {
     required this.onExportVideo,
     required this.onViewDetails,
     required this.onEdit,
-  }) : super(key: key);
+  });
 
   static Future<void> show(
     BuildContext context, {
@@ -90,7 +90,24 @@ class _TranscriptionCompleteDialogState
       parent: _animationController,
       curve: Curves.easeOutBack,
     );
-    _animationController.forward();
+  }
+
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    // Respect the system "reduce motion" setting: jump straight to the
+    // final state instead of animating the scale-in.
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      _animationController.value = 1.0;
+    } else {
+      _animationController.forward();
+    }
   }
 
   @override
@@ -171,7 +188,7 @@ class _TranscriptionCompleteDialogState
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),

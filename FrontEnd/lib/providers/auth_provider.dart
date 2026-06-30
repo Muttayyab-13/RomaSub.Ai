@@ -202,7 +202,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
 
         // Get authorization code from desktop OAuth flow
-        final code = await _desktopOAuth!.signIn();
+        final code = await _desktopOAuth.signIn();
         if (code == null) {
           // User canceled or error occurred
           state = state.copyWith(isLoading: false);
@@ -212,7 +212,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Exchange code for tokens via backend
         final response = await _authService.googleLoginWithCode(
           code,
-          _desktopOAuth!.getRedirectUri(),
+          _desktopOAuth.getRedirectUri(),
         );
         await _storage.saveToken(response.accessToken);
         await _storage.saveUser(response.user);
@@ -231,7 +231,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       // Trigger Google Sign-In flow
-      final googleUser = await _googleSignIn!.signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         // User canceled the sign-in
         state = state.copyWith(isLoading: false);
@@ -256,7 +256,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(error: e.message, isLoading: false);
       if (_googleSignIn != null) {
-        await _googleSignIn!.signOut();
+        await _googleSignIn.signOut();
       }
       return false;
     } catch (e) {
@@ -265,7 +265,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
       if (_googleSignIn != null) {
-        await _googleSignIn!.signOut();
+        await _googleSignIn.signOut();
       }
       return false;
     }
@@ -275,7 +275,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _storage.clearAll();
     if (_googleSignIn != null) {
-      await _googleSignIn!.signOut();
+      await _googleSignIn.signOut();
     }
     state = AuthState.initial();
   }

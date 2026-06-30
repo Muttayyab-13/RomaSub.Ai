@@ -29,7 +29,7 @@ class UploadProgressDialog extends ConsumerWidget {
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
                 spreadRadius: 0,
@@ -196,9 +196,7 @@ class UploadProgressDialog extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.success.withOpacity(
-                                          0.1,
-                                        ),
+                                        color: AppColors.success.withValues(alpha: 0.1,),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -537,12 +535,12 @@ class UploadProgressDialog extends ConsumerWidget {
       case UploadPhase.completed:
         icon = Icons.check_circle;
         color = AppColors.success;
-        backgroundColor = AppColors.success.withOpacity(0.15);
+        backgroundColor = AppColors.success.withValues(alpha: 0.15);
         break;
       case UploadPhase.error:
         icon = Icons.error_outline;
         color = AppColors.error;
-        backgroundColor = AppColors.error.withOpacity(0.15);
+        backgroundColor = AppColors.error.withValues(alpha: 0.15);
         break;
     }
 
@@ -568,7 +566,7 @@ void _showFullTextDialog(BuildContext context, String fullText, {bool isRomanUrd
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),

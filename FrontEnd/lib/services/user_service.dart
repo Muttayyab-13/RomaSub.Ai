@@ -4,7 +4,6 @@ import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
 import '../models/user_model.dart';
-import 'dart:io';
 
 /// User profile service for handling profile-related API calls
 class UserService {

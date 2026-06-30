@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:shelf/shelf.dart' as shelf;
-import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import '../core/config/oauth_config.dart';
@@ -27,7 +26,7 @@ class GoogleOAuthDesktopService {
     try {
       // 1. Start local HTTP server to capture callback
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, serverPort);
-      print('📡 OAuth server started on $redirectUri');
+      debugPrint('📡 OAuth server started on $redirectUri');
 
       // 2. Build Google OAuth URL
       final authUrl = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
@@ -39,7 +38,7 @@ class GoogleOAuthDesktopService {
         'prompt': 'select_account',
       });
 
-      print('🌐 Opening browser for Google authentication...');
+      debugPrint('🌐 Opening browser for Google authentication...');
 
       // 3. Open browser for authentication
       if (await canLaunchUrl(authUrl)) {
@@ -65,23 +64,23 @@ class GoogleOAuthDesktopService {
 
             // Complete with result
             if (error != null) {
-              print('❌ Google OAuth error: $error');
+              debugPrint('❌ Google OAuth error: $error');
               completer.complete(null);
             } else if (code != null) {
-              print('✅ Authorization code received');
+              debugPrint('✅ Authorization code received');
 
               // Bring the Flutter app window to foreground
               try {
                 await windowManager.show();
                 await windowManager.focus();
-                print('🎯 App brought to foreground');
+                debugPrint('🎯 App brought to foreground');
               } catch (e) {
-                print('⚠️  Could not bring window to foreground: $e');
+                debugPrint('⚠️  Could not bring window to foreground: $e');
               }
 
               completer.complete(code);
             } else {
-              print('❌ No code or error in response');
+              debugPrint('❌ No code or error in response');
               completer.complete(null);
             }
 
@@ -89,7 +88,7 @@ class GoogleOAuthDesktopService {
             await server?.close();
           }
         } catch (e) {
-          print('❌ Error handling callback: $e');
+          debugPrint('❌ Error handling callback: $e');
           completer.complete(null);
           await server?.close();
         }
@@ -98,7 +97,7 @@ class GoogleOAuthDesktopService {
       // 5. Set timeout for OAuth flow (2 minutes)
       Timer(const Duration(minutes: 2), () {
         if (!completer.isCompleted) {
-          print('⏱️  OAuth timeout');
+          debugPrint('⏱️  OAuth timeout');
           completer.complete(null);
           server?.close();
         }
@@ -106,7 +105,7 @@ class GoogleOAuthDesktopService {
 
       return await completer.future;
     } catch (e) {
-      print('❌ OAuth error: $e');
+      debugPrint('❌ OAuth error: $e');
       await server?.close();
       return null;
     }

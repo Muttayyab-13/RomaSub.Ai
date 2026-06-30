@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api/api_client.dart';
 import '../../services/api/api_config.dart';
 import '../../widgets/sidebar/sidebar.dart';
+import '../../widgets/common/pressable.dart';
 
 /// Provider that fetches real projects from the backend
 final projectsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -236,19 +236,18 @@ class _ProjectTile extends StatelessWidget {
         ? '${(duration / 60).floor()}:${(duration.toDouble() % 60).floor().toString().padLeft(2, '0')}'
         : '--:--';
 
-    return InkWell(
+    return Pressable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.md),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 Icon(Icons.movie_rounded, size: 20,
@@ -301,7 +300,6 @@ class _ProjectTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

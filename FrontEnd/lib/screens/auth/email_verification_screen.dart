@@ -216,30 +216,48 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 const SizedBox(height: AppSizes.md),
 
                 // Resend Code link
-                GestureDetector(
-                  onTap: _resendCooldown > 0 || isLoading ? null : _handleResendCode,
-                  child: Text(
-                    _resendCooldown > 0
-                        ? '${AppStrings.resendCode} ($_resendCooldown s)'
-                        : AppStrings.resendCode,
-                    style: TextStyle(
-                      color: _resendCooldown > 0 || isLoading
-                          ? AppColors.textHint
-                          : AppColors.accent,
-                      fontWeight: FontWeight.w600,
+                InkWell(
+                  onTap: _resendCooldown > 0 || isLoading
+                      ? null
+                      : _handleResendCode,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.sm,
+                      vertical: AppSizes.sm,
+                    ),
+                    child: Text(
+                      _resendCooldown > 0
+                          ? '${AppStrings.resendCode} ($_resendCooldown s)'
+                          : AppStrings.resendCode,
+                      style: TextStyle(
+                        color: _resendCooldown > 0 || isLoading
+                            ? AppColors.textHint
+                            : AppColors.accentStrong,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSizes.md),
+                const SizedBox(height: AppSizes.sm),
 
                 // Back link
-                GestureDetector(
+                InkWell(
                   onTap: isLoading ? null : () => AppRoutes.back(context),
-                  child: Text(
-                    AppStrings.backToLogin,
-                    style: TextStyle(
-                      color: isLoading ? AppColors.textHint : AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.sm,
+                      vertical: AppSizes.sm,
+                    ),
+                    child: Text(
+                      AppStrings.backToLogin,
+                      style: TextStyle(
+                        color: isLoading
+                            ? AppColors.textHint
+                            : AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
