@@ -6,13 +6,9 @@ import '../../screens/auth/email_verification_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_email_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_otp_screen.dart';
 import '../../screens/auth/forgot_password/forgot_password_reset_screen.dart';
-import '../../screens/dashboard/dashboard_screen.dart';
-import '../../screens/projects/projects_screen.dart';
-import '../../screens/exports/exports_screen.dart';
-import '../../screens/feedback/feedback_screen.dart';
-import '../../screens/settings/settings_screen.dart';
 import '../../screens/editor/subtitle_editor_screen.dart';
 import '../../screens/realtime/realtime_viewer_screen.dart';
+import '../../widgets/shell/main_shell.dart';
 import '../../models/transcription_model.dart';
 
 class AppRoutes {
@@ -21,6 +17,11 @@ class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
   static const String emailVerification = '/email-verification';
+
+  /// Single entry point for the in-app shell (5 tabs via IndexedStack). The
+  /// individual tab constants below remain as deep-link identifiers but are no
+  /// longer pushed — tab switching happens through `navIndexProvider`.
+  static const String app = '/app';
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
   static const String exports = '/exports';
@@ -43,34 +44,30 @@ class AppRoutes {
       case emailVerification:
         final email = routeSettings.arguments as String;
         return _buildRoute(EmailVerificationScreen(email: email));
-      case dashboard:
-        return _buildRoute(DashboardScreen());
-      case projects:
-        return _buildRoute(ProjectsScreen());
-      case exports:
-        return _buildRoute(const ExportsScreen());
-      case feedback:
-        return _buildRoute(FeedbackScreen());
+      case app:
+        return _buildRoute(const MainShell());
       case forgotPasswordEmail:
         return _buildRoute(ForgotPasswordEmailScreen());
       case forgotPasswordOtp:
         return _buildRoute(ForgotPasswordOtpScreen());
       case forgotPasswordReset:
         return _buildRoute(ForgotPasswordResetScreen());
-      case settings:
-        return _buildRoute(SettingsScreen());
       case editor:
         final args = routeSettings.arguments as Map<String, dynamic>;
-        return _buildRoute(SubtitleEditorScreen(
-          fileId: args['fileId'] as String,
-          transcription: args['transcription'] as TranscriptionModel?,
-        ));
+        return _buildRoute(
+          SubtitleEditorScreen(
+            fileId: args['fileId'] as String,
+            transcription: args['transcription'] as TranscriptionModel?,
+          ),
+        );
       case realtimeViewer:
         final args = routeSettings.arguments as Map<String, dynamic>;
-        return _buildRoute(RealtimeViewerScreen(
-          fileId: args['fileId'] as String,
-          filename: args['filename'] as String,
-        ));
+        return _buildRoute(
+          RealtimeViewerScreen(
+            fileId: args['fileId'] as String,
+            filename: args['filename'] as String,
+          ),
+        );
       default:
         return _buildRoute(LoginScreen());
     }
@@ -89,8 +86,17 @@ class AppRoutes {
     Navigator.pushReplacementNamed(context, route, arguments: arguments);
   }
 
-  static void clearAndGo(BuildContext context, String route, {Object? arguments}) {
-    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false, arguments: arguments);
+  static void clearAndGo(
+    BuildContext context,
+    String route, {
+    Object? arguments,
+  }) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      route,
+      (_) => false,
+      arguments: arguments,
+    );
   }
 
   static void back(BuildContext context) {

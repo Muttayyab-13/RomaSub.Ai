@@ -121,7 +121,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         .signInWithGoogle();
 
     if (success && mounted) {
-      AppRoutes.clearAndGo(context, AppRoutes.dashboard);
+      AppRoutes.clearAndGo(context, AppRoutes.app);
     } else if (mounted) {
       final error = ref.read(authNotifierProvider).error;
       if (error != null) {

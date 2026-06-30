@@ -28,8 +28,13 @@ class AppSizes {
   static const double iconXl = 48.0;
   
   // Layout
-  static const double sidebarWidth = 260.0;
+  static const double sidebarWidth = 240.0; // expanded labeled rail (>= tablet bp)
+  static const double sidebarRailWidth = 88.0; // collapsed icon-only rail (< tablet bp)
   static const double inputHeight = 48.0;
   static const double buttonHeight = 48.0;
   static const double authMaxWidth = 420.0;
+
+  // Responsive breakpoints (logical width)
+  static const double breakpointMobile = 600.0; // < 600 = phone
+  static const double breakpointTablet = 1024.0; // 600-1024 = tablet/narrow; >= 1024 = desktop
 }

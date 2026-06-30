@@ -4,11 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/upload_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/sidebar/sidebar.dart';
+import '../../providers/nav_provider.dart';
 import '../../widgets/common/pressable.dart';
 import '../../widgets/dialogs/upload_progress_dialog.dart';
 import '../../services/api/api_config.dart';
@@ -81,36 +80,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final authState = ref.watch(authNotifierProvider);
     final isDark = ref.watch(themeProvider).isDark;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Sidebar(currentRoute: AppRoutes.dashboard),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.xl),
-              child: Column(
+          // Header Row
+          _buildHeader(authState, isDark),
+          const SizedBox(height: AppSizes.xl),
+
+          // Main Content — side-by-side on wide content areas, stacked when narrow
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 760) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildUploadSection(isDark),
+                    const SizedBox(height: AppSizes.lg),
+                    _buildStatusSection(isDark),
+                  ],
+                );
+              }
+              return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Row
-                  _buildHeader(authState, isDark),
-                  const SizedBox(height: AppSizes.xl),
+                  // Left - Upload Section
+                  Expanded(flex: 6, child: _buildUploadSection(isDark)),
+                  const SizedBox(width: AppSizes.lg),
 
-                  // Main Content
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left - Upload Section
-                      Expanded(flex: 6, child: _buildUploadSection(isDark)),
-                      const SizedBox(width: AppSizes.lg),
-
-                      // Right - Status Section
-                      Expanded(flex: 4, child: _buildStatusSection(isDark)),
-                    ],
-                  ),
+                  // Right - Status Section
+                  Expanded(flex: 4, child: _buildStatusSection(isDark)),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -149,7 +152,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
+                color: (isDark ? Colors.black : Colors.grey).withValues(
+                  alpha: 0.1,
+                ),
                 blurRadius: 15,
                 offset: const Offset(0, 4),
                 spreadRadius: 0,
@@ -435,9 +440,7 @@ class _IconButton extends StatelessWidget {
       ),
     );
 
-    return tooltip == null
-        ? button
-        : Tooltip(message: tooltip!, child: button);
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }
 
@@ -501,19 +504,21 @@ class _StatusItem extends StatelessWidget {
   }
 }
 
-class _ProfilePicture extends StatelessWidget {
+class _ProfilePicture extends ConsumerWidget {
   final AuthState authState;
 
   const _ProfilePicture({required this.authState});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = authState.user;
     final hasProfilePicture =
         user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty;
 
     return InkWell(
-      onTap: () => AppRoutes.replace(context, AppRoutes.settings),
+      // Switch to the Settings tab in the shell (both screens stay alive).
+      onTap: () =>
+          ref.read(navIndexProvider.notifier).state = AppTab.settings.index,
       customBorder: const CircleBorder(),
       child: Container(
         width: 44,

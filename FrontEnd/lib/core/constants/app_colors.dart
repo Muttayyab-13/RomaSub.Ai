@@ -101,6 +101,8 @@ class AppColors {
       isDark ? textSecondaryDark : textSecondary;
   static Color getBorder(bool isDark) => isDark ? borderDark : border;
   static Color getPrimary(bool isDark) => isDark ? primaryDark : primary;
+  static Color getTextHint(bool isDark) => isDark ? textHintDark : textHint;
+  static Color getDivider(bool isDark) => isDark ? dividerDark : divider;
 
   /// Brand accent for FOREGROUND uses (links, icons, active indicators, focus).
   /// Contrast-safe in each mode: teal-700 on light (~5.5:1 on white), teal-400

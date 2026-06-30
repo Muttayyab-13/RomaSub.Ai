@@ -56,8 +56,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
           backgroundColor: AppColors.success,
         ),
       );
-      // Navigate to dashboard
-      AppRoutes.clearAndGo(context, AppRoutes.dashboard);
+      // Navigate into the app shell
+      AppRoutes.clearAndGo(context, AppRoutes.app);
     } else if (mounted) {
       final error = ref.read(authNotifierProvider).error;
       if (error != null) {

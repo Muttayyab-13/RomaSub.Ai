@@ -91,7 +91,7 @@ class _RealtimeViewerScreenState extends ConsumerState<RealtimeViewerScreen> {
         backgroundColor: AppColors.getBackground(isDark),
         body: Row(
           children: [
-            const Sidebar(currentRoute: AppRoutes.realtimeViewer),
+            const Sidebar(selectedIndexOverride: -1),
             Expanded(
               child: Column(
                 children: [

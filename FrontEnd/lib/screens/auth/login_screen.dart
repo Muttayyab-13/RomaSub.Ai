@@ -47,7 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .login(_emailController.text.trim(), _passwordController.text);
 
       if (success && mounted) {
-        AppRoutes.clearAndGo(context, AppRoutes.dashboard);
+        AppRoutes.clearAndGo(context, AppRoutes.app);
       } else if (mounted) {
         final error = ref.read(authNotifierProvider).error;
         if (error != null) {
@@ -117,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .signInWithGoogle();
 
     if (success && mounted) {
-      AppRoutes.clearAndGo(context, AppRoutes.dashboard);
+      AppRoutes.clearAndGo(context, AppRoutes.app);
     } else if (mounted) {
       final error = ref.read(authNotifierProvider).error;
       if (error != null) {

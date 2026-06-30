@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/routes/app_routes.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api/api_client.dart';
 import '../../services/api/api_config.dart';
-import '../../widgets/sidebar/sidebar.dart';
 
 /// Provider that fetches real exports from the backend
-final exportsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+final exportsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final client = ref.watch(apiClientProvider);
   final response = await client.dio.get(ApiConfig.exportsList);
   final data = response.data as Map<String, dynamic>;
@@ -24,120 +24,121 @@ class ExportsScreen extends ConsumerWidget {
     final isDark = ref.watch(themeProvider).isDark;
     final exportsAsync = ref.watch(exportsProvider);
 
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
     final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
     final textPrimary = isDark ? Colors.white : Colors.black;
     final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: Row(
-        children: [
-          const Sidebar(currentRoute: AppRoutes.exports),
-          Expanded(
-            child: Column(
-              children: [
-                // Top Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.lg,
-                    vertical: AppSizes.md,
+    return Column(
+      children: [
+        // Top Bar
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.lg,
+            vertical: AppSizes.md,
+          ),
+          decoration: BoxDecoration(
+            color: cardBg,
+            border: Border(bottom: BorderSide(color: borderColor)),
+          ),
+          child: Row(
+            children: [
+              Text(
+                AppStrings.exports,
+                style: TextStyle(
+                  fontSize: AppSizes.fontXl,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                color: textPrimary,
+                onPressed: () => ref.invalidate(exportsProvider),
+                tooltip: 'Refresh',
+              ),
+            ],
+          ),
+        ),
+
+        // Content
+        Expanded(
+          child: exportsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_off_rounded, size: 48, color: textSecondary),
+                  const SizedBox(height: AppSizes.md),
+                  Text(
+                    'Failed to load exports',
+                    style: TextStyle(color: textSecondary),
                   ),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    border: Border(bottom: BorderSide(color: borderColor)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(exportsProvider),
+                    child: const Text('Retry'),
                   ),
-                  child: Row(
+                ],
+              ),
+            ),
+            data: (exports) {
+              if (exports.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Icon(
+                        Icons.download_done_rounded,
+                        size: 64,
+                        color: textSecondary,
+                      ),
+                      const SizedBox(height: AppSizes.md),
                       Text(
-                        AppStrings.exports,
+                        'No exports yet',
                         style: TextStyle(
-                          fontSize: AppSizes.fontXl,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
+                          fontSize: AppSizes.fontMd,
+                          color: textSecondary,
                         ),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded),
-                        color: textPrimary,
-                        onPressed: () => ref.invalidate(exportsProvider),
-                        tooltip: 'Refresh',
+                      const SizedBox(height: AppSizes.sm),
+                      Text(
+                        'Export subtitles from the editor to see them here',
+                        style: TextStyle(
+                          fontSize: AppSizes.fontSm,
+                          color: textSecondary,
+                        ),
                       ),
                     ],
                   ),
-                ),
+                );
+              }
 
-                // Content
-                Expanded(
-                  child: exportsAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.cloud_off_rounded, size: 48, color: textSecondary),
-                          const SizedBox(height: AppSizes.md),
-                          Text('Failed to load exports', style: TextStyle(color: textSecondary)),
-                          TextButton(
-                            onPressed: () => ref.invalidate(exportsProvider),
-                            child: const Text('Retry'),
-                          ),
-                        ],
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSizes.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${AppStrings.exportHistory} (${exports.length})',
+                      style: TextStyle(
+                        fontSize: AppSizes.fontLg,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
                       ),
                     ),
-                    data: (exports) {
-                      if (exports.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.download_done_rounded, size: 64, color: textSecondary),
-                              const SizedBox(height: AppSizes.md),
-                              Text(
-                                'No exports yet',
-                                style: TextStyle(fontSize: AppSizes.fontMd, color: textSecondary),
-                              ),
-                              const SizedBox(height: AppSizes.sm),
-                              Text(
-                                'Export subtitles from the editor to see them here',
-                                style: TextStyle(fontSize: AppSizes.fontSm, color: textSecondary),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(AppSizes.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${AppStrings.exportHistory} (${exports.length})',
-                              style: TextStyle(
-                                fontSize: AppSizes.fontLg,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            ...exports.map((export) => _ExportTile(
-                              export: export,
-                              isDark: isDark,
-                            )),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                    const SizedBox(height: AppSizes.md),
+                    ...exports.map(
+                      (export) => _ExportTile(export: export, isDark: isDark),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -150,10 +151,14 @@ class _ExportTile extends StatelessWidget {
 
   IconData _formatIcon(String format) {
     switch (format) {
-      case 'srt': return Icons.subtitles_rounded;
-      case 'vtt': return Icons.web_rounded;
-      case 'txt': return Icons.description_rounded;
-      default: return Icons.file_present_rounded;
+      case 'srt':
+        return Icons.subtitles_rounded;
+      case 'vtt':
+        return Icons.web_rounded;
+      case 'txt':
+        return Icons.description_rounded;
+      default:
+        return Icons.file_present_rounded;
     }
   }
 
@@ -169,7 +174,9 @@ class _ExportTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [

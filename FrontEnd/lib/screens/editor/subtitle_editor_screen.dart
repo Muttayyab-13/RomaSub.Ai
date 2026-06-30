@@ -132,8 +132,8 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
         backgroundColor: AppColors.getBackground(isDark),
         body: Row(
           children: [
-            // Sidebar
-            const Sidebar(currentRoute: AppRoutes.editor),
+            // Sidebar (deep screen pushed over the shell — no tab highlighted)
+            const Sidebar(selectedIndexOverride: -1),
 
             // Main content
             Expanded(

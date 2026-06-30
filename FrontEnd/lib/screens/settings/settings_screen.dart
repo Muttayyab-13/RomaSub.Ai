@@ -4,11 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/routes/app_routes.dart';
 import '../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/common/app_text_field.dart';
 import '../../widgets/common/app_snackbar.dart';
 import '../../services/api/api_config.dart';
@@ -178,114 +176,115 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final isDark = ref.watch(themeProvider).isDark;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
-        children: [
-          const Sidebar(currentRoute: AppRoutes.settings),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1100),
-                  child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white : Colors.black,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.settings_outlined,
+                      color: isDark ? Colors.black : Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white : Colors.black,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.settings_outlined,
-                              color: isDark ? Colors.black : Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                AppStrings.settings,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Manage your account settings and preferences',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      Text(
+                        AppStrings.settings,
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 32),
-
-                      // Two-column layout
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Left - Profile Card
-                          SizedBox(
-                            width: 320,
-                            child: _buildProfileCard(authState, user, isDark),
-                          ),
-                          const SizedBox(width: 24),
-
-                          // Right - Settings
-                          Expanded(
-                            child: Column(
-                              children: [
-                                _buildSection(
-                                  'Profile Information',
-                                  Icons.person_outline,
-                                  _buildProfileSection(user, isDark),
-                                  isDark,
-                                ),
-                                const SizedBox(height: 20),
-                                _buildSection(
-                                  'Security',
-                                  Icons.lock_outline,
-                                  _buildSecuritySection(isDark),
-                                  isDark,
-                                ),
-                                const SizedBox(height: 20),
-                                _buildSection(
-                                  'Account',
-                                  Icons.info_outline,
-                                  _buildAccountSection(user, isDark),
-                                  isDark,
-                                ),
-                                const SizedBox(height: 20),
-                                _buildSection(
-                                  'Appearance',
-                                  Icons.palette_outlined,
-                                  _buildAppearanceSection(),
-                                  isDark,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'Manage your account settings and preferences',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-            ),
+              const SizedBox(height: 32),
+
+              // Two-column layout — stacks vertically on narrow screens
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final profileCard = _buildProfileCard(
+                    authState,
+                    user,
+                    isDark,
+                  );
+                  final sections = Column(
+                    children: [
+                      _buildSection(
+                        'Profile Information',
+                        Icons.person_outline,
+                        _buildProfileSection(user, isDark),
+                        isDark,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        'Security',
+                        Icons.lock_outline,
+                        _buildSecuritySection(isDark),
+                        isDark,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        'Account',
+                        Icons.info_outline,
+                        _buildAccountSection(user, isDark),
+                        isDark,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        'Appearance',
+                        Icons.palette_outlined,
+                        _buildAppearanceSection(),
+                        isDark,
+                      ),
+                    ],
+                  );
+
+                  if (constraints.maxWidth < 760) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        profileCard,
+                        const SizedBox(height: 24),
+                        sections,
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 320, child: profileCard),
+                      const SizedBox(width: 24),
+                      Expanded(child: sections),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
