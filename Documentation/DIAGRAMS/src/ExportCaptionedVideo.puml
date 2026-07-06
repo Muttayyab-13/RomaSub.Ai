@@ -1,0 +1,39 @@
+@startuml ExportCaptionedVideo
+' RomaSub.Ai — System Sequence: Export Captioned Video (video download)
+' New diagram covering GET /subtitles/{id}/export-video?mode=hardsub|softsub.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam sequence {
+  ArrowColor #334155
+  LifeLineBorderColor #94A3B8
+  ParticipantBorderColor #2C6FB5
+  ParticipantBackgroundColor #EAF2FB
+  ActorBorderColor #334155
+}
+
+title Export Captioned Video (.mp4 — hardsub / softsub)
+
+actor "User" as U
+participant "Flutter Desktop App\n(EditorToolbar)" as E
+participant "FastAPI Backend\n(/subtitles)" as SUB
+participant "video_export\nservice" as V
+participant "FFmpeg" as F
+
+U -> E : Select "Video — burned-in"\nor "Video — toggleable"
+E -> SUB : (save edits first)\nGET /subtitles/{id}/export-video?mode=
+activate SUB
+SUB -> V : export_video_with_subtitles(id, mode)
+activate V
+V -> V : validate (mode / project /\nsegments / is_video / source exists)
+V -> V : write temp SRT\n(roman_urdu_text, urdu fallback)
+V -> F : FFmpeg render\n(burn-in OR mux mov_text), timeout 1800s
+activate F
+F --> V : output.mp4
+deactivate F
+V --> SUB : (ok, output_path, download_filename)
+deactivate V
+SUB -> SUB : record_export("mp4-hardsub" / "mp4-softsub")
+SUB --> E : FileResponse (video/mp4)\n+ BackgroundTask deletes temp
+deactivate SUB
+E -> U : Save bytes to downloads\n+ success message
+@enduml

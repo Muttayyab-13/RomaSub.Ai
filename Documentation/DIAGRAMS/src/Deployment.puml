@@ -1,0 +1,48 @@
+@startuml Deployment
+' RomaSub.Ai — Deployment Diagram
+' Regenerated: FFmpeg node now also performs video rendering; MP4 returns to client.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam node {
+  BackgroundColor #F4F7FB
+  BorderColor #334155
+}
+skinparam ArrowColor #334155
+
+node "Client Machine" as CLIENT {
+  artifact "Flutter Desktop App" as FAPP
+}
+
+node "External Services" as EXT {
+  artifact "Email Service\n(SMTP)" as EMAIL
+  artifact "Google Auth" as GAUTH
+}
+
+node "Application Service (Media)" as APPMEDIA {
+  artifact "FFmpeg Media Processor\n(Audio Extraction + Video Rendering)" as FFMPEG #D7F0DD
+  artifact "FastAPI Backend" as API
+}
+
+node "Application Service (AI)" as APPAI {
+  artifact "OpenAI Whisper\n(ASR Engine)" as WHISPER
+  artifact "M2M100\n(Transliteration)" as M2M
+}
+
+node "Database Server" as DBS {
+  database "PostgreSQL" as PG {
+    artifact "User Data" as UD
+    artifact "Feedback Data" as FD
+    artifact "Project Metadata" as PM
+  }
+}
+
+FAPP --> API : HTTPS (REST API)\nupload + download MP4
+API --> EMAIL : SMTP
+API --> GAUTH : OAuth 2.0
+API --> FFMPEG : Audio Extraction\n+ Video Rendering
+FFMPEG --> API : Captioned MP4
+API --> WHISPER : Audio Processing
+WHISPER --> M2M : Urdu Text
+M2M --> API : Text Transliteration
+API --> PG : TCP/IP (Port 5432)
+@enduml
