@@ -1,0 +1,14 @@
+%% RomaSub.AI — How It Works (High-Level Flow)
+flowchart LR
+  A["📹 Upload<br/>video / audio"] --> B["🎧 Audio Extraction<br/>(FFmpeg)"]
+  B --> C["🗣️ Whisper ASR<br/>Urdu speech → Urdu text"]
+  C --> D["🧹 Urdu Pre-processing<br/>normalize + diacritize"]
+  D --> E["📖 Loanword / Names<br/>dictionary lookup"]
+  E -->|"known loanwords & names<br/>(fixed spelling · bypass model)"| M["🧩 Merge / Reconstruct"]
+  E -->|"remaining Urdu"| F["🔤 Transliteration<br/>Urdu → Roman Urdu (M2M100)"]
+  F --> M
+  M --> G["✨ Refine (optional)<br/>Claude LLM"]
+  G --> H["👁️ Preview Subtitles"]
+  H --> J["📤 Export<br/>SRT · VTT · TXT · captioned MP4"]
+  H -. "optional edit" .-> I["📝 Subtitle Editor<br/>review & correct"]
+  I -. "back to preview" .-> H
