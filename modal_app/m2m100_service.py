@@ -29,6 +29,7 @@ ONE-TIME SETUP
 """
 import os
 import modal
+from fastapi import Header, HTTPException
 
 MODEL_REPO = "muttayyab23/m2m100-2gb-custom"  # <-- set to your private HF repo
 ROMAN_UR_TOKEN_ID = 128105
@@ -96,9 +97,11 @@ class M2M100Service:
         )
 
     @modal.fastapi_endpoint(method="POST")
-    def web(self, data: dict, authorization: str = ""):
+    def web(self, data: dict, authorization: str = Header(default="")):
+        # `authorization` is bound from the HTTP `Authorization` header via
+        # Header(); a plain `str` default would be read as a query param and
+        # never see the header the backend actually sends.
         import torch
-        from fastapi import HTTPException
 
         expected = os.environ.get("ROMASUB_MODAL_TOKEN")
         if not expected:
