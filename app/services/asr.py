@@ -86,7 +86,7 @@ def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
     Returns:
         Dict with 'text' and 'segments' keys
     """
-    backend = (settings.whisper_backend or "faster").lower()
+    backend = (settings.effective_whisper_backend or "faster").lower()
 
     if backend == "groq":
         if settings.groq_api_key:

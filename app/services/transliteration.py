@@ -97,7 +97,59 @@ def transliterate_text(urdu_text: str) -> str:
 
 def _m2m100_batch(texts: List[str], batch_size: int = 8) -> List[str]:
     """
-    Raw M2M100 batch inference (no loanword processing).
+    Dispatch raw M2M100 inference to the configured backend.
+
+    Backends receive already-normalized Urdu texts and return Roman Urdu.
+    The Modal cloud backend falls back to the local transformers path on any
+    error (offline / no credits / no endpoint URL). The offline master switch
+    forces "transformers" via settings.effective_transliteration_backend.
+    """
+    if not texts:
+        return []
+
+    backend = (settings.effective_transliteration_backend or "transformers").lower()
+
+    if backend == "modal":
+        if settings.modal_endpoint_url:
+            try:
+                return _m2m100_batch_modal(texts, batch_size)
+            except Exception as e:
+                logger.warning(
+                    "[TRANSLITERATION] Modal failed (%s); falling back to local transformers", e
+                )
+        else:
+            logger.warning(
+                "[TRANSLITERATION] transliteration_backend='modal' but MODAL_ENDPOINT_URL is empty; using local transformers"
+            )
+        return _m2m100_batch_transformers(texts, batch_size)
+
+    return _m2m100_batch_transformers(texts, batch_size)
+
+
+def _m2m100_batch_modal(texts: List[str], batch_size: int = 8) -> List[str]:
+    """Transliterate via the Modal-hosted M2M100 GPU service (HTTP)."""
+    if not texts:
+        return []
+
+    import requests
+
+    results: List[str] = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        resp = requests.post(
+            settings.modal_endpoint_url,
+            headers={"Authorization": f"Bearer {settings.modal_auth_token}"},
+            json={"texts": batch},
+            timeout=120,  # headroom for a Modal cold start before falling back to local
+        )
+        resp.raise_for_status()
+        results.extend(resp.json()["transliterations"])
+    return results
+
+
+def _m2m100_batch_transformers(texts: List[str], batch_size: int = 8) -> List[str]:
+    """
+    Raw M2M100 batch inference via local transformers (no loanword processing).
     Takes Urdu texts and returns Roman Urdu texts.
     """
     if not texts:

@@ -136,3 +136,22 @@ def test_transcribe_chunk_local_backend_never_calls_groq(monkeypatch):
 
     assert result["text"] == "local"
     assert "groq" not in called
+
+
+def test_transcribe_chunk_offline_mode_forces_local(monkeypatch):
+    # OFFLINE_MODE=true must override whisper_backend=groq and never hit network.
+    monkeypatch.setattr(asr.settings, "whisper_backend", "groq")
+    monkeypatch.setattr(asr.settings, "groq_api_key", "test-key")
+    monkeypatch.setattr(asr.settings, "offline_mode", True)
+    _stub_local(monkeypatch)
+
+    called = {}
+    monkeypatch.setattr(
+        asr, "_transcribe_groq",
+        lambda path, language="ur": called.setdefault("groq", True),
+    )
+
+    result = asr.transcribe_chunk("chunk.wav")
+
+    assert result["text"] == "local"
+    assert "groq" not in called

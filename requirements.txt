@@ -63,3 +63,9 @@ datasets
 
 # Testing
 pytest
+
+# Deployment tooling for the Modal-hosted M2M100 backend (not needed to RUN the
+# backend — it only makes HTTP calls). `huggingface_hub` pushes the model to a
+# private HF repo; `modal` deploys modal_app/m2m100_service.py.
+huggingface_hub
+modal

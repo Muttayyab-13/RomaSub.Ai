@@ -47,6 +47,19 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_model: str = "whisper-large-v3-turbo"
 
+    # Transliteration (M2M100) backend:
+    #   "modal"        — Modal per-second GPU service (fast). Falls back to the
+    #                    local transformers path on any error / missing URL.
+    #   "transformers" — local fp32 model (original path; slower, no network).
+    transliteration_backend: str = "modal"
+    modal_endpoint_url: str = ""
+    modal_auth_token: str = ""
+
+    # Master offline switch. When True, forces the WHOLE pipeline local
+    # (Whisper -> faster-whisper, M2M100 -> transformers) regardless of the
+    # per-service backend settings. Flip this for the viva — no network needed.
+    offline_mode: bool = False
+
     # Transliteration (M2M100)
     m2m100_model_path: str = "models/m2m100_ur_to_rur"
     m2m100_tokenizer_path: str = "models/m2m100_tokenizer"
@@ -96,6 +109,16 @@ class Settings(BaseSettings):
     def max_file_size_bytes(self) -> int:
         """Get max file size in bytes"""
         return self.max_file_size_mb * 1024 * 1024
+
+    @property
+    def effective_whisper_backend(self) -> str:
+        """Whisper backend after applying the offline master switch."""
+        return "faster" if self.offline_mode else self.whisper_backend
+
+    @property
+    def effective_transliteration_backend(self) -> str:
+        """M2M100 backend after applying the offline master switch."""
+        return "transformers" if self.offline_mode else self.transliteration_backend
     
     class Config:
         env_file = ".env"
