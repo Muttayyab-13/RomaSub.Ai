@@ -6,13 +6,15 @@ Pure functions for ASR operations with in-memory result storage.
 """
 
 import os
+import subprocess
+import tempfile
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
 import json
 
 from app.config import settings
-from app.services import media as media_service
+from app.services import media as media_service  # also runs static_ffmpeg.add_paths()
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,8 +24,15 @@ logger = logging.getLogger(__name__)
 # Module-level state for Whisper model and results
 # ============================================================================
 
-# Global variable to hold loaded Whisper model
-_whisper_model = None
+# Loaded local model handles (lazy). openai-whisper and faster-whisper are
+# separate implementations, so they get separate globals.
+_whisper_model = None          # openai-whisper
+_faster_whisper_model = None   # faster-whisper (CTranslate2)
+_groq_client = None            # Groq SDK client
+
+# Stay safely under Groq's 25 MB free-tier upload limit; larger inputs get
+# transcoded to 16 kHz mono FLAC before upload.
+GROQ_MAX_UPLOAD_BYTES = 24 * 1024 * 1024
 
 # In-memory storage for transcription results (temporary)
 _transcription_results: Dict[str, Dict] = {}
@@ -63,6 +72,13 @@ def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
     Transcribe an audio file/chunk and return segments.
     Used by both full-file transcription and realtime chunked processing.
 
+    Dispatches to the backend selected by `settings.whisper_backend`:
+      * "groq"   — Groq-hosted Whisper. On any failure (offline, no key/credits,
+                   file too large) it falls back to local faster-whisper so a
+                   transcription is always produced.
+      * "faster" — local faster-whisper.
+      * "openai" — local openai-whisper.
+
     Args:
         audio_path: Path to audio file
         language: Language code (default: 'ur')
@@ -70,6 +86,177 @@ def transcribe_chunk(audio_path: str, language: str = "ur") -> Dict:
     Returns:
         Dict with 'text' and 'segments' keys
     """
+    backend = (settings.whisper_backend or "faster").lower()
+
+    if backend == "groq":
+        if settings.groq_api_key:
+            try:
+                return _transcribe_groq(audio_path, language)
+            except Exception as e:
+                logger.warning(
+                    "[ASR] Groq transcription failed (%s); falling back to local faster-whisper", e
+                )
+        else:
+            logger.warning(
+                "[ASR] whisper_backend='groq' but GROQ_API_KEY is empty; using local faster-whisper"
+            )
+        return _transcribe_faster_whisper(audio_path, language)
+
+    if backend == "openai":
+        return _transcribe_openai_whisper(audio_path, language)
+
+    # Default local backend.
+    return _transcribe_faster_whisper(audio_path, language)
+
+
+# ----------------------------------------------------------------------------
+# Backend: Groq-hosted Whisper (OpenAI-compatible Audio API)
+# ----------------------------------------------------------------------------
+
+def _get_groq_client():
+    """Lazily construct and cache the Groq SDK client."""
+    global _groq_client
+    if _groq_client is None:
+        from groq import Groq
+        _groq_client = Groq(api_key=settings.groq_api_key)
+    return _groq_client
+
+
+def _seg_value(seg, key, default):
+    """Read a field from a response segment that may be an object or a dict."""
+    if isinstance(seg, dict):
+        return seg.get(key, default)
+    return getattr(seg, key, default)
+
+
+def _groq_response_to_result(resp) -> Dict:
+    """
+    Map a Groq verbose_json transcription response to the internal
+    {"text", "segments":[{id,start,end,text}]} shape used downstream.
+    Accepts either SDK objects (attribute access) or plain dicts.
+    """
+    text = _seg_value(resp, "text", "") or ""
+    raw_segments = _seg_value(resp, "segments", []) or []
+
+    segments = []
+    for i, seg in enumerate(raw_segments):
+        segments.append({
+            "id": _seg_value(seg, "id", i),
+            "start": float(_seg_value(seg, "start", 0.0) or 0.0),
+            "end": float(_seg_value(seg, "end", 0.0) or 0.0),
+            "text": (_seg_value(seg, "text", "") or "").strip(),
+        })
+
+    return {"text": text, "segments": segments}
+
+
+def _compress_for_groq(audio_path: str) -> str:
+    """
+    Transcode audio to 16 kHz mono FLAC so large inputs stay under Groq's
+    upload limit. Whisper resamples to 16 kHz mono internally, so this is
+    lossless w.r.t. transcription quality. Returns a temp file path the
+    caller must delete.
+    """
+    fd, out_path = tempfile.mkstemp(suffix=".flac", prefix="groq_asr_")
+    os.close(fd)
+
+    command = [
+        "ffmpeg", "-i", audio_path,
+        "-vn", "-ar", "16000", "-ac", "1",
+        "-c:a", "flac",
+        "-y", out_path,
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        try:
+            os.remove(out_path)
+        except OSError:
+            pass
+        raise RuntimeError(f"ffmpeg compression for Groq failed: {result.stderr}")
+
+    return out_path
+
+
+def _transcribe_groq(audio_path: str, language: str = "ur") -> Dict:
+    """Transcribe via Groq-hosted Whisper, compressing first only if needed."""
+    upload_path = audio_path
+    tmp_path = None
+    if os.path.getsize(audio_path) > GROQ_MAX_UPLOAD_BYTES:
+        tmp_path = _compress_for_groq(audio_path)
+        upload_path = tmp_path
+
+    try:
+        client = _get_groq_client()
+        with open(upload_path, "rb") as f:
+            resp = client.audio.transcriptions.create(
+                file=(os.path.basename(upload_path), f.read()),
+                model=settings.groq_model,
+                language=language,
+                response_format="verbose_json",
+                temperature=0.0,
+            )
+        return _groq_response_to_result(resp)
+    finally:
+        if tmp_path:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+
+# ----------------------------------------------------------------------------
+# Backend: local faster-whisper (CTranslate2, int8) — offline, low RAM
+# ----------------------------------------------------------------------------
+
+def _get_faster_whisper_model():
+    """Lazily load and cache the faster-whisper model."""
+    global _faster_whisper_model
+    if _faster_whisper_model is None:
+        print(f"\n[ASR] Loading faster-whisper model: {settings.whisper_model} "
+              f"(compute_type={settings.whisper_compute_type})")
+        from faster_whisper import WhisperModel
+        _faster_whisper_model = WhisperModel(
+            settings.whisper_model,
+            device="cpu",
+            compute_type=settings.whisper_compute_type,
+        )
+        print("[ASR] faster-whisper model loaded successfully!")
+    return _faster_whisper_model
+
+
+def _transcribe_faster_whisper(audio_path: str, language: str = "ur") -> Dict:
+    model = _get_faster_whisper_model()
+
+    segment_iter, _info = model.transcribe(
+        audio_path,
+        language=language,
+        task="transcribe",
+        vad_filter=True,  # skip silence — big speedup on real speech
+        condition_on_previous_text=False,
+        no_speech_threshold=0.5,
+        compression_ratio_threshold=2.4,
+    )
+
+    segments = []
+    parts = []
+    for i, seg in enumerate(segment_iter):
+        text = seg.text.strip()
+        segments.append({
+            "id": i,
+            "start": seg.start,
+            "end": seg.end,
+            "text": text,
+        })
+        parts.append(text)
+
+    return {"text": " ".join(parts), "segments": segments}
+
+
+# ----------------------------------------------------------------------------
+# Backend: local openai-whisper (original implementation)
+# ----------------------------------------------------------------------------
+
+def _transcribe_openai_whisper(audio_path: str, language: str = "ur") -> Dict:
     model = get_whisper_model()
 
     result = model.transcribe(
@@ -130,8 +317,9 @@ def transcribe_audio(file_id: str, language: str = "ur", auto_cleanup: bool = Tr
     print(f"{'='*60}")
 
     try:
-        # Ensure model is loaded
-        get_whisper_model()
+        # Model loading is handled lazily per-backend inside transcribe_chunk,
+        # so we don't eagerly load a local model here (would waste RAM when the
+        # Groq backend is active).
 
         # Get audio duration
         duration = media_service.get_audio_duration(audio_path)

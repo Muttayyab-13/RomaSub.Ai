@@ -31,7 +31,21 @@ class Settings(BaseSettings):
     brevo_sender_name: str = "RomaSub.AI"
     
     # Whisper ASR
+    # Backend selects where Whisper runs:
+    #   "groq"   — Groq-hosted Whisper (large-v3-turbo). Fastest; needs
+    #              groq_api_key. Falls back to local faster-whisper on any
+    #              error (no network / no credits / file too large).
+    #   "faster" — local faster-whisper (CTranslate2, int8). Offline, low RAM.
+    #   "openai" — local openai-whisper (original behaviour).
+    whisper_backend: str = "groq"
+    # Local model name for the "faster"/"openai" backends (and the groq fallback).
     whisper_model: str = "medium"
+    # faster-whisper CPU quantization: "int8" (fast, low RAM), "int8_float16", "float32".
+    whisper_compute_type: str = "int8"
+
+    # Groq hosted Whisper (OpenAI-compatible Audio API). Key: console.groq.com/keys
+    groq_api_key: str = ""
+    groq_model: str = "whisper-large-v3-turbo"
 
     # Transliteration (M2M100)
     m2m100_model_path: str = "models/m2m100_ur_to_rur"

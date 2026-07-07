@@ -20,7 +20,12 @@ google-auth-oauthlib
 # Email (Brevo transactional API via REST — uses `requests` listed below)
 
 # Whisper ASR
+# openai-whisper: local "openai" backend. faster-whisper: local "faster"
+# backend (CTranslate2, int8 — lower RAM, ~4x faster on CPU). groq: cloud
+# Whisper backend (whisper-large-v3-turbo) — see settings.whisper_backend.
 openai-whisper
+faster-whisper
+groq
 torch
 
 # Transliteration (M2M100)
