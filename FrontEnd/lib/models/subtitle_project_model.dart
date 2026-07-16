@@ -33,6 +33,35 @@ class EditableSegment {
     return null;
   }
 
+  /// Minimum gap the backend enforces between segments, in seconds.
+  /// Mirrors MIN_GAP_BETWEEN_SEGMENTS in app/services/subtitle.py.
+  static const double minGapSeconds = 0.1;
+
+  /// Above this, captions outrun a comfortable reading pace. 21 chars/sec is
+  /// the common broadcast-subtitling ceiling.
+  static const double maxComfortableCps = 21.0;
+
+  /// The text that actually reaches the viewer: Roman Urdu, falling back to
+  /// Urdu. Mirrors the caption rule used everywhere else, including export.
+  String get displayText =>
+      romanUrduText.isNotEmpty ? romanUrduText : urduText;
+
+  /// Reading rate in characters per second. Zero (not infinity) when the
+  /// duration is zero, so the UI never has to render an infinity.
+  double get charsPerSecond {
+    if (duration <= 0) return 0.0;
+    return displayText.length / duration;
+  }
+
+  bool get isComfortableReadingRate => charsPerSecond <= maxComfortableCps;
+
+  /// True when [next] starts before this segment ends, or closer than the
+  /// backend's minimum gap. Drives the warning marker in the segment list.
+  bool overlapsNext(EditableSegment? next) {
+    if (next == null) return false;
+    return next.start - end < minGapSeconds;
+  }
+
   /// Format timestamp as HH:MM:SS,mmm
   static String formatTimestamp(double seconds) {
     final hours = (seconds / 3600).floor();
