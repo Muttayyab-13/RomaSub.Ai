@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/design/app_typography.dart';
 import '../../providers/subtitle_editor_provider.dart';
 import '../../providers/video_player_provider.dart';
 import 'timing_adjuster.dart';
@@ -16,29 +17,47 @@ class TextEditorPanel extends ConsumerStatefulWidget {
 
 class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
   final _romanUrduController = TextEditingController();
-  final _urduController = TextEditingController();
+  final FocusNode _romanUrduFocus = FocusNode();
   int? _lastSegmentIndex;
 
   @override
   void dispose() {
     _romanUrduController.dispose();
-    _urduController.dispose();
+    _romanUrduFocus.dispose();
     super.dispose();
   }
 
+  /// Sync the text controllers from state.
+  ///
+  /// Syncs on index change AND when the segment's text has changed underneath
+  /// us — undo/redo mutate the selected segment in place, and the old
+  /// index-only guard meant those edits never reached the fields.
   void _syncControllers(EditorState editorState) {
-    final segment = editorState.selectedSegment;
     final currentIndex = editorState.selectedSegmentIndex;
+    final segment = editorState.selectedSegment;
 
-    if (currentIndex != _lastSegmentIndex) {
-      _lastSegmentIndex = currentIndex;
-      if (segment != null) {
-        _romanUrduController.text = segment.romanUrduText;
-        _urduController.text = segment.urduText;
-      } else {
+    if (segment == null) {
+      if (_lastSegmentIndex != null) {
         _romanUrduController.clear();
-        _urduController.clear();
+        _lastSegmentIndex = null;
       }
+      return;
+    }
+
+    final indexChanged = currentIndex != _lastSegmentIndex;
+
+    if (indexChanged) {
+      _romanUrduController.text = segment.romanUrduText;
+      _lastSegmentIndex = currentIndex;
+      return;
+    }
+
+    // Same segment, but state changed underneath us (undo/redo). Only touch
+    // the controller while the user isn't typing in it — that would fight
+    // their cursor.
+    if (_romanUrduController.text != segment.romanUrduText &&
+        !_romanUrduFocus.hasFocus) {
+      _romanUrduController.text = segment.romanUrduText;
     }
   }
 
@@ -48,6 +67,7 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
     final editorNotifier = ref.read(editorNotifierProvider.notifier);
     final playerNotifier = ref.read(videoPlayerNotifierProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
 
     _syncControllers(editorState);
 
@@ -195,6 +215,7 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                   const SizedBox(height: AppSizes.xs),
                   TextField(
                     controller: _romanUrduController,
+                    focusNode: _romanUrduFocus,
                     maxLines: 4,
                     maxLength: 500,
                     style: TextStyle(
@@ -206,6 +227,7 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                       hintStyle: TextStyle(
                         color: AppColors.getTextSecondary(isDark),
                       ),
+                      counterText: '',
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSizes.radiusMd),
@@ -237,46 +259,101 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                       );
                     },
                   ),
+                  const SizedBox(height: AppSizes.xs),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${segment.romanUrduText.length} Chars',
+                        style: AppTypography.mono(
+                          size: 11,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Tooltip(
+                        message: segment.isComfortableReadingRate
+                            ? 'Characters per second — a comfortable reading pace'
+                            : 'Too fast to read comfortably. Lengthen the segment '
+                                'or shorten the text.',
+                        child: Text(
+                          '${segment.charsPerSecond.toStringAsFixed(1)} CPS',
+                          style: AppTypography.mono(
+                            size: 11,
+                            color: segment.isComfortableReadingRate
+                                ? scheme.onSurfaceVariant
+                                : scheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: AppSizes.md),
 
-                  // Urdu text field (read-only display)
-                  Text(
-                    'Urdu Text (Original)',
-                    style: TextStyle(
-                      fontSize: AppSizes.fontXs,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextSecondary(isDark),
+                  // Urdu reference (read-only, Nastaliq)
+                  Row(
+                    children: [
+                      Text(
+                        'Urdu Script',
+                        style: AppTypography.latin(
+                          size: 11,
+                          weight: FontWeight.w600,
+                          color: scheme.onSurfaceVariant,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.xs),
+                      Tooltip(
+                        message:
+                            'Auto-generated from speech. Correct the Roman '
+                            'Urdu above; the Urdu reference is read-only.',
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.xs),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSizes.sm),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: Text(
+                      segment.urduText.isEmpty ? '—' : segment.urduText,
+                      textDirection: TextDirection.rtl,
+                      textAlign: TextAlign.right,
+                      style: AppTypography.urdu(
+                        size: 14,
+                        color: scheme.onSurface,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSizes.xs),
-                  TextField(
-                    controller: _urduController,
-                    maxLines: 3,
-                    readOnly: true,
-                    style: TextStyle(
-                      fontSize: AppSizes.fontSm,
-                      color: AppColors.getTextSecondary(isDark),
-                    ),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusMd),
-                        borderSide:
-                            BorderSide(color: AppColors.getBorder(isDark)),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 12,
+                        color: scheme.primary,
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusMd),
-                        borderSide:
-                            BorderSide(color: AppColors.getBorder(isDark)),
+                      const SizedBox(width: 4),
+                      Text(
+                        // Transliteration, NOT translation: same language,
+                        // different script. This distinction is the entire
+                        // product.
+                        'AI Transliteration Active',
+                        style: AppTypography.latin(
+                          size: 11,
+                          color: scheme.primary,
+                        ),
                       ),
-                      filled: true,
-                      fillColor: AppColors.getSurfaceVariant(isDark)
-                          .withValues(alpha: 0.5),
-                      contentPadding: const EdgeInsets.all(AppSizes.sm),
-                    ),
-                    textDirection: TextDirection.rtl,
+                    ],
                   ),
 
                   const SizedBox(height: AppSizes.lg),
