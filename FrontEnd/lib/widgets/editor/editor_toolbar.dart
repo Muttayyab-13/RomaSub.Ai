@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/design/app_typography.dart';
 import '../../providers/subtitle_editor_provider.dart';
 
 /// Top toolbar: project name, undo/redo, save, export, auto-fix
@@ -15,16 +16,15 @@ class EditorToolbar extends ConsumerWidget {
     final editorState = ref.watch(editorNotifierProvider);
     final editorNotifier = ref.read(editorNotifierProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
     final isVideoSource = editorState.project?.isVideo ?? false;
 
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.getSurfaceVariant(isDark),
-        border: Border(
-          bottom: BorderSide(color: AppColors.getBorder(isDark)),
-        ),
+        color: scheme.surfaceContainerLowest,
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Row(
         children: [
@@ -48,10 +48,10 @@ class EditorToolbar extends ConsumerWidget {
           Flexible(
             child: Text(
               editorState.project?.projectName ?? 'Subtitle Editor',
-              style: TextStyle(
-                fontSize: AppSizes.fontSm,
-                fontWeight: FontWeight.w600,
-                color: AppColors.getTextPrimary(isDark),
+              style: AppTypography.latin(
+                size: 14,
+                weight: FontWeight.w600,
+                color: scheme.onSurface,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -159,27 +159,30 @@ class EditorToolbar extends ConsumerWidget {
               ],
             ],
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.getPrimary(isDark),
-                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                color: scheme.primary,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md,
+                vertical: AppSizes.xs,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.download_rounded,
-                    size: 16,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                  const SizedBox(width: 4),
                   Text(
                     'Export',
-                    style: TextStyle(
-                      fontSize: AppSizes.fontXs,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.black : Colors.white,
+                    style: AppTypography.latin(
+                      size: 13,
+                      weight: FontWeight.w600,
+                      color: scheme.onPrimary,
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: scheme.onPrimary,
                   ),
                 ],
               ),
