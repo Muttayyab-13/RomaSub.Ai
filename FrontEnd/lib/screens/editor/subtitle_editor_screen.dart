@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/design/editor_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/transcription_model.dart';
 import '../../providers/subtitle_editor_provider.dart';
@@ -11,15 +12,20 @@ import '../../services/api/api_config.dart';
 import '../../services/media_service.dart';
 import '../../widgets/sidebar/sidebar.dart';
 import '../../widgets/editor/editor_toolbar.dart';
+import '../../widgets/editor/segment_timeline.dart';
 import '../../widgets/editor/video_preview_panel.dart';
 import '../../widgets/editor/subtitle_list_panel.dart';
 import '../../widgets/editor/text_editor_panel.dart';
 
-/// Main subtitle editor screen with three-panel layout
+/// The subtitle editor.
 ///
-/// Left: Video preview with subtitle overlay (40%)
-/// Center: Subtitle segment list with search (30%)
-/// Right: Text/timing editor for selected segment (30%)
+/// Three panels inside the app shell, left to right:
+///   - Segment list (flex 3)  — navigate and search
+///   - Video + timeline (flex 6) — judge the result
+///   - Inspector (flex 3)     — where corrections happen
+///
+/// Desktop-only. See Documentation/PRODUCT_OVERVIEW.md §6.13 — a mobile
+/// layout is an open design problem, not a scaling exercise.
 class SubtitleEditorScreen extends ConsumerStatefulWidget {
   final String fileId;
   final TranscriptionModel? transcription;
@@ -37,6 +43,20 @@ class SubtitleEditorScreen extends ConsumerStatefulWidget {
 
 class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
   late final FocusNode _focusNode;
+
+  static const double _minPixelsPerSecond = 4.0;
+  static const double _maxPixelsPerSecond = 200.0;
+  double _pixelsPerSecond = 40.0;
+
+  void _zoomIn() => setState(() {
+        _pixelsPerSecond = (_pixelsPerSecond * 1.5)
+            .clamp(_minPixelsPerSecond, _maxPixelsPerSecond);
+      });
+
+  void _zoomOut() => setState(() {
+        _pixelsPerSecond = (_pixelsPerSecond / 1.5)
+            .clamp(_minPixelsPerSecond, _maxPixelsPerSecond);
+      });
 
   @override
   void initState() {
@@ -124,64 +144,101 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
     final editorState = ref.watch(editorNotifierProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Focus(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: Scaffold(
-        backgroundColor: AppColors.getBackground(isDark),
-        body: Row(
-          children: [
-            // Sidebar (deep screen pushed over the shell — no tab highlighted)
-            const Sidebar(selectedIndexOverride: -1),
-
-            // Main content
-            Expanded(
-              child: editorState.isLoading
-                  ? _buildLoadingState(isDark)
-                  : editorState.error != null && editorState.project == null
-                      ? _buildErrorState(isDark, editorState.error!)
-                      : Column(
-                          children: [
-                            // Top toolbar
-                            const EditorToolbar(),
-
-                            // Error banner (non-fatal)
-                            if (editorState.error != null)
-                              _buildErrorBanner(isDark, editorState.error!),
-
-                            // Three-panel layout
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  // Left: Video preview (50%)
-                                  const Expanded(
-                                    flex: 5,
-                                    child: VideoPreviewPanel(),
-                                  ),
-
-                                  // Center: Subtitle list (25%)
-                                  const Expanded(
-                                    flex: 3,
-                                    child: SubtitleListPanel(),
-                                  ),
-
-                                  // Right: Text editor (~27% — needs enough
-                                  // width for two side-by-side TimingAdjuster
-                                  // fields showing HH:MM:SS,mmm timestamps).
-                                  const Expanded(
-                                    flex: 3,
-                                    child: TextEditorPanel(),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+    // The Scaffold now lives inside the scoped theme, so this is what paints
+    // behind the Sidebar's margin. The editor is pushed as an opaque route over
+    // MainShell, so nothing else would fill that gap.
+    return ColoredBox(
+      color: AppColors.getBackground(isDark),
+      child: Row(
+        children: [
+          // Outside the scoped theme on purpose — shared with every other screen.
+          const Sidebar(selectedIndexOverride: -1),
+          Expanded(
+            // Scoped: the redesign applies to the editor only. Everything else
+            // still uses AppTheme/AppColors until it is redesigned in turn.
+            child: Theme(
+              data: buildEditorTheme(isDark),
+              // Builder is required: without it the subtree below reads the
+              // OUTER theme, not the one we just built.
+              child: Builder(
+                builder: (context) {
+                  final scheme = Theme.of(context).colorScheme;
+                  return Focus(
+                    focusNode: _focusNode,
+                    autofocus: true,
+                    onKeyEvent: _handleKeyEvent,
+                    child: Scaffold(
+                      backgroundColor: scheme.surface,
+                      body: editorState.isLoading
+                          ? _buildLoadingState(isDark)
+                          : (editorState.error != null &&
+                                  editorState.project == null)
+                              ? _buildErrorState(isDark, editorState.error!)
+                              : Column(
+                                  children: [
+                                    const EditorToolbar(),
+                                    if (editorState.error != null)
+                                      _buildErrorBanner(
+                                          isDark, editorState.error!),
+                                    Expanded(child: _buildPanels(editorState)),
+                                  ],
+                                ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildPanels(EditorState editorState) {
+    return Row(
+      children: [
+        const Expanded(flex: 3, child: SubtitleListPanel()),
+        Expanded(
+          flex: 6,
+          child: Column(
+            children: [
+              const Expanded(child: VideoPreviewPanel()),
+              _buildTimeline(editorState),
+            ],
+          ),
+        ),
+        // The inspector needs width for two side-by-side TimingAdjuster
+        // fields showing HH:MM:SS,mmm.
+        const Expanded(flex: 3, child: TextEditorPanel()),
+      ],
+    );
+  }
+
+  Widget _buildTimeline(EditorState editorState) {
+    final playerState = ref.watch(videoPlayerNotifierProvider);
+
+    // Prefer the project's duration: it survives the media file going away,
+    // and the timeline should still render for a project whose video is gone.
+    final duration =
+        editorState.project?.fileDuration ?? playerState.durationSeconds;
+    if (duration <= 0) return const SizedBox.shrink();
+
+    return SegmentTimeline(
+      segments: editorState.segments,
+      positionSeconds: playerState.positionSeconds,
+      durationSeconds: duration,
+      selectedIndex: editorState.selectedSegmentIndex,
+      pixelsPerSecond: _pixelsPerSecond,
+      onSeek: (seconds) =>
+          ref.read(videoPlayerNotifierProvider.notifier).seekToSeconds(seconds),
+      onSelect: (index) {
+        ref.read(editorNotifierProvider.notifier).selectSegment(index);
+        ref
+            .read(videoPlayerNotifierProvider.notifier)
+            .seekToSeconds(editorState.segments[index].start);
+      },
+      onZoomIn: _zoomIn,
+      onZoomOut: _zoomOut,
     );
   }
 
