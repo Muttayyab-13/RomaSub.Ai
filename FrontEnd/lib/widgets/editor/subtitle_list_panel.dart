@@ -28,8 +28,7 @@ class _SubtitleListPanelState extends ConsumerState<SubtitleListPanel> {
 
   void _scrollToIndex(int index) {
     if (!_scrollController.hasClients) return;
-    // Approximate: each tile is ~70px
-    final offset = (index * 70.0).clamp(
+    final offset = (index * SegmentTile.height).clamp(
       0.0,
       _scrollController.position.maxScrollExtent,
     );
@@ -167,6 +166,9 @@ class _SubtitleListPanelState extends ConsumerState<SubtitleListPanel> {
                     controller: _scrollController,
                     itemCount: segments.length,
                     itemBuilder: (context, index) {
+                      final next = index + 1 < segments.length
+                          ? segments[index + 1]
+                          : null;
                       return SegmentTile(
                         segment: segments[index],
                         index: index,
@@ -174,6 +176,7 @@ class _SubtitleListPanelState extends ConsumerState<SubtitleListPanel> {
                         isActive: activeSegment == index,
                         matchesSearch:
                             editorState.searchResults.contains(index),
+                        hasOverlap: segments[index].overlapsNext(next),
                         onTap: () {
                           editorNotifier.selectSegment(index);
                           // Seek video to segment start

@@ -1,16 +1,26 @@
+// FrontEnd/lib/widgets/editor/segment_tile.dart
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+
 import '../../core/constants/app_sizes.dart';
+import '../../core/design/app_typography.dart';
+import '../../core/design/editor_theme.dart';
 import '../../models/subtitle_project_model.dart';
 import '../common/pressable.dart';
 
-/// Single segment row in the subtitle list panel
+/// One row in the editor's segment list.
+///
+/// Height is pinned by [height] because SubtitleListPanel scrolls by
+/// `index * height` — the two must not drift apart.
 class SegmentTile extends StatelessWidget {
+  /// Fixed row height. SubtitleListPanel's auto-scroll depends on this.
+  static const double height = 84.0;
+
   final EditableSegment segment;
   final int index;
   final bool isSelected;
-  final bool isActive; // Currently playing
+  final bool isActive;
   final bool matchesSearch;
+  final bool hasOverlap;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -21,105 +31,146 @@ class SegmentTile extends StatelessWidget {
     required this.isSelected,
     required this.isActive,
     required this.matchesSearch,
+    required this.hasOverlap,
     required this.onTap,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+    final editor = Theme.of(context).extension<EditorTheme>()!;
 
-    Color backgroundColor;
-    if (isSelected) {
-      backgroundColor = isDark
-          ? AppColors.accentLightDark
-          : AppColors.accentLight;
-    } else if (isActive) {
-      // Currently-playing segment: subtle teal accent tint
-      backgroundColor = AppColors.getAccent(isDark).withValues(alpha: 0.15);
-    } else {
-      backgroundColor = AppColors.getSurface(isDark);
-    }
+    final Color background = isSelected
+        ? editor.segmentSelected
+        : isActive
+            ? editor.segmentActive
+            : scheme.surface;
 
-    return Pressable(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.sm,
-        vertical: AppSizes.sm,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border(
-          bottom: BorderSide(color: AppColors.getBorder(isDark), width: 0.5),
-          left: isSelected
-              ? BorderSide(color: AppColors.getPrimary(isDark), width: 3)
-              : BorderSide.none,
+    final isUrduFallback = segment.romanUrduText.isEmpty;
+
+    return SizedBox(
+      height: height,
+      child: Pressable(
+        onTap: onTap,
+        decoration: BoxDecoration(
+          color: background,
+          border: Border(
+            left: BorderSide(
+              color: isSelected ? scheme.primary : Colors.transparent,
+              width: 3,
+            ),
+            bottom: BorderSide(color: scheme.outlineVariant, width: 0.5),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // Sequence number
-          SizedBox(
-            width: 28,
-            child: Text(
-              '${index + 1}',
-              style: TextStyle(
-                fontSize: AppSizes.fontXs,
-                fontWeight: FontWeight.w600,
-                color: AppColors.getTextSecondary(isDark),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.sm,
+          vertical: AppSizes.sm,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 24,
+              child: Text(
+                '${index + 1}',
+                style: AppTypography.mono(
+                  size: 11,
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ),
-          ),
-
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${segment.startFormatted} - ${segment.endFormatted}',
+                    style: AppTypography.mono(
+                      size: 11,
+                      color: scheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Text(
+                      segment.displayText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textDirection: isUrduFallback
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                      style: isUrduFallback
+                          ? AppTypography.urdu(
+                              size: 12,
+                              color: scheme.onSurface,
+                            )
+                          : AppTypography.latin(
+                              size: 13,
+                              color: scheme.onSurface,
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSizes.xs),
+            // No mainAxisSize.min here: the Spacer below needs a bounded,
+            // non-shrinking column to push the delete button to the bottom.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Time range
-                Text(
-                  '${segment.startFormatted} → ${segment.endFormatted}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontFamily: 'monospace',
-                    color: AppColors.getTextSecondary(isDark),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasOverlap)
+                      Tooltip(
+                        message: 'Overlaps the next segment',
+                        child: Icon(
+                          Icons.warning_amber_rounded,
+                          size: 14,
+                          color: editor.overlapMarker,
+                        ),
+                      ),
+                    if (segment.isEdited)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          size: 12,
+                          color: editor.editedMarker,
+                        ),
+                      ),
+                    if (matchesSearch)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Icon(
+                          Icons.search_rounded,
+                          size: 12,
+                          color: scheme.primary,
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-
-                // Text preview
-                Text(
-                  segment.romanUrduText.isNotEmpty
-                      ? segment.romanUrduText
-                      : segment.urduText,
-                  style: TextStyle(
-                    fontSize: AppSizes.fontXs,
-                    color: AppColors.getTextPrimary(isDark),
+                const Spacer(),
+                if (isSelected)
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 14,
+                      splashRadius: 14,
+                      tooltip: 'Delete segment',
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      color: scheme.onSurfaceVariant,
+                      onPressed: onDelete,
+                    ),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
             ),
-          ),
-
-          // Indicators
-          Column(
-            children: [
-              if (segment.isEdited)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Icon(
-                    Icons.edit_rounded,
-                    size: 12,
-                    color: AppColors.warning,
-                  ),
-                ),
-              if (matchesSearch)
-                Icon(Icons.search_rounded, size: 12, color: AppColors.success),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
