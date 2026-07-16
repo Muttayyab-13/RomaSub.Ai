@@ -303,17 +303,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final project = state.project;
     if (project == null) return;
 
-    final restored = SubtitleProject(
-      subtitleId: project.subtitleId,
-      fileId: project.fileId,
-      projectName: project.projectName,
-      originalFilename: project.originalFilename,
-      isVideo: project.isVideo,
+    final restored = project.copyWith(
       segments: action.previousSegments,
       segmentCount: action.previousSegments.length,
-      fileDuration: project.fileDuration,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
     );
 
     state = state.copyWith(
@@ -346,17 +338,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final project = state.project;
     if (project == null) return;
 
-    final restored = SubtitleProject(
-      subtitleId: project.subtitleId,
-      fileId: project.fileId,
-      projectName: project.projectName,
-      originalFilename: project.originalFilename,
-      isVideo: project.isVideo,
+    final restored = project.copyWith(
       segments: action.previousSegments,
       segmentCount: action.previousSegments.length,
-      fileDuration: project.fileDuration,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
     );
 
     state = state.copyWith(
@@ -412,17 +396,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
       );
 
       final project = state.project!;
-      final updated = SubtitleProject(
-        subtitleId: project.subtitleId,
-        fileId: project.fileId,
-        projectName: project.projectName,
-        originalFilename: project.originalFilename,
-        isVideo: project.isVideo,
+      final updated = project.copyWith(
         segments: fixedSegments,
         segmentCount: fixedSegments.length,
-        fileDuration: project.fileDuration,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
       );
 
       state = state.copyWith(

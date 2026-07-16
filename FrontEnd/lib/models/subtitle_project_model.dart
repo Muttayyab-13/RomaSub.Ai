@@ -144,6 +144,32 @@ class SubtitleProject {
     required this.updatedAt,
   });
 
+  SubtitleProject copyWith({
+    String? subtitleId,
+    String? fileId,
+    String? projectName,
+    String? originalFilename,
+    bool? isVideo,
+    List<EditableSegment>? segments,
+    int? segmentCount,
+    double? fileDuration,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return SubtitleProject(
+      subtitleId: subtitleId ?? this.subtitleId,
+      fileId: fileId ?? this.fileId,
+      projectName: projectName ?? this.projectName,
+      originalFilename: originalFilename ?? this.originalFilename,
+      isVideo: isVideo ?? this.isVideo,
+      segments: segments ?? this.segments,
+      segmentCount: segmentCount ?? this.segmentCount,
+      fileDuration: fileDuration ?? this.fileDuration,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   static const Set<String> _videoExtensions = {
     'mp4', 'avi', 'mkv', 'mov', 'webm',
   };
