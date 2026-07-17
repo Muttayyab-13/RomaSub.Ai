@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/api/api_client.dart';
 import '../services/api/api_config.dart';
+import '../models/system_health.dart';
 
 /// Subtitle projects, newest-first, from `/subtitles/list/projects`.
 /// Consumed by the Projects screen; will also feed the Dashboard.
@@ -32,4 +33,19 @@ final exportsProvider =
   final response = await client.dio.get(ApiConfig.exportsList);
   final data = response.data as Map<String, dynamic>;
   return List<Map<String, dynamic>>.from(data['exports'] ?? []);
+});
+
+/// Honest system status from `GET /health`. Returns [SystemHealth.unreachable]
+/// instead of throwing, so the UI shows a red "Unreachable" state rather than
+/// an error box.
+final systemHealthProvider =
+    FutureProvider.autoDispose<SystemHealth>((ref) async {
+  final client = ref.watch(apiClientProvider);
+  try {
+    final response = await client.dio.get(ApiConfig.health);
+    final data = response.data as Map<String, dynamic>;
+    return SystemHealth.fromJson(data);
+  } catch (_) {
+    return const SystemHealth.unreachable();
+  }
 });
