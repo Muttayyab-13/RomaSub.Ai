@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RomaSub.AI - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "border-strong": "#CBD5E1",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "primary-container": "#008378",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-fixed-dim": "#ffb59a",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-primary": "#FFFFFF",
+                        "primary-fixed": "#89f5e7",
+                        "outline-variant": "#bcc9c6",
+                        "on-secondary-container": "#5c647a",
+                        "surface-container-high": "#dce9ff",
+                        "secondary-fixed": "#dae2fd",
+                        "tertiary": "#924628",
+                        "secondary-container": "#dae2fd",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "surface-variant": "#d3e4fe",
+                        "accent-teal-subtle": "#F0FDFA",
+                        "on-primary-fixed-variant": "#005049",
+                        "surface-tertiary": "#F1F5F9",
+                        "primary": "#00685f",
+                        "surface-tint": "#006a61",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#3d4947",
+                        "on-primary-container": "#f4fffc",
+                        "tertiary-container": "#b05e3d",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00201d",
+                        "on-tertiary-container": "#fffbff",
+                        "outline": "#6d7a77",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "text-urdu": "#1E293B",
+                        "inverse-primary": "#6bd8cb",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "secondary": "#565e74",
+                        "on-tertiary-fixed-variant": "#773215",
+                        "primary-fixed-dim": "#6bd8cb",
+                        "tertiary-fixed": "#ffdbce",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-container": "#e5eeff",
+                        "inverse-surface": "#213145",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "surface": "#f8f9ff",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "border-subtle": "#E2E8F0",
+                        "on-tertiary-fixed": "#370e00",
+                        "surface-secondary": "#F8FAFC",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "timeline-height": "180px",
+                        "row-height-compact": "32px",
+                        "panel-gap": "1px",
+                        "container-padding": "12px",
+                        "row-height-standard": "44px",
+                        "sidebar-width": "240px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "display-urdu": ["Inter"],
+                        "mono-ui": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "editor-text": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-urdu": ["24px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "mono-ui": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "editor-text": ["15px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface-primary text-on-surface font-body-sm h-full flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-secondary dark:bg-surface-secondary text-primary dark:text-primary-fixed font-body-sm text-body-sm w-sidebar-width h-screen sticky left-0 top-0 border-r border-border-subtle dark:border-outline-variant flex flex-col h-full py-container-padding z-40">
+<div class="px-container-padding mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold">R</div>
+<div>
+<h1 class="font-display-urdu text-display-urdu text-primary dark:text-primary-fixed text-lg leading-tight">RomaSub.AI</h1>
+<p class="text-on-surface-variant dark:text-on-secondary-container text-xs">Pro Editor</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+                Recent Projects
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+                Exports
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+                Feedback
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-primary dark:text-primary-fixed bg-accent-teal-subtle dark:bg-on-primary-fixed-variant border-l-2 border-primary cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto px-container-padding pt-4 border-t border-border-subtle">
+<div class="flex items-center gap-3">
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-border-strong" data-alt="A minimalist profile picture placeholder avatar with a plain white background and a subtle gray silhouette of a person, suitable for a professional utility application interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPscVAmJrSp8ItwMcgl-gql2QOvYRZ-8rWjONeYCHOhByTp-tPuZrsJSmlPVxEkmcUbkGTv2MpJ9jWtjws4_1albywMUF56VQGd5Noe4qadms7JHk-C6PfPbGMR16OjWdBaeYIaXA0fzz9krP_Z-RodSX0oz-81-c-gfJCNdWqyeT5D-FVDVCwbb-cGD51Fm76T383iGT3XfUiWKg6quvsbnucHpglTwqGkqBqPkEPdidDP5J7GcMRSA"/>
+<div class="flex-1 truncate">
+<p class="font-body-sm text-body-sm truncate">user@romasub.ai</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col h-full overflow-hidden bg-surface-primary">
+<!-- TopNavBar -->
+<header class="bg-surface-primary dark:bg-surface-primary text-primary dark:text-primary-fixed font-body-sm text-body-sm h-row-height-standard w-full sticky top-0 z-50 border-b border-border-subtle dark:border-outline-variant flex justify-between items-center px-container-padding">
+<div class="flex items-center gap-4">
+<!-- Search on left as per JSON -->
+<div class="relative w-64 hidden md:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" data-icon="search">search</span>
+<input class="w-full h-row-height-compact pl-8 pr-3 bg-surface-secondary border-border-subtle rounded-DEFAULT text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none placeholder-on-surface-variant" placeholder="Search settings..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-8 h-8 flex items-center justify-center rounded-DEFAULT hover:bg-surface-tertiary text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-DEFAULT hover:bg-surface-tertiary text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<button class="px-4 h-row-height-compact border border-border-strong text-on-surface rounded-DEFAULT hover:bg-surface-secondary transition-colors font-body-sm">
+                    Save
+                </button>
+<button class="px-4 h-row-height-compact bg-primary text-on-primary rounded-DEFAULT hover:bg-surface-tint transition-colors font-body-sm">
+                    Export
+                </button>
+</div>
+</header>
+<!-- Settings Content Area -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Settings Internal Nav (Notion style left pane) -->
+<div class="w-48 bg-surface-secondary border-r border-border-subtle h-full flex flex-col pt-6 z-10 hidden lg:flex">
+<h2 class="px-4 font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase tracking-wider">Settings</h2>
+<nav class="flex-1 space-y-0.5 px-2">
+<a class="block px-3 py-1.5 rounded-DEFAULT text-body-sm font-body-sm bg-accent-teal-subtle text-primary font-bold border-l-2 border-primary" href="#profile">Profile</a>
+<a class="block px-3 py-1.5 rounded-DEFAULT text-body-sm font-body-sm text-on-surface-variant hover:bg-surface-container transition-colors" href="#security">Security</a>
+<a class="block px-3 py-1.5 rounded-DEFAULT text-body-sm font-body-sm text-on-surface-variant hover:bg-surface-container transition-colors" href="#appearance">Appearance</a>
+<a class="block px-3 py-1.5 rounded-DEFAULT text-body-sm font-body-sm text-on-surface-variant hover:bg-surface-container transition-colors" href="#account">Account</a>
+</nav>
+</div>
+<!-- Settings Form Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface-primary relative">
+<div class="max-w-3xl mx-auto py-12 px-8">
+<h1 class="font-display-urdu text-display-urdu mb-8">Profile Settings</h1>
+<!-- Segmented Form: Profile -->
+<section class="mb-12" id="profile">
+<div class="border border-border-subtle rounded-lg bg-surface-primary">
+<div class="p-6 border-b border-border-subtle flex items-start justify-between">
+<div>
+<h3 class="font-body-sm font-bold text-on-surface mb-1">Avatar</h3>
+<p class="font-body-sm text-on-surface-variant text-xs">This image will be displayed on your profile and team workspaces.</p>
+</div>
+<div class="flex items-center gap-4">
+<img class="w-16 h-16 rounded-full border border-border-strong object-cover" data-alt="A detailed digital avatar of a professional in a minimalist style, clean lines, flat colors, primarily subtle grays and whites, conveying a focused utilitarian aesthetic suitable for a high-concentration software tool." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ7Qzi9lxyLhTBlbmcTtFuAen3kVHK3IfepNUejngw0KeMLllOVeK9C6I1crOqu4rac3ADVxQ6GWuNIKM7ZBgReoUbef38Gck5itbwa94g7aObJpnf_Dn0Hov-9Puc020qAzfuvZICkCOT2idLI0eiLszFKUUXT-f2AgtH2uDxWcrngtbN0P2UcOL9hdSEBO9hvBTsgr9AoSqFKnpj0eplmUWiMRXAg9_Msz0FCRjegltPUGFutkDvuw"/>
+<button class="px-3 h-row-height-compact border border-border-strong rounded-DEFAULT hover:bg-surface-secondary text-on-surface font-body-sm">Change</button>
+</div>
+</div>
+<div class="p-6 border-b border-border-subtle">
+<div class="grid grid-cols-2 gap-6">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">First Name</label>
+<input class="w-full h-row-height-compact px-3 bg-surface-primary border border-border-strong rounded-DEFAULT text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" type="text" value="Pro"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Last Name</label>
+<input class="w-full h-row-height-compact px-3 bg-surface-primary border border-border-strong rounded-DEFAULT text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" type="text" value="Editor"/>
+</div>
+</div>
+</div>
+<div class="p-6">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Email Address</label>
+<input class="w-full max-w-md h-row-height-compact px-3 bg-surface-primary border border-border-strong rounded-DEFAULT text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none mb-2" type="email" value="user@romasub.ai"/>
+<p class="text-xs text-on-surface-variant">We will use this email for billing and critical notifications.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Panel (Contextual Help / Inspector placeholder for density) -->
+<div class="w-64 bg-surface-secondary border-l border-border-subtle h-full p-4 hidden xl:block">
+<div class="bg-surface-primary border border-border-subtle rounded-DEFAULT p-4">
+<div class="flex items-center gap-2 mb-2 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="info">info</span>
+<h4 class="font-body-sm font-bold">Pro Tip</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                        Ensure your display name matches your billing information to avoid invoice discrepancies when exporting subtitle manifestos.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+</body></html>

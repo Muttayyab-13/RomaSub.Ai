@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - RomaSub.AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border-strong": "#CBD5E1",
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#eaf1ff",
+                      "primary-container": "#008378",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "surface-container-low": "#eff4ff",
+                      "on-secondary-fixed": "#131b2e",
+                      "surface-primary": "#FFFFFF",
+                      "primary-fixed": "#89f5e7",
+                      "outline-variant": "#bcc9c6",
+                      "on-secondary-container": "#5c647a",
+                      "surface-container-high": "#dce9ff",
+                      "secondary-fixed": "#dae2fd",
+                      "tertiary": "#924628",
+                      "secondary-container": "#dae2fd",
+                      "on-secondary-fixed-variant": "#3f465c",
+                      "surface-variant": "#d3e4fe",
+                      "accent-teal-subtle": "#F0FDFA",
+                      "on-primary-fixed-variant": "#005049",
+                      "surface-tertiary": "#F1F5F9",
+                      "primary": "#00685f",
+                      "surface-tint": "#006a61",
+                      "on-secondary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface-variant": "#3d4947",
+                      "on-primary-container": "#f4fffc",
+                      "tertiary-container": "#b05e3d",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#00201d",
+                      "on-tertiary-container": "#fffbff",
+                      "outline": "#6d7a77",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "text-urdu": "#1E293B",
+                      "inverse-primary": "#6bd8cb",
+                      "on-surface": "#0b1c30",
+                      "background": "#f8f9ff",
+                      "secondary": "#565e74",
+                      "on-tertiary-fixed-variant": "#773215",
+                      "primary-fixed-dim": "#6bd8cb",
+                      "tertiary-fixed": "#ffdbce",
+                      "surface-container-highest": "#d3e4fe",
+                      "surface-container": "#e5eeff",
+                      "inverse-surface": "#213145",
+                      "secondary-fixed-dim": "#bec6e0",
+                      "surface": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#0b1c30",
+                      "border-subtle": "#E2E8F0",
+                      "on-tertiary-fixed": "#370e00",
+                      "surface-secondary": "#F8FAFC",
+                      "error-container": "#ffdad6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "timeline-height": "180px",
+                      "row-height-compact": "32px",
+                      "panel-gap": "1px",
+                      "container-padding": "12px",
+                      "row-height-standard": "44px",
+                      "sidebar-width": "240px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "display-urdu": [
+                              "Inter"
+                      ],
+                      "mono-ui": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "editor-text": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-urdu": [
+                              "24px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "mono-ui": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "editor-text": [
+                              "15px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          .material-symbols-outlined {
+              font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          }
+          .material-symbols-outlined.fill-icon {
+              font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          }
+          /* Custom scrollbar for dense data tables/lists */
+          ::-webkit-scrollbar {
+              width: 6px;
+              height: 6px;
+          }
+          ::-webkit-scrollbar-track {
+              background: transparent;
+          }
+          ::-webkit-scrollbar-thumb {
+              background: #CBD5E1;
+              border-radius: 3px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+              background: #94A3B8;
+          }
+      </style>
+</head>
+<body class="bg-surface-primary text-on-surface font-body-sm h-screen overflow-hidden flex font-body-sm text-body-sm antialiased">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface-secondary dark:bg-surface-secondary w-sidebar-width h-screen sticky left-0 top-0 border-r border-border-subtle dark:border-outline-variant flex-col h-full py-container-padding shrink-0 z-40">
+<div class="px-container-padding mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold">R</div>
+<div>
+<h1 class="font-display-urdu text-display-urdu text-primary dark:text-primary-fixed leading-none">RomaSub.AI</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pro Editor</p>
+</div>
+</div>
+<ul class="flex-1 space-y-1 px-2">
+<!-- Active: Dashboard -->
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary dark:text-primary-fixed bg-accent-teal-subtle dark:bg-on-primary-fixed-variant border-l-2 border-primary cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined fill-icon text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150 border-l-2 border-transparent" href="#">
+<span class="material-symbols-outlined text-lg">folder_open</span>
+<span>Recent Projects</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150 border-l-2 border-transparent" href="#">
+<span class="material-symbols-outlined text-lg">ios_share</span>
+<span>Exports</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150 border-l-2 border-transparent" href="#">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+<span>Feedback</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto px-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-on-secondary-container hover:bg-surface-container dark:hover:bg-surface-variant transition-colors cursor-pointer duration-150 border-l-2 border-transparent" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Settings</span>
+</a>
+<div class="mt-4 px-3 py-3 border-t border-border-subtle flex items-center gap-3">
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-border-subtle" data-alt="A professional headshot of a person looking forward, neutral lighting, minimalist background. The image should convey a sense of reliability and professional competence in a clean, brightly lit setting. The overall tone is calm and understated, fitting for a corporate or professional software user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1-Vnq9y3lE5yEdlZxQMEX1_qObFYoK7YhLYIVRIZwW7ZHAMjj-2Dk6-5TQAc3ejyT_jptm9EGWXOYlXeDCec3w2SdZzepvIHgluVsid7ZajIntYaTzHGH69CJjfSDHcz_Gvg4I_0wrdcWCQBg9064LUYFE1pquXqqPCebl_z6WDOeiXzyqTJvtJ_DQzwFKjSZ9PFk2P9o5b1D_aBVGMFmf3sEvO--jLVidYbO1Z_LYkT3evHwDFL76A"/>
+<div class="overflow-hidden">
+<p class="font-body-sm text-body-sm font-semibold truncate">Jane Doe</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant truncate">Premium Plan</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden bg-surface-primary">
+<!-- TopNavBar -->
+<header class="bg-surface-primary dark:bg-surface-primary h-row-height-standard w-full sticky top-0 z-50 border-b border-border-subtle dark:border-outline-variant flex justify-between items-center px-container-padding w-full shrink-0">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full h-row-height-compact pl-8 pr-3 bg-surface-secondary border border-border-subtle rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-body-sm text-body-sm placeholder:text-on-surface-variant" placeholder="Search projects..." type="text"/>
+</div>
+</div>
+<div class="md:hidden flex items-center gap-2">
+<h1 class="font-display-urdu text-display-urdu text-primary dark:text-primary-fixed text-lg leading-none">RomaSub.AI</h1>
+</div>
+<div class="flex items-center gap-4 flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-tertiary">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-tertiary">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+<div class="h-4 w-[1px] bg-border-subtle mx-1 hidden sm:block"></div>
+<button class="hidden sm:flex items-center justify-center px-3 h-row-height-compact border border-border-strong text-on-surface rounded hover:bg-surface-tertiary transition-colors font-body-sm text-body-sm">
+                    Save
+                </button>
+<button class="flex items-center justify-center px-4 h-row-height-compact bg-primary text-on-primary rounded hover:bg-surface-tint transition-colors font-body-sm text-body-sm font-semibold shadow-sm">
+                    Export
+                </button>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+<div class="flex flex-col lg:flex-row gap-6 h-full">
+<!-- Left/Main Column: Upload & Recent Projects -->
+<div class="flex-1 flex flex-col gap-6 min-w-0">
+<!-- Upload Area -->
+<section class="border border-border-subtle rounded-lg bg-surface-secondary p-8 flex flex-col items-center justify-center text-center border-dashed border-2 hover:border-primary hover:bg-accent-teal-subtle transition-all duration-200 group cursor-pointer h-64 shrink-0">
+<div class="w-16 h-16 rounded-full bg-surface-primary border border-border-subtle flex items-center justify-center mb-4 group-hover:border-primary group-hover:text-primary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-3xl text-on-surface-variant group-hover:text-primary transition-colors">cloud_upload</span>
+</div>
+<h2 class="font-body-sm text-body-sm font-semibold text-on-surface mb-2">Drag &amp; Drop media to start editing</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6 max-w-sm">Upload video or audio files to auto-generate Roman Urdu subtitles.</p>
+<div class="flex flex-wrap items-center justify-center gap-4 text-on-surface-variant">
+<div class="flex items-center gap-1 font-mono-ui text-mono-ui bg-surface-primary px-2 py-1 rounded border border-border-subtle">
+<span class="material-symbols-outlined text-[14px]">movie</span>
+                                MP4, MOV, MKV
+                            </div>
+<div class="flex items-center gap-1 font-mono-ui text-mono-ui bg-surface-primary px-2 py-1 rounded border border-border-subtle">
+<span class="material-symbols-outlined text-[14px]">audio_file</span>
+                                MP3, WAV
+                            </div>
+<div class="flex items-center gap-1 font-label-caps text-label-caps text-primary bg-accent-teal-subtle px-2 py-1 rounded border border-primary/20">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                MAX 2GB
+                            </div>
+</div>
+</section>
+<!-- Recent Projects List -->
+<section class="flex-1 flex flex-col min-h-[300px] border border-border-subtle rounded-lg bg-surface-primary overflow-hidden">
+<div class="h-row-height-standard border-b border-border-subtle flex items-center justify-between px-4 bg-surface-secondary shrink-0">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">RECENT PROJECTS</h3>
+<button class="text-primary hover:underline font-body-sm text-body-sm">View All</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sr-only">
+<tr>
+<th>Project Name</th>
+<th>Date</th>
+<th>Duration</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<!-- Row 1 -->
+<tr class="border-b border-border-subtle hover:bg-surface-secondary transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-tertiary rounded flex items-center justify-center border border-border-subtle">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">movie</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm font-semibold truncate max-w-[200px]">Interview_Raw_01.mp4</p>
+<p class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">Urdu -&gt; Roman Urdu</p>
+</div>
+</div>
+</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant whitespace-nowrap">Today, 10:42 AM</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant">45:20</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent-teal-subtle text-primary border border-primary/20 font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                                Completed
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-tertiary rounded">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-border-subtle hover:bg-surface-secondary transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-tertiary rounded flex items-center justify-center border border-border-subtle">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">audio_file</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm font-semibold truncate max-w-[200px]">Podcast_Ep4_Draft.wav</p>
+<p class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">Urdu -&gt; Roman Urdu</p>
+</div>
+</div>
+</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant whitespace-nowrap">Yesterday</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant">1:12:05</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-tertiary text-on-surface border border-border-subtle font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[12px]">sync</span>
+                                                Draft
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-tertiary rounded">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-border-subtle hover:bg-surface-secondary transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-tertiary rounded flex items-center justify-center border border-border-subtle">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">movie</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm font-semibold truncate max-w-[200px]">Short_Clip_Promo.mp4</p>
+<p class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">Urdu -&gt; Roman Urdu</p>
+</div>
+</div>
+</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant whitespace-nowrap">Oct 24, 2023</td>
+<td class="p-3 font-mono-ui text-mono-ui text-on-surface-variant">02:15</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent-teal-subtle text-primary border border-primary/20 font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                                Completed
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-tertiary rounded">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: Stats & System Health -->
+<aside class="w-full lg:w-80 flex flex-col gap-6 shrink-0">
+<!-- Quick Stats -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-primary border border-border-subtle rounded-lg p-4 flex flex-col justify-between h-24">
+<span class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">folder</span>
+                                TOTAL PROJECTS
+                            </span>
+<div class="font-display-urdu text-display-urdu text-on-surface">142</div>
+</div>
+<div class="bg-surface-primary border border-border-subtle rounded-lg p-4 flex flex-col justify-between h-24">
+<span class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">download</span>
+                                EXPORTS
+                            </span>
+<div class="font-display-urdu text-display-urdu text-on-surface">328</div>
+</div>
+<div class="col-span-2 bg-surface-primary border border-border-subtle rounded-lg p-4 flex flex-col justify-between h-24">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+                                    MINUTES PROCESSED
+                                </span>
+<span class="font-mono-ui text-mono-ui text-primary bg-accent-teal-subtle px-1.5 py-0.5 rounded text-xs">+12% this week</span>
+</div>
+<div class="font-display-urdu text-display-urdu text-on-surface">4,520</div>
+</div>
+</div>
+<!-- System Health / Quota -->
+<div class="bg-surface-secondary border border-border-subtle rounded-lg p-4 flex flex-col gap-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+                            WORKSPACE USAGE
+                        </h3>
+<div>
+<div class="flex justify-between font-mono-ui text-mono-ui mb-1">
+<span>Storage</span>
+<span class="text-on-surface-variant">45GB / 100GB</span>
+</div>
+<div class="w-full h-1.5 bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[45%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-mono-ui text-mono-ui mb-1">
+<span>Processing Minutes (Monthly)</span>
+<span class="text-on-surface-variant">850 / 1000</span>
+</div>
+<div class="w-full h-1.5 bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container w-[85%] rounded-full"></div>
+</div>
+<p class="font-mono-ui text-mono-ui text-tertiary-container mt-1 text-xs text-right">Approaching limit</p>
+</div>
+</div>
+<!-- Activity Feed -->
+<div class="bg-surface-primary border border-border-subtle rounded-lg flex-1 overflow-hidden flex flex-col min-h-[250px]">
+<div class="p-4 border-b border-border-subtle shrink-0">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                                RECENT ACTIVITY
+                            </h3>
+</div>
+<div class="p-4 overflow-y-auto flex-1">
+<ul class="space-y-4 relative before:absolute before:inset-y-0 before:left-2 before:w-[1px] before:bg-border-subtle before:ml-1.5">
+<!-- Activity Item -->
+<li class="relative pl-8 flex flex-col">
+<span class="absolute left-0 top-1 w-5 h-5 rounded-full bg-surface-primary border border-primary flex items-center justify-center z-10">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</span>
+<p class="font-body-sm text-body-sm text-on-surface">Exported <span class="font-semibold">Interview_Raw_01.srt</span></p>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">10:45 AM</span>
+</li>
+<!-- Activity Item -->
+<li class="relative pl-8 flex flex-col">
+<span class="absolute left-0 top-1 w-5 h-5 rounded-full bg-surface-secondary border border-border-strong flex items-center justify-center z-10">
+</span>
+<p class="font-body-sm text-body-sm text-on-surface">Processing finished for <span class="font-semibold">Interview_Raw_01.mp4</span></p>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">10:42 AM</span>
+</li>
+<!-- Activity Item -->
+<li class="relative pl-8 flex flex-col">
+<span class="absolute left-0 top-1 w-5 h-5 rounded-full bg-surface-secondary border border-border-strong flex items-center justify-center z-10">
+</span>
+<p class="font-body-sm text-body-sm text-on-surface">Started transcription: <span class="font-semibold">Interview_Raw_01.mp4</span></p>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">10:05 AM</span>
+</li>
+<!-- Activity Item -->
+<li class="relative pl-8 flex flex-col">
+<span class="absolute left-0 top-1 w-5 h-5 rounded-full bg-surface-secondary border border-border-strong flex items-center justify-center z-10">
+</span>
+<p class="font-body-sm text-body-sm text-on-surface">Saved draft <span class="font-semibold">Podcast_Ep4_Draft</span></p>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant mt-0.5">Yesterday, 4:30 PM</span>
+</li>
+</ul>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>

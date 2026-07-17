@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RomaSub.AI - Realtime Viewer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border-strong": "#CBD5E1",
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#eaf1ff",
+                      "primary-container": "#008378",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "surface-container-low": "#eff4ff",
+                      "on-secondary-fixed": "#131b2e",
+                      "surface-primary": "#FFFFFF",
+                      "primary-fixed": "#89f5e7",
+                      "outline-variant": "#bcc9c6",
+                      "on-secondary-container": "#5c647a",
+                      "surface-container-high": "#dce9ff",
+                      "secondary-fixed": "#dae2fd",
+                      "tertiary": "#924628",
+                      "secondary-container": "#dae2fd",
+                      "on-secondary-fixed-variant": "#3f465c",
+                      "surface-variant": "#d3e4fe",
+                      "accent-teal-subtle": "#F0FDFA",
+                      "on-primary-fixed-variant": "#005049",
+                      "surface-tertiary": "#F1F5F9",
+                      "primary": "#00685f",
+                      "surface-tint": "#006a61",
+                      "on-secondary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface-variant": "#3d4947",
+                      "on-primary-container": "#f4fffc",
+                      "tertiary-container": "#b05e3d",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#00201d",
+                      "on-tertiary-container": "#fffbff",
+                      "outline": "#6d7a77",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "text-urdu": "#1E293B",
+                      "inverse-primary": "#6bd8cb",
+                      "on-surface": "#0b1c30",
+                      "background": "#f8f9ff",
+                      "secondary": "#565e74",
+                      "on-tertiary-fixed-variant": "#773215",
+                      "primary-fixed-dim": "#6bd8cb",
+                      "tertiary-fixed": "#ffdbce",
+                      "surface-container-highest": "#d3e4fe",
+                      "surface-container": "#e5eeff",
+                      "inverse-surface": "#213145",
+                      "secondary-fixed-dim": "#bec6e0",
+                      "surface": "#f8f9ff",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#0b1c30",
+                      "border-subtle": "#E2E8F0",
+                      "on-tertiary-fixed": "#370e00",
+                      "surface-secondary": "#F8FAFC",
+                      "error-container": "#ffdad6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "timeline-height": "180px",
+                      "row-height-compact": "32px",
+                      "panel-gap": "1px",
+                      "container-padding": "12px",
+                      "row-height-standard": "44px",
+                      "sidebar-width": "240px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "display-urdu": [
+                              "Inter"
+                      ],
+                      "mono-ui": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "editor-text": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-urdu": [
+                              "24px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "mono-ui": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "editor-text": [
+                              "15px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          .progress-indeterminate {
+              width: 50%;
+              animation: indeterminate 2s linear infinite;
+              transform-origin: left;
+          }
+          @keyframes indeterminate {
+              0% { transform: translateX(-100%) scaleX(0.2); }
+              50% { transform: translateX(50%) scaleX(0.8); }
+              100% { transform: translateX(200%) scaleX(0.2); }
+          }
+          
+          .pulse-dot {
+              animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: .5; }
+          }
+      </style>
+</head>
+<body class="bg-background text-on-background font-body-sm h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-primary h-row-height-standard w-full sticky top-0 z-50 border-b border-border-subtle flex justify-between items-center px-container-padding flex-shrink-0">
+<div class="flex items-center gap-4">
+<span class="font-display-urdu text-display-urdu text-primary">RomaSub.AI</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-tertiary transition-colors rounded p-1">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-tertiary transition-colors rounded p-1">help_outline</span>
+<button class="font-body-sm text-body-sm border border-border-strong px-3 py-1 rounded hover:bg-surface-tertiary transition-colors">Save</button>
+<button class="font-body-sm text-body-sm bg-primary text-on-primary px-3 py-1 rounded">Export</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-border-subtle">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a person looking at the camera, neutral lighting, minimalist background. The image should be sharp and high contrast, fitting a modern software interface user profile avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8qDHEeo3WNfDEFBe02RIl7-q6Vf9tnZLA3p8gFV1Hmq1PuwLnGZuwVYqLgVAAdZ8B3Yrn4bUNYloxcw3mHAQReiwA4wD83d8bB4x7RejR62gFmKauEJzurGEkheDTvXZh3mqrpBc_0Bki7TDfmv46JEPV_jITC_3VXoELhdCqX8ZXSL3aYsN0ME0V-_Nrl1MJtowApBoOKR1-Z2hARBq91Oq32GSveky4gWf-QRw8zScvQhX12ZYt3g"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-secondary w-sidebar-width h-full sticky left-0 top-0 border-r border-border-subtle flex flex-col py-container-padding flex-shrink-0 hidden md:flex">
+<div class="px-container-padding mb-6">
+<div class="font-body-sm text-body-sm font-bold text-on-surface">RomaSub.AI</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Pro Editor</div>
+</div>
+<ul class="flex flex-col gap-1">
+<li class="flex items-center gap-3 px-container-padding py-2 cursor-pointer duration-150 text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-sm text-body-sm">Dashboard</span>
+</li>
+<li class="flex items-center gap-3 px-container-padding py-2 cursor-pointer duration-150 text-primary bg-accent-teal-subtle border-l-2 border-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder_open</span>
+<span class="font-body-sm text-body-sm font-bold">Recent Projects</span>
+</li>
+<li class="flex items-center gap-3 px-container-padding py-2 cursor-pointer duration-150 text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">ios_share</span>
+<span class="font-body-sm text-body-sm">Exports</span>
+</li>
+<li class="flex items-center gap-3 px-container-padding py-2 cursor-pointer duration-150 text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-body-sm text-body-sm">Feedback</span>
+</li>
+<li class="flex items-center gap-3 px-container-padding py-2 cursor-pointer duration-150 text-on-surface-variant hover:bg-surface-container transition-colors mt-auto">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-sm text-body-sm">Settings</span>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area: Realtime Viewer Modal Overlay Concept -->
+<main class="flex-1 bg-surface-secondary relative flex flex-col items-center justify-center p-8 overflow-y-auto">
+<!-- Context: They uploaded a file, now they are watching it process live -->
+<div class="w-full max-w-4xl bg-surface-primary border border-border-subtle rounded flex flex-col shadow-[0_4px_6px_-1px_rgb(0,0,0,0.1)] overflow-hidden">
+<!-- Viewer Header -->
+<div class="flex justify-between items-center p-4 border-b border-border-subtle bg-surface-secondary">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">video_file</span>
+<div>
+<h2 class="font-body-sm text-body-sm font-bold text-on-surface">interview_raw_footage.mp4</h2>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant">Processing Realtime</span>
+</div>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface cursor-pointer">close</button>
+</div>
+<!-- Video Player Area -->
+<div class="relative w-full aspect-video bg-inverse-surface border-b border-border-subtle flex flex-col justify-end group">
+<!-- Fake Video Content -->
+<div class="absolute inset-0 z-0">
+<img alt="Video Stream" class="w-full h-full object-cover opacity-80" data-alt="A wide angle shot of a professional interview setup in a modern office with large windows. Soft natural light, shallow depth of field focusing on an empty chair. The aesthetic is clean, corporate, and cinematic, using muted cool tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDt7m0gC9gl9CLt3ZPE--9cbTiRfAqNV1v9C7d76XtcadxsY08IcoULHJ7Ab2vuzxjcC5g9bhn8-5o7vmJTirTyrFUUh--_nPj7Q8gI3TtwRppHNHyybQpxZmoosZ0FbH_gcTaOPe8_EYpf74GgPZ8fMQmV8rwaayVHrKYt8qi3UcLtU3tDNKnzVOwLoQ73BAcivD3Qx-HFtQ9Eccz5VtXXeYgPlW5R_3ZG6wT83FVF-qlSCYhPQDKDpA"/>
+</div>
+<!-- Processing Boundary Indicator -->
+<div class="absolute top-4 right-4 z-10 bg-on-surface/80 backdrop-blur text-on-primary px-3 py-1 rounded border border-border-strong/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span class="font-mono-ui text-mono-ui">Buffer: 45s</span>
+</div>
+<!-- Live Subtitle Overlay -->
+<div class="z-10 w-full p-6 text-center">
+<div class="inline-block bg-on-surface/90 text-on-primary font-editor-text text-editor-text px-6 py-3 rounded-lg border border-border-strong/20 max-w-2xl mx-auto shadow-lg">
+<p class="mb-1">Toh basically, humara approach kaafi straight-forward tha.</p>
+<p class="text-primary-fixed-dim">So basically, our approach was quite straightforward.</p>
+</div>
+</div>
+<!-- Player Controls -->
+<div class="z-10 bg-gradient-to-t from-on-surface/90 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<div class="flex items-center gap-4 text-on-primary">
+<span class="material-symbols-outlined cursor-pointer">play_arrow</span>
+<div class="font-mono-ui text-mono-ui">00:01:23 / --:--:--</div>
+<!-- Custom Progress Bar -->
+<div class="flex-1 h-1 bg-surface-variant/30 rounded-full relative overflow-hidden cursor-pointer">
+<!-- Processed Buffer -->
+<div class="absolute top-0 left-0 h-full w-3/4 bg-border-strong/50 rounded-full"></div>
+<!-- Played -->
+<div class="absolute top-0 left-0 h-full w-1/4 bg-primary-fixed rounded-full"></div>
+</div>
+<span class="material-symbols-outlined cursor-pointer">volume_up</span>
+<span class="material-symbols-outlined cursor-pointer">fullscreen</span>
+</div>
+</div>
+</div>
+<!-- Live Subtitle Stream (Side panel / Bottom list concept) -->
+<div class="bg-surface-primary flex-1 min-h-[200px] flex flex-col">
+<div class="px-4 py-2 bg-surface-secondary border-b border-border-subtle flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Live Transcript</span>
+<span class="font-mono-ui text-mono-ui text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">auto_awesome</span> Auto-scrolling</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-2">
+<!-- Segments -->
+<div class="flex gap-4 p-2 rounded hover:border-border-strong border border-transparent group transition-colors">
+<div class="font-mono-ui text-mono-ui text-on-surface-variant pt-1 w-16 shrink-0">01:15</div>
+<div class="flex-1 font-editor-text text-editor-text">
+<div class="text-text-urdu">Project start karne se pehle planning zaroori hai.</div>
+<div class="text-on-surface-variant text-[13px] mt-1">Planning is essential before starting the project.</div>
+</div>
+<div class="w-8 shrink-0 flex justify-end opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer text-[18px]">edit</span>
+</div>
+</div>
+<div class="flex gap-4 p-2 rounded hover:border-border-strong border border-transparent group transition-colors">
+<div class="font-mono-ui text-mono-ui text-on-surface-variant pt-1 w-16 shrink-0">01:19</div>
+<div class="flex-1 font-editor-text text-editor-text">
+<div class="text-text-urdu">Aur humne wahi kiya.</div>
+<div class="text-on-surface-variant text-[13px] mt-1">And we did exactly that.</div>
+</div>
+<div class="w-8 shrink-0 flex justify-end opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer text-[18px]">edit</span>
+</div>
+</div>
+<!-- Active Processing Segment -->
+<div class="flex gap-4 p-2 rounded bg-accent-teal-subtle border-l-2 border-primary group">
+<div class="font-mono-ui text-mono-ui text-primary pt-1 w-16 shrink-0">01:23</div>
+<div class="flex-1 font-editor-text text-editor-text">
+<div class="text-text-urdu flex items-center gap-2">
+                                    Toh basically, humara approach kaafi straight-forward tha.
+                                    <span class="inline-block w-1.5 h-4 bg-primary animate-pulse"></span>
+</div>
+<div class="text-on-surface-variant text-[13px] mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-primary animate-spin">progress_activity</span> Translating...
+                                </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Upload Progress Overlay (Hidden in this view, but represented structurally for requirements) -->
+<!-- Uncomment to see the upload state
+            <div class="absolute inset-0 bg-surface-primary z-20 flex flex-col items-center justify-center p-8">
+                <div class="w-full max-w-md bg-surface-primary border border-border-subtle rounded p-8 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.1)] flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-[32px] text-primary">cloud_upload</span>
+                    </div>
+                    <h3 class="font-body-sm text-body-sm font-bold text-on-surface text-lg mb-2">Processing video...</h3>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">We are setting up your workspace. You can wait here or jump into the live viewer.</p>
+                    
+                    <div class="w-full space-y-4 mb-8 text-left">
+                        <div class="flex items-center justify-between text-body-sm font-body-sm">
+                            <span class="text-on-surface">Uploading file</span>
+                            <span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                        </div>
+                        <div class="flex items-center justify-between text-body-sm font-body-sm">
+                            <span class="text-on-surface font-bold">Extracting audio</span>
+                            <span class="font-mono-ui text-primary">45%</span>
+                        </div>
+                        <div class="w-full h-1 bg-surface-variant rounded overflow-hidden">
+                            <div class="h-full bg-primary w-[45%]"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant">
+                            <span>Transcribing & Transliterating</span>
+                            <span class="material-symbols-outlined text-[18px]">pending</span>
+                        </div>
+                    </div>
+
+                    <button class="w-full bg-primary text-on-primary font-body-sm text-body-sm font-bold py-3 rounded hover:bg-surface-tint transition-colors flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined">play_circle</span>
+                        Watch with Live Subtitles
+                    </button>
+                </div>
+            </div>
+            -->
+</main>
+</div>
+</body></html>
