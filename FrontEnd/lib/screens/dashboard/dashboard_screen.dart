@@ -112,7 +112,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   const SizedBox(height: AppSizes.xs),
                   Text(
-                    AppStrings.dashUploadSubtitle,
+                    AppStrings.dashGreetingSubtitle,
                     style: text.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -216,6 +216,9 @@ class _Rail extends StatelessWidget {
           loading: () => const SystemStatusCard(
             health: SystemHealthLoadingPlaceholder.value,
           ),
+          // Defensive: systemHealthProvider catches its own errors and resolves
+          // as data(unreachable), so this branch only fires if the provider
+          // itself throws during construction.
           error: (_, _) => const SystemStatusCard(
             health: SystemHealthLoadingPlaceholder.unreachable,
           ),

@@ -72,6 +72,8 @@ class AppStrings {
   static const String dashUploadTitle = "Drag & drop media to start editing";
   static const String dashUploadSubtitle =
       "Upload video or audio files to auto-generate Roman Urdu subtitles.";
+  static const String dashGreetingSubtitle =
+      "Upload a file to generate captions, or jump back into a recent project.";
   static const String dashUploadTapHint = "Tap to choose a file";
   static const String dashMaxSize = "MAX 2GB";
 
