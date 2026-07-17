@@ -380,7 +380,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: AppSizes.lg),
           _StatusItem(
-            label: AppStrings.romanUrduTranslation,
+            label: AppStrings.romanUrduTransliteration,
             status: AppStrings.ready,
             isOnline: true,
             isDark: isDark,

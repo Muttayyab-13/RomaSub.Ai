@@ -63,10 +63,37 @@ class AppStrings {
   static const String chooseFile = "Choose File";
   static const String processingStatus = "Processing Status";
   static const String audioTranscription = "Audio Transcription";
-  static const String romanUrduTranslation = "Roman Urdu Translation";
+  static const String romanUrduTransliteration = "Roman Urdu Transliteration";
   static const String aiModelStatus = "AI Model Status";
   static const String ready = "Ready";
   static const String online = "Online";
+
+  // Dashboard — upload drop zone
+  static const String dashUploadTitle = "Drag & drop media to start editing";
+  static const String dashUploadSubtitle =
+      "Upload video or audio files to auto-generate Roman Urdu subtitles.";
+  static const String dashUploadTapHint = "Tap to choose a file";
+  static const String dashMaxSize = "MAX 2GB";
+
+  // Dashboard — stat cards
+  static const String dashTotalProjects = "TOTAL PROJECTS";
+  static const String dashExports = "EXPORTS";
+
+  // Dashboard — recent projects
+  static const String dashRecentProjects = "RECENT PROJECTS";
+  static const String dashViewAll = "View All";
+  static const String dashNoProjects = "No projects yet";
+  static const String dashNoProjectsHint =
+      "Upload a file above to generate your first captions.";
+  static const String dashProjectFlow = "Urdu → Roman Urdu";
+
+  // Dashboard — system status
+  static const String dashSystemStatus = "SYSTEM STATUS";
+  static const String dashOnline = "Online";
+  static const String dashUnreachable = "Unreachable";
+  static const String dashTranscription = "Transcription";
+  static const String dashTransliteration = "Transliteration";
+  static const String dashUnknownModel = "—";
 
   // Projects
   static const String allProjects = "All Projects";
