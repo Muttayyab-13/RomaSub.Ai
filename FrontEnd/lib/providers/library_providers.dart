@@ -9,6 +9,7 @@
 /// `project_provider.dart`.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/api/api_client.dart';
@@ -45,7 +46,8 @@ final systemHealthProvider =
     final response = await client.dio.get(ApiConfig.health);
     final data = response.data as Map<String, dynamic>;
     return SystemHealth.fromJson(data);
-  } catch (_) {
+  } catch (e) {
+    if (kDebugMode) debugPrint('systemHealthProvider: $e');
     return const SystemHealth.unreachable();
   }
 });

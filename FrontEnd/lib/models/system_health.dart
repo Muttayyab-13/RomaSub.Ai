@@ -41,4 +41,9 @@ class SystemHealth {
       device: str(json['transliteration_device']),
     );
   }
+
+  @override
+  String toString() =>
+      'SystemHealth(reachable: $reachable, whisperModel: $whisperModel, '
+      'transliterationModel: $transliterationModel, device: $device)';
 }
