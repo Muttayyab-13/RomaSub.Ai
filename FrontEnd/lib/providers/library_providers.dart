@@ -1,11 +1,21 @@
 // FrontEnd/lib/providers/library_providers.dart
+/// Shared read-side data providers for the user's library — the lists and
+/// status the Projects, Exports, and Dashboard screens all read.
+///
+/// Grouped in one file (rather than the folder's usual one-provider-per-file)
+/// because these are small, related, read-only list providers consumed across
+/// several screens. Note the deliberate plural name: a singular
+/// `projects_provider.dart` would collide with the unrelated legacy
+/// `project_provider.dart`.
+library;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/api/api_client.dart';
 import '../services/api/api_config.dart';
 
 /// Subtitle projects, newest-first, from `/subtitles/list/projects`.
-/// Shared by the Projects screen and the Dashboard.
+/// Consumed by the Projects screen; will also feed the Dashboard.
 final projectsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final client = ref.watch(apiClientProvider);
@@ -15,7 +25,7 @@ final projectsProvider =
 });
 
 /// Export history, newest-first, from `/subtitles/list/exports`.
-/// Shared by the Exports screen and the Dashboard.
+/// Consumed by the Exports screen; will also feed the Dashboard.
 final exportsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final client = ref.watch(apiClientProvider);
