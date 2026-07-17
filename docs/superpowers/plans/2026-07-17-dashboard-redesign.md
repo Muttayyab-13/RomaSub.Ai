@@ -4,7 +4,7 @@
 
 **Goal:** Rebuild the Dashboard screen against the design system created for the editor (`lib/core/design/`), matching the intent of the Stitch mockup at `Documentation/design/screens/dashboard.png` while showing only data the product actually has.
 
-**Architecture:** The dashboard is one tab inside `main_shell`'s `IndexedStack`. Like the editor, it opts into the new design system through a **scoped `Theme` wrapper around its own subtree only** — the shell chrome (sidebar) and the other four tabs keep the existing `AppColors`/`AppTheme` look until they are redesigned in turn. The new base theme is extracted from `buildEditorTheme` into a shared `buildAppTheme(isDark)` so both screens draw from one source. Colours come from `AppPalette` (via `Theme.of(context).colorScheme`), type from `AppTypography` (via `Theme.of(context).textTheme`), and **spacing/radii stay on the existing `AppSizes` scale** so the dashboard sits coherently beside its sibling tabs.
+**Architecture:** The dashboard is one tab inside `main_shell`'s `IndexedStack`. Like the editor, it opts into the new design system through a **scoped `Theme` wrapper around its own subtree only** — the shell chrome (sidebar) and the other four tabs keep the existing `AppColors`/`AppTheme` look until they are redesigned in turn. The new base theme is extracted from `buildEditorTheme` into a shared `buildBaseTheme(isDark)` so both screens draw from one source. Colours come from `AppPalette` (via `Theme.of(context).colorScheme`), type from `AppTypography` (via `Theme.of(context).textTheme`), and **spacing/radii stay on the existing `AppSizes` scale** so the dashboard sits coherently beside its sibling tabs.
 
 **Tech Stack:** Flutter 3 / Dart ^3.8.1, flutter_riverpod ^2.5.1 (`FutureProvider.autoDispose` for data), dio (via `apiClientProvider`), intl ^0.19.0 (date formatting), flutter_test. No new dependencies.
 
@@ -57,14 +57,14 @@
 **Create:**
 | Path | Responsibility |
 |---|---|
-| `lib/core/design/app_shell_theme.dart` | `buildAppTheme(bool isDark)` — the shared base `ThemeData` (scheme + typography + divider + icon), no editor extension |
+| `lib/core/design/base_theme.dart` | `buildBaseTheme(bool isDark)` — the shared base `ThemeData` (scheme + typography + divider + icon), no editor extension |
 | `lib/providers/library_providers.dart` | `projectsProvider`, `exportsProvider` (moved here), `systemHealthProvider` |
 | `lib/models/system_health.dart` | `SystemHealth` value type + `fromJson` + `unreachable` factory |
 | `lib/widgets/dashboard/stat_card.dart` | `StatCard` — icon + uppercase label + big number; used for Total Projects / Exports |
 | `lib/widgets/dashboard/system_status_card.dart` | `SystemStatusCard` — honest reachability dot + configured model rows |
 | `lib/widgets/dashboard/recent_projects_card.dart` | `RecentProjectsCard` — bordered card, project rows, "View All", empty/loading/error states, `_formatProjectDate`/`_formatDuration` helpers |
 | `lib/widgets/dashboard/upload_dropzone.dart` | `UploadDropzone` — dashed drop zone, format chips, tap-to-pick |
-| `test/core/design/app_shell_theme_test.dart` | Base theme unit test |
+| `test/core/design/base_theme_test.dart` | Base theme unit test |
 | `test/models/system_health_test.dart` | `SystemHealth.fromJson` + `unreachable` tests |
 | `test/widgets/dashboard/stat_card_test.dart` | StatCard widget tests |
 | `test/widgets/dashboard/system_status_card_test.dart` | SystemStatusCard widget tests (incl. the no-"translation" copy guard) |
@@ -73,12 +73,12 @@
 **Modify:**
 | Path | Change |
 |---|---|
-| `lib/core/design/editor_theme.dart` | `buildEditorTheme` delegates to `buildAppTheme`, then adds the `EditorTheme` extension |
+| `lib/core/design/editor_theme.dart` | `buildEditorTheme` delegates to `buildBaseTheme`, then adds the `EditorTheme` extension |
 | `lib/core/constants/app_strings.dart:66` | Fix the "Translation" copy; add the dashboard strings Task 1 lists |
 | `lib/services/api/api_config.dart` | Add `health = '/health'` |
 | `lib/screens/projects/projects_screen.dart:13` | Delete local `projectsProvider`; import from `library_providers.dart` |
 | `lib/screens/exports/exports_screen.dart:11` | Delete local `exportsProvider`; import from `library_providers.dart` |
-| `lib/screens/dashboard/dashboard_screen.dart` | Rebuild: scoped `buildAppTheme` wrapper, greeting header, responsive layout, new widgets |
+| `lib/screens/dashboard/dashboard_screen.dart` | Rebuild: scoped `buildBaseTheme` wrapper, greeting header, responsive layout, new widgets |
 
 **Delete (each guarded by a grep step in Task 10):**
 | Path | Why |
@@ -180,32 +180,32 @@ git commit -m "fix(dashboard): correct 'translation' to 'transliteration'; add d
 `buildEditorTheme` builds a `ThemeData` (scheme, typography, divider, icon) and then attaches the editor-only `EditorTheme` extension. The dashboard needs the same base **without** the extension. Extract the base so both screens share one source instead of duplicating theme construction.
 
 **Files:**
-- Create: `lib/core/design/app_shell_theme.dart`
-- Create: `test/core/design/app_shell_theme_test.dart`
+- Create: `lib/core/design/base_theme.dart`
+- Create: `test/core/design/base_theme_test.dart`
 - Modify: `lib/core/design/editor_theme.dart`
 
 - [ ] **Step 1: Write the failing test**
 
 ```dart
-// FrontEnd/test/core/design/app_shell_theme_test.dart
+// FrontEnd/test/core/design/base_theme_test.dart
 //
-// buildAppTheme is the shared base every redesigned screen wraps itself in.
+// buildBaseTheme is the shared base every redesigned screen wraps itself in.
 // It must carry the AppPalette ColorScheme and AppTypography, and — unlike
 // buildEditorTheme — must NOT attach the editor-only EditorTheme extension.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:romasubai_frontend/core/design/app_palette.dart';
-import 'package:romasubai_frontend/core/design/app_shell_theme.dart';
+import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/core/design/editor_theme.dart';
 
 void main() {
-  test('buildAppTheme uses the AppPalette scheme for the given brightness', () {
-    expect(buildAppTheme(false).colorScheme.primary, AppPalette.primary);
-    expect(buildAppTheme(true).colorScheme.primary, AppPalette.primaryDark);
+  test('buildBaseTheme uses the AppPalette scheme for the given brightness', () {
+    expect(buildBaseTheme(false).colorScheme.primary, AppPalette.primary);
+    expect(buildBaseTheme(true).colorScheme.primary, AppPalette.primaryDark);
   });
 
-  test('buildAppTheme does NOT carry the EditorTheme extension', () {
-    expect(buildAppTheme(false).extension<EditorTheme>(), isNull);
+  test('buildBaseTheme does NOT carry the EditorTheme extension', () {
+    expect(buildBaseTheme(false).extension<EditorTheme>(), isNull);
   });
 
   test('buildEditorTheme still carries the EditorTheme extension', () {
@@ -216,13 +216,13 @@ void main() {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd FrontEnd && flutter test test/core/design/app_shell_theme_test.dart`
-Expected: FAIL — `Target of URI doesn't exist: 'package:romasubai_frontend/core/design/app_shell_theme.dart'`.
+Run: `cd FrontEnd && flutter test test/core/design/base_theme_test.dart`
+Expected: FAIL — `Target of URI doesn't exist: 'package:romasubai_frontend/core/design/base_theme.dart'`.
 
 - [ ] **Step 3: Create the base theme**
 
 ```dart
-// FrontEnd/lib/core/design/app_shell_theme.dart
+// FrontEnd/lib/core/design/base_theme.dart
 import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
@@ -231,10 +231,10 @@ import 'app_typography.dart';
 /// The shared base theme every redesigned screen wraps itself in.
 ///
 /// Deliberately NOT applied app-wide: screens opt in one at a time via a
-/// scoped `Theme(data: buildAppTheme(isDark), ...)`, so the un-redesigned
+/// scoped `Theme(data: buildBaseTheme(isDark), ...)`, so the un-redesigned
 /// screens keep using AppColors/AppTheme. The editor extends this base with
 /// its own [EditorTheme] extension in `editor_theme.dart`.
-ThemeData buildAppTheme(bool isDark) {
+ThemeData buildBaseTheme(bool isDark) {
   final scheme = AppPalette.scheme(isDark);
   final textTheme = AppTypography.textTheme(
     scheme.onSurface,
@@ -262,19 +262,19 @@ ThemeData buildAppTheme(bool isDark) {
 In `lib/core/design/editor_theme.dart`, add the import near the top (after the existing `app_typography.dart` import):
 
 ```dart
-import 'app_shell_theme.dart';
+import 'base_theme.dart';
 ```
 
 Replace the entire `buildEditorTheme` function body (currently lines ~121-144) with:
 
 ```dart
-/// The scoped theme the editor wraps itself in: the shared [buildAppTheme]
+/// The scoped theme the editor wraps itself in: the shared [buildBaseTheme]
 /// base plus the editor-only [EditorTheme] extension.
 ///
 /// Deliberately NOT applied app-wide: the un-redesigned screens still use
 /// AppColors/AppTheme and are redesigned separately.
 ThemeData buildEditorTheme(bool isDark) {
-  return buildAppTheme(isDark).copyWith(
+  return buildBaseTheme(isDark).copyWith(
     extensions: <ThemeExtension<dynamic>>[
       isDark ? EditorTheme.dark : EditorTheme.light,
     ],
@@ -286,14 +286,14 @@ If `app_typography.dart` is now unused in `editor_theme.dart`, remove its import
 
 - [ ] **Step 5: Run the new test and the existing editor tests**
 
-Run: `cd FrontEnd && flutter test test/core/design/app_shell_theme_test.dart test/widgets/editor/`
+Run: `cd FrontEnd && flutter test test/core/design/base_theme_test.dart test/widgets/editor/`
 Expected: PASS — the base test passes and the editor widget tests still pass (proving the delegation produced an equivalent theme).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add FrontEnd/lib/core/design/app_shell_theme.dart FrontEnd/lib/core/design/editor_theme.dart FrontEnd/test/core/design/app_shell_theme_test.dart
-git commit -m "refactor(design): extract buildAppTheme base; buildEditorTheme delegates to it"
+git add FrontEnd/lib/core/design/base_theme.dart FrontEnd/lib/core/design/editor_theme.dart FrontEnd/test/core/design/base_theme_test.dart
+git commit -m "refactor(design): extract buildBaseTheme base; buildEditorTheme delegates to it"
 ```
 
 ---
@@ -550,12 +550,12 @@ A small reusable card: an icon + uppercase label on top, a large number below. U
 // show a placeholder while its provider is still loading.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:romasubai_frontend/core/design/app_shell_theme.dart';
+import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/widgets/dashboard/stat_card.dart';
 
 Widget _host({required String label, String? value, IconData icon = Icons.folder}) {
   return MaterialApp(
-    theme: buildAppTheme(false),
+    theme: buildBaseTheme(false),
     home: Scaffold(
       body: StatCard(icon: icon, label: label, value: value),
     ),
@@ -678,13 +678,13 @@ Renders the honest health view: a reachability dot + label, then two rows showin
 // (this product does transliteration).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:romasubai_frontend/core/design/app_shell_theme.dart';
+import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/models/system_health.dart';
 import 'package:romasubai_frontend/widgets/dashboard/system_status_card.dart';
 
 Widget _host(SystemHealth health) {
   return MaterialApp(
-    theme: buildAppTheme(false),
+    theme: buildBaseTheme(false),
     home: Scaffold(body: SystemStatusCard(health: health)),
   );
 }
@@ -886,7 +886,7 @@ A bordered card with a header ("RECENT PROJECTS" + "View All"), and up to N proj
 // no provider/fake is needed.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:romasubai_frontend/core/design/app_shell_theme.dart';
+import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/widgets/dashboard/recent_projects_card.dart';
 
 Widget _host({
@@ -895,7 +895,7 @@ Widget _host({
   VoidCallback? onViewAll,
 }) {
   return MaterialApp(
-    theme: buildAppTheme(false),
+    theme: buildBaseTheme(false),
     home: Scaffold(
       body: RecentProjectsCard(
         projects: projects,
@@ -1373,7 +1373,7 @@ git commit -m "feat(dashboard): UploadDropzone with dashed border + format chips
 
 ## Task 9: Rebuild the dashboard screen
 
-Assemble everything: scoped `buildAppTheme` wrapper, greeting header, responsive two-column-vs-stacked body, upload zone + recent projects on the left, stat cards + system status on the right. Keep the existing `_handleFilePicker` flow intact.
+Assemble everything: scoped `buildBaseTheme` wrapper, greeting header, responsive two-column-vs-stacked body, upload zone + recent projects on the left, stat cards + system status on the right. Keep the existing `_handleFilePicker` flow intact.
 
 **Files:**
 - Modify: `lib/screens/dashboard/dashboard_screen.dart`
@@ -1389,7 +1389,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/design/app_shell_theme.dart';
+import '../../core/design/base_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/upload_provider.dart';
@@ -1404,7 +1404,7 @@ import '../../widgets/dashboard/upload_dropzone.dart';
 import '../../widgets/dialogs/upload_progress_dialog.dart';
 
 /// The Dashboard tab. Opts into the redesigned system via a scoped
-/// [buildAppTheme] wrapper; the shell chrome around it keeps the old look.
+/// [buildBaseTheme] wrapper; the shell chrome around it keeps the old look.
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -1475,7 +1475,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final projects = projectsAsync.asData?.value ?? const [];
 
     return Theme(
-      data: buildAppTheme(isDark),
+      data: buildBaseTheme(isDark),
       child: Builder(
         builder: (context) {
           final scheme = Theme.of(context).colorScheme;
@@ -1736,7 +1736,7 @@ git commit -m "fix(dashboard): render fixes from in-app verification"
 
 **Placeholder scan** — no "TBD"/"handle appropriately"; every widget and test has full code. The two runtime-name checks (Task 9 Step 3: `firstName`, `navIndexProvider`) are verification steps against existing code, not invented logic — the fallbacks are spelled out.
 
-**Type consistency** — `SystemHealth` fields (`reachable`, `whisperModel`, `transliterationModel`, `device`) are used identically in the model, provider, card, and tests. `buildAppTheme(bool)` / `buildEditorTheme(bool)` signatures match across Tasks 2 and 5-9. `projectsProvider`/`exportsProvider`/`systemHealthProvider` are defined once in `library_providers.dart` and imported everywhere else.
+**Type consistency** — `SystemHealth` fields (`reachable`, `whisperModel`, `transliterationModel`, `device`) are used identically in the model, provider, card, and tests. `buildBaseTheme(bool)` / `buildEditorTheme(bool)` signatures match across Tasks 2 and 5-9. `projectsProvider`/`exportsProvider`/`systemHealthProvider` are defined once in `library_providers.dart` and imported everywhere else.
 
 **Known soft spots flagged for the reviewer:**
 1. Task 9 Step 3 depends on the real names of the user's first-name field and the nav provider's mutation API. Verified to exist by grep during planning (`firstName`/`first_name` and `navIndexProvider`), but the exact call shape is confirmed at implementation time against `sidebar.dart`.
