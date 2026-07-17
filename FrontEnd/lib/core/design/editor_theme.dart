@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
-import 'app_typography.dart';
+import 'app_shell_theme.dart';
 
 /// Editor-specific colours with no Material role.
 ///
@@ -114,29 +114,13 @@ class EditorTheme extends ThemeExtension<EditorTheme> {
   }
 }
 
-/// The scoped theme the editor wraps itself in.
+/// The scoped theme the editor wraps itself in: the shared [buildAppTheme]
+/// base plus the editor-only [EditorTheme] extension.
 ///
-/// Deliberately NOT applied app-wide: the other 13 screens still use
+/// Deliberately NOT applied app-wide: the un-redesigned screens still use
 /// AppColors/AppTheme and are redesigned separately.
 ThemeData buildEditorTheme(bool isDark) {
-  final scheme = AppPalette.scheme(isDark);
-  final textTheme = AppTypography.textTheme(
-    scheme.onSurface,
-    scheme.onSurfaceVariant,
-  );
-
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: scheme,
-    scaffoldBackgroundColor: scheme.surface,
-    textTheme: textTheme,
-    fontFamily: AppTypography.latinFamily,
-    dividerTheme: DividerThemeData(
-      color: scheme.outlineVariant,
-      thickness: 1,
-      space: 1,
-    ),
-    iconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+  return buildAppTheme(isDark).copyWith(
     extensions: <ThemeExtension<dynamic>>[
       isDark ? EditorTheme.dark : EditorTheme.light,
     ],
