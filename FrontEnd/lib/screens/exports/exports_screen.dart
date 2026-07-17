@@ -3,19 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../providers/library_providers.dart';
 import '../../providers/theme_provider.dart';
-import '../../services/api/api_client.dart';
-import '../../services/api/api_config.dart';
-
-/// Provider that fetches real exports from the backend
-final exportsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final client = ref.watch(apiClientProvider);
-  final response = await client.dio.get(ApiConfig.exportsList);
-  final data = response.data as Map<String, dynamic>;
-  return List<Map<String, dynamic>>.from(data['exports'] ?? []);
-});
 
 class ExportsScreen extends ConsumerWidget {
   const ExportsScreen({super.key});
