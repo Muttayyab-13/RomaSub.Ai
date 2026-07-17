@@ -35,7 +35,7 @@ class StatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: scheme.onSurfaceVariant),
+              Icon(icon, size: AppSizes.iconSm, color: scheme.onSurfaceVariant),
               const SizedBox(width: AppSizes.xs),
               Expanded(
                 child: Text(
@@ -51,6 +51,8 @@ class StatCard extends StatelessWidget {
           Text(
             value ?? '—',
             style: text.headlineMedium?.copyWith(color: scheme.onSurface),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
