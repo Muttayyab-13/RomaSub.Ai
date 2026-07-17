@@ -7,7 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/widgets/dashboard/stat_card.dart';
 
-Widget _host({required String label, String? value, IconData icon = Icons.folder}) {
+Widget _host({
+  required String label,
+  String? value,
+  IconData icon = Icons.folder,
+}) {
   return MaterialApp(
     theme: buildBaseTheme(false),
     home: Scaffold(

@@ -18,18 +18,20 @@ import '../models/system_health.dart';
 
 /// Subtitle projects, newest-first, from `/subtitles/list/projects`.
 /// Consumed by the Projects screen; will also feed the Dashboard.
-final projectsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final client = ref.watch(apiClientProvider);
-  final response = await client.dio.get(ApiConfig.projectsList);
-  final data = response.data as Map<String, dynamic>;
-  return List<Map<String, dynamic>>.from(data['projects'] ?? []);
-});
+final projectsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+  (ref) async {
+    final client = ref.watch(apiClientProvider);
+    final response = await client.dio.get(ApiConfig.projectsList);
+    final data = response.data as Map<String, dynamic>;
+    return List<Map<String, dynamic>>.from(data['projects'] ?? []);
+  },
+);
 
 /// Export history, newest-first, from `/subtitles/list/exports`.
 /// Consumed by the Exports screen; will also feed the Dashboard.
-final exportsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+final exportsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final client = ref.watch(apiClientProvider);
   final response = await client.dio.get(ApiConfig.exportsList);
   final data = response.data as Map<String, dynamic>;
@@ -39,8 +41,9 @@ final exportsProvider =
 /// Honest system status from `GET /health`. Returns [SystemHealth.unreachable]
 /// instead of throwing, so the UI shows a red "Unreachable" state rather than
 /// an error box.
-final systemHealthProvider =
-    FutureProvider.autoDispose<SystemHealth>((ref) async {
+final systemHealthProvider = FutureProvider.autoDispose<SystemHealth>((
+  ref,
+) async {
   final client = ref.watch(apiClientProvider);
   try {
     final response = await client.dio.get(ApiConfig.health);

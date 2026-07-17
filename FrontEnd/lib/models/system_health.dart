@@ -27,10 +27,10 @@ class SystemHealth {
 
   /// The red fallback used when the health call fails or times out.
   const SystemHealth.unreachable()
-      : reachable = false,
-        whisperModel = null,
-        transliterationModel = null,
-        device = null;
+    : reachable = false,
+      whisperModel = null,
+      transliterationModel = null,
+      device = null;
 
   factory SystemHealth.fromJson(Map<String, dynamic> json) {
     String? str(dynamic v) => v?.toString();

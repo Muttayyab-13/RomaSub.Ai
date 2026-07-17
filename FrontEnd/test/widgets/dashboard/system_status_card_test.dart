@@ -17,13 +17,19 @@ Widget _host(SystemHealth health) {
 }
 
 void main() {
-  testWidgets('reachable shows Online and the configured models', (tester) async {
-    await tester.pumpWidget(_host(const SystemHealth(
-      reachable: true,
-      whisperModel: 'whisper-large-v3-turbo',
-      transliterationModel: 'facebook/m2m100_418M',
-      device: 'cuda',
-    )));
+  testWidgets('reachable shows Online and the configured models', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        const SystemHealth(
+          reachable: true,
+          whisperModel: 'whisper-large-v3-turbo',
+          transliterationModel: 'facebook/m2m100_418M',
+          device: 'cuda',
+        ),
+      ),
+    );
     expect(find.text('Online'), findsOneWidget);
     expect(find.text('whisper-large-v3-turbo'), findsOneWidget);
     expect(find.text('facebook/m2m100_418M · cuda'), findsOneWidget);
@@ -36,12 +42,16 @@ void main() {
   });
 
   testWidgets('never renders the word Translation', (tester) async {
-    await tester.pumpWidget(_host(const SystemHealth(
-      reachable: true,
-      whisperModel: 'medium',
-      transliterationModel: 'm2m100',
-      device: 'cpu',
-    )));
+    await tester.pumpWidget(
+      _host(
+        const SystemHealth(
+          reachable: true,
+          whisperModel: 'medium',
+          transliterationModel: 'm2m100',
+          device: 'cpu',
+        ),
+      ),
+    );
     expect(find.textContaining('Translation'), findsNothing);
     expect(find.text('Transliteration'), findsOneWidget);
   });

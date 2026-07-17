@@ -63,10 +63,17 @@ class SystemStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.md),
-          _row(context, AppStrings.dashTranscription,
-              health.whisperModel ?? AppStrings.dashUnknownModel),
+          _row(
+            context,
+            AppStrings.dashTranscription,
+            health.whisperModel ?? AppStrings.dashUnknownModel,
+          ),
           const SizedBox(height: AppSizes.sm),
-          _row(context, AppStrings.dashTransliteration, _transliterationValue()),
+          _row(
+            context,
+            AppStrings.dashTransliteration,
+            _transliterationValue(),
+          ),
         ],
       ),
     );
