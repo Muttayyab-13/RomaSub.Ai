@@ -4,9 +4,7 @@
 ///
 /// Grouped in one file (rather than the folder's usual one-provider-per-file)
 /// because these are small, related, read-only list providers consumed across
-/// several screens. Note the deliberate plural name: a singular
-/// `projects_provider.dart` would collide with the unrelated legacy
-/// `project_provider.dart`.
+/// several screens.
 library;
 
 import 'package:flutter/foundation.dart';
