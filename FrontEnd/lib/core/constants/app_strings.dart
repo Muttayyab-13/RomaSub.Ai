@@ -51,23 +51,6 @@ class AppStrings {
   static const String feedback = "Feedback";
   static const String settings = "Settings";
 
-  // Dashboard
-  static const String hello = "Hello";
-  static const String welcomeBack = "It's good to see you again.";
-  static const String welcomeTitle = "Welcome to RomaSub.AI";
-  static const String welcomeDesc =
-      "Generate accurate Roman Urdu subtitles for your videos using advanced AI technology. Upload your content and let our system handle the transcription and transliteration.";
-  static const String uploadTitle = "Upload New Video";
-  static const String uploadDesc =
-      "Drag and drop your video file or click to browse";
-  static const String chooseFile = "Choose File";
-  static const String processingStatus = "Processing Status";
-  static const String audioTranscription = "Audio Transcription";
-  static const String romanUrduTransliteration = "Roman Urdu Transliteration";
-  static const String aiModelStatus = "AI Model Status";
-  static const String ready = "Ready";
-  static const String online = "Online";
-
   // Dashboard — upload drop zone
   static const String dashUploadTitle = "Drag & drop media to start editing";
   static const String dashUploadSubtitle =
