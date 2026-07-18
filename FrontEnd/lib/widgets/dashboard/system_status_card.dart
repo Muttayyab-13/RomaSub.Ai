@@ -34,13 +34,20 @@ class SystemStatusCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                AppStrings.dashSystemStatus,
-                style: text.labelSmall?.copyWith(letterSpacing: 0.5),
+              // Flexes so the header degrades gracefully at the rail's
+              // narrowest (320px): the label ellipsizes rather than letting
+              // the longer "Unreachable" status overflow the row.
+              Expanded(
+                child: Text(
+                  AppStrings.dashSystemStatus,
+                  style: text.labelSmall?.copyWith(letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: AppSizes.sm),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 8,
