@@ -85,6 +85,13 @@ class AppStrings {
   static const String allProjects = "All Projects";
   static const String searchProjects = "Search projects...";
 
+  // Projects — table column headers
+  static const String projectsColProject = "PROJECT";
+  static const String projectsColFilename = "FILENAME";
+  static const String projectsColDuration = "DURATION";
+  static const String projectsColSegments = "SEGMENTS";
+  static const String projectsColLastEdited = "LAST EDITED";
+
   // Exports
   static const String exportHistory = "Export History";
 
