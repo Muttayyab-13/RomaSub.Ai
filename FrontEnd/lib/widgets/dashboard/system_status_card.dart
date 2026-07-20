@@ -13,15 +13,36 @@ import '../../models/system_health.dart';
 class SystemStatusCard extends StatelessWidget {
   final SystemHealth health;
 
-  const SystemStatusCard({super.key, required this.health});
+  /// True while `/health` is still in flight. We can't yet claim the backend is
+  /// up, so the card shows a neutral "Checking…" instead of asserting a green
+  /// "Online" it hasn't verified — reachability is the one honest signal here.
+  final bool checking;
+
+  const SystemStatusCard({super.key, required this.health}) : checking = false;
+
+  /// The in-flight state: neutral dot, "Checking…", and em-dash models.
+  const SystemStatusCard.checking({super.key})
+    : health = const SystemHealth.unreachable(),
+      checking = true;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final ok = health.reachable;
-    final dotColor = ok ? AppPalette.success : scheme.error;
-    final statusLabel = ok ? AppStrings.dashOnline : AppStrings.dashUnreachable;
+    final isDark = scheme.brightness == Brightness.dark;
+
+    final Color dotColor;
+    final String statusLabel;
+    if (checking) {
+      dotColor = scheme.onSurfaceVariant;
+      statusLabel = AppStrings.dashChecking;
+    } else if (health.reachable) {
+      dotColor = isDark ? AppPalette.successDark : AppPalette.success;
+      statusLabel = AppStrings.dashOnline;
+    } else {
+      dotColor = scheme.error;
+      statusLabel = AppStrings.dashUnreachable;
+    }
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
@@ -73,13 +94,15 @@ class SystemStatusCard extends StatelessWidget {
           _row(
             context,
             AppStrings.dashTranscription,
-            health.whisperModel ?? AppStrings.dashUnknownModel,
+            checking
+                ? AppStrings.dashUnknownModel
+                : (health.whisperModel ?? AppStrings.dashUnknownModel),
           ),
           const SizedBox(height: AppSizes.sm),
           _row(
             context,
             AppStrings.dashTransliteration,
-            _transliterationValue(),
+            checking ? AppStrings.dashUnknownModel : _transliterationValue(),
           ),
         ],
       ),

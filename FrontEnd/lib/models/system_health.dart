@@ -47,16 +47,3 @@ class SystemHealth {
       'SystemHealth(reachable: $reachable, whisperModel: $whisperModel, '
       'transliterationModel: $transliterationModel, device: $device)';
 }
-
-/// Convenience constants for the dashboard rail's loading/error branches,
-/// so the status card always has a concrete value to render.
-class SystemHealthLoadingPlaceholder {
-  const SystemHealthLoadingPlaceholder._();
-
-  /// Shown while `/health` is in flight — reachable-unknown treated as up,
-  /// with no model info yet.
-  static const SystemHealth value = SystemHealth(reachable: true);
-
-  /// Shown when the provider errored outright.
-  static const SystemHealth unreachable = SystemHealth.unreachable();
-}

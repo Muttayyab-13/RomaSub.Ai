@@ -67,6 +67,7 @@ Future<void> _pumpDashboard(
   List<Map<String, dynamic>>? projects,
   List<Map<String, dynamic>>? exports,
   SystemHealth health = _reachableHealth,
+  bool healthPending = false,
   Size size = const Size(1200, 1000),
 }) async {
   tester.view.physicalSize = size;
@@ -76,6 +77,8 @@ Future<void> _pumpDashboard(
 
   // Never completes → authNotifierProvider stays on its inert loading notifier.
   final neverReady = Completer<StorageService>();
+  // Optionally hold /health in flight to exercise the "Checking…" branch.
+  final pendingHealth = Completer<SystemHealth>();
 
   await tester.pumpWidget(
     ProviderScope(
@@ -85,7 +88,9 @@ Future<void> _pumpDashboard(
           (ref) async => projects ?? _sampleProjects,
         ),
         exportsProvider.overrideWith((ref) async => exports ?? _sampleExports),
-        systemHealthProvider.overrideWith((ref) async => health),
+        systemHealthProvider.overrideWith(
+          (ref) => healthPending ? pendingHealth.future : Future.value(health),
+        ),
       ],
       child: const MaterialApp(home: Scaffold(body: DashboardScreen())),
     ),
@@ -142,6 +147,17 @@ void main() {
     // Both model rows fall back to the em-dash placeholder.
     expect(find.text(AppStrings.dashUnknownModel), findsNWidgets(2));
     expect(find.textContaining('Translation'), findsNothing);
+  });
+
+  testWidgets('status shows neutral "Checking…" while /health is in flight', (
+    tester,
+  ) async {
+    await _pumpDashboard(tester, healthPending: true);
+
+    // The card must not claim a green "Online" it hasn't verified yet.
+    expect(find.text(AppStrings.dashChecking), findsOneWidget);
+    expect(find.text(AppStrings.dashOnline), findsNothing);
+    expect(find.text(AppStrings.dashUnreachable), findsNothing);
   });
 
   testWidgets('empty library: recents empty state + zero counts', (

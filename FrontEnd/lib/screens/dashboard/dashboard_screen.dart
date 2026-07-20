@@ -213,15 +213,13 @@ class _Rail extends StatelessWidget {
         const SizedBox(height: AppSizes.md),
         health.when(
           data: (h) => SystemStatusCard(health: h),
-          loading: () => const SystemStatusCard(
-            health: SystemHealthLoadingPlaceholder.value,
-          ),
+          // In flight: neutral "Checking…", not a premature green "Online".
+          loading: () => const SystemStatusCard.checking(),
           // Defensive: systemHealthProvider catches its own errors and resolves
           // as data(unreachable), so this branch only fires if the provider
           // itself throws during construction.
-          error: (_, _) => const SystemStatusCard(
-            health: SystemHealthLoadingPlaceholder.unreachable,
-          ),
+          error: (_, _) =>
+              const SystemStatusCard(health: SystemHealth.unreachable()),
         ),
       ],
     );

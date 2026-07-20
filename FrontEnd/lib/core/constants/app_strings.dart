@@ -76,6 +76,7 @@ class AppStrings {
   static const String dashSystemStatus = "SYSTEM STATUS";
   static const String dashOnline = "Online";
   static const String dashUnreachable = "Unreachable";
+  static const String dashChecking = "Checking…";
   static const String dashTranscription = "Transcription";
   static const String dashTransliteration = "Transliteration";
   static const String dashUnknownModel = "—";

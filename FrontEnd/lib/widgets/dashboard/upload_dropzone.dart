@@ -94,6 +94,7 @@ class UploadDropzone extends StatelessWidget {
   }) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final isDark = scheme.brightness == Brightness.dark;
     final fg = emphasize ? scheme.primary : scheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -101,7 +102,11 @@ class UploadDropzone extends StatelessWidget {
         vertical: AppSizes.xs,
       ),
       decoration: BoxDecoration(
-        color: emphasize ? AppPalette.tealSubtle : scheme.surface,
+        // The subtle teal wash has a light and a dark variant; picking by
+        // brightness avoids a near-white pill glaring on the dark dropzone.
+        color: emphasize
+            ? (isDark ? AppPalette.tealSubtleDark : AppPalette.tealSubtle)
+            : scheme.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusSm),
         border: Border.all(
           color: emphasize
