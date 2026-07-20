@@ -92,6 +92,14 @@ class AppStrings {
   static const String projectsColSegments = "SEGMENTS";
   static const String projectsColLastEdited = "LAST EDITED";
 
+  // Projects — states
+  static const String projectsEmptyTitle = "No projects yet";
+  static const String projectsEmptySubtitle =
+      "Upload a video or audio file to generate your first captions.";
+  static const String projectsSearchEmpty = "No projects match your search";
+  static const String projectsLoadError = "Failed to load projects";
+  static const String refreshTooltip = "Refresh";
+
   // Exports
   static const String exportHistory = "Export History";
 
