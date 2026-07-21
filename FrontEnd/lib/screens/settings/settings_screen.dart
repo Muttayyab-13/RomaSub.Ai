@@ -180,13 +180,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: AppSizes.lg),
                       _SettingsCard(
-                        title: 'Profile',
+                        title: AppStrings.profile,
                         icon: Icons.person_outline,
                         child: _buildProfileSection(context, authState, user),
                       ),
                       const SizedBox(height: AppSizes.lg),
                       _SettingsCard(
-                        title: 'Security',
+                        title: AppStrings.security,
                         icon: Icons.lock_outline,
                         child: SecuritySection(
                           isGoogleAccount: user?.isGoogleUser ?? false,
@@ -442,6 +442,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           borderSide: BorderSide(color: scheme.outlineVariant),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+        ),
       ),
     );
   }
@@ -466,7 +470,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _infoRow(
           context,
           'Verification',
-          isVerified ? 'Verified' : 'Pending',
+          isVerified ? AppStrings.verified : 'Pending',
           valueColor: isVerified ? successColor : scheme.onSurface,
         ),
         _infoRow(context, 'Member Since', _formatMemberSince(user?.createdAt)),

@@ -56,7 +56,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(AppStrings.allProjects, style: text.headlineSmall),
+                      Text(AppStrings.allProjects, style: text.headlineMedium),
                       const SizedBox(width: AppSizes.sm),
                       _CountPill(count: projectsAsync.asData?.value.length),
                       const Spacer(),

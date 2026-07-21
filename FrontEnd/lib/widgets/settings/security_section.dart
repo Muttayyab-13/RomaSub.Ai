@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_sizes.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/utils/validators.dart';
 
 /// Password-change UI for the settings screen. Pure: state in via
@@ -91,7 +92,7 @@ class _SecuritySectionState extends State<SecuritySection> {
           _field(
             context,
             controller: _current,
-            label: 'Current Password',
+            label: AppStrings.currentPassword,
             validator: (value) => (value == null || value.isEmpty)
                 ? 'Enter your current password'
                 : null,
@@ -119,7 +120,7 @@ class _SecuritySectionState extends State<SecuritySection> {
                     width: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Update Password'),
+                : const Text(AppStrings.updatePassword),
           ),
         ],
       ),
@@ -144,6 +145,10 @@ class _SecuritySectionState extends State<SecuritySection> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           borderSide: BorderSide(color: scheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
         ),
       ),
     );

@@ -136,18 +136,10 @@ class AppStrings {
 
   // Settings Screen
   static const String profileSettings = "Profile Settings";
-  static const String profilePicture = "Profile Picture";
-  static const String changePhoto = "Change Photo";
-  static const String accountInfo = "Account Information";
-  static const String accountCreatedOn = "Account Created";
   static const String verified = "Verified";
-  static const String notVerified = "Not Verified";
-  static const String saveChanges = "Save Changes";
-  static const String changePassword = "Change Password";
   static const String currentPassword = "Current Password";
   static const String newPassword = "New Password";
   static const String updatePassword = "Update Password";
-  static const String googleAccount = "Google Account";
   static const String passwordUpdated = "Password updated successfully!";
   static const String profileUpdated = "Profile updated successfully!";
   static const String security = "Security";
