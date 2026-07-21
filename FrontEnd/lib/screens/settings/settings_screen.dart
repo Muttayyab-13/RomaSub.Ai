@@ -1,16 +1,31 @@
+// FrontEnd/lib/screens/settings/settings_screen.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import '../../core/constants/app_colors.dart';
+import 'package:intl/intl.dart';
+
+import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/design/app_palette.dart';
+import '../../core/design/base_theme.dart';
 import '../../core/utils/validators.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/app_snackbar.dart';
 import '../../services/api/api_config.dart';
+import '../../widgets/common/app_snackbar.dart';
+import '../../widgets/settings/appearance_row.dart';
+import '../../widgets/settings/security_section.dart';
 
+/// The Settings tab. Opts into the redesigned system via a scoped
+/// [buildBaseTheme] wrapper; the shell chrome around it keeps the old look.
+///
+/// This is a live, fully-wired screen — the redesign is a design-system
+/// migration, not a behavior change. The three real handlers
+/// (`_handleSaveProfile`, `_handleChangePassword`, `_handlePickImage`) and the
+/// `user.googleId == null` gating for name-edit are preserved as-is.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -25,13 +40,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String? _lastNameError;
   bool _isEditingProfile = false;
   bool _isSavingProfile = false;
-
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  String? _currentPasswordError;
-  String? _newPasswordError;
-  String? _confirmPasswordError;
   bool _isChangingPassword = false;
 
   String? _selectedImagePath;
@@ -51,9 +59,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -62,70 +67,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _firstNameError = Validators.name(_firstNameController.text);
       _lastNameError = Validators.name(_lastNameController.text);
     });
+    if (_firstNameError != null || _lastNameError != null) return;
 
-    if (_firstNameError == null && _lastNameError == null) {
-      setState(() => _isSavingProfile = true);
-      final success = await ref
-          .read(authNotifierProvider.notifier)
-          .updateProfile(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-          );
+    setState(() => _isSavingProfile = true);
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .updateProfile(
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+        );
 
-      if (mounted) {
-        setState(() {
-          _isSavingProfile = false;
-          _isEditingProfile = false;
-        });
-        if (success) {
-          AppSnackbar.showSuccess(context, AppStrings.profileUpdated);
-        } else {
-          final error = ref.read(authNotifierProvider).error;
-          if (error != null) {
-            AppSnackbar.showError(context, error);
-          }
-        }
-      }
+    if (!mounted) return;
+    setState(() {
+      _isSavingProfile = false;
+      _isEditingProfile = false;
+    });
+    if (success) {
+      AppSnackbar.showSuccess(context, AppStrings.profileUpdated);
+    } else {
+      final error = ref.read(authNotifierProvider).error;
+      if (error != null) AppSnackbar.showError(context, error);
     }
   }
 
-  Future<void> _handleChangePassword() async {
-    setState(() {
-      _currentPasswordError = Validators.password(
-        _currentPasswordController.text,
-      );
-      _newPasswordError = Validators.password(_newPasswordController.text);
-      _confirmPasswordError = Validators.confirmPassword(
-        _confirmPasswordController.text,
-        _newPasswordController.text,
-      );
-    });
+  /// Adapts [SecuritySection]'s `(current, next)` callback onto the real
+  /// `authNotifier.changePassword` call.
+  Future<void> _handleChangePassword(String current, String next) async {
+    setState(() => _isChangingPassword = true);
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .changePassword(current, next);
 
-    if (_currentPasswordError == null &&
-        _newPasswordError == null &&
-        _confirmPasswordError == null) {
-      setState(() => _isChangingPassword = true);
-      final success = await ref
-          .read(authNotifierProvider.notifier)
-          .changePassword(
-            _currentPasswordController.text,
-            _newPasswordController.text,
-          );
-
-      if (mounted) {
-        setState(() => _isChangingPassword = false);
-        if (success) {
-          _currentPasswordController.clear();
-          _newPasswordController.clear();
-          _confirmPasswordController.clear();
-          AppSnackbar.showSuccess(context, 'Password changed successfully!');
-        } else {
-          final error = ref.read(authNotifierProvider).error;
-          if (error != null) {
-            AppSnackbar.showError(context, error);
-          }
-        }
-      }
+    if (!mounted) return;
+    setState(() => _isChangingPassword = false);
+    if (success) {
+      AppSnackbar.showSuccess(context, 'Password changed successfully!');
+    } else {
+      final error = ref.read(authNotifierProvider).error;
+      if (error != null) AppSnackbar.showError(context, error);
     }
   }
 
@@ -137,393 +116,275 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         maxWidth: 512,
         maxHeight: 512,
       );
+      if (pickedFile == null) return;
 
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImagePath = pickedFile.path;
-          _isUploadingImage = true;
-        });
+      setState(() {
+        _selectedImagePath = pickedFile.path;
+        _isUploadingImage = true;
+      });
 
-        final success = await ref
-            .read(authNotifierProvider.notifier)
-            .uploadProfilePicture(pickedFile.path);
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .uploadProfilePicture(pickedFile.path);
 
-        if (mounted) {
-          setState(() => _isUploadingImage = false);
-          if (success) {
-            AppSnackbar.showSuccess(context, 'Profile picture updated!');
-          } else {
-            setState(() => _selectedImagePath = null);
-            final error = ref.read(authNotifierProvider).error;
-            if (error != null) {
-              AppSnackbar.showError(context, error);
-            }
-          }
-        }
+      if (!mounted) return;
+      setState(() => _isUploadingImage = false);
+      if (success) {
+        AppSnackbar.showSuccess(context, 'Profile picture updated!');
+      } else {
+        setState(() => _selectedImagePath = null);
+        final error = ref.read(authNotifierProvider).error;
+        if (error != null) AppSnackbar.showError(context, error);
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isUploadingImage = false);
-        AppSnackbar.showError(context, 'Failed to pick image: $e');
-      }
+      if (!mounted) return;
+      setState(() => _isUploadingImage = false);
+      AppSnackbar.showError(context, 'Failed to pick image: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ref.watch(themeProvider).isDark;
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
 
-    final isDark = ref.watch(themeProvider).isDark;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.getPrimary(isDark),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.settings_outlined,
-                      color: isDark ? Colors.black : Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
+    return Theme(
+      data: buildBaseTheme(isDark),
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          final text = Theme.of(context).textTheme;
+          return ColoredBox(
+            color: scheme.surface,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.lg),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppStrings.settings,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        AppStrings.profileSettings,
+                        style: text.headlineMedium,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSizes.xs),
                       Text(
-                        'Manage your account settings and preferences',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
+                        'Manage your profile, security, and preferences.',
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
+                      const SizedBox(height: AppSizes.lg),
+                      _SettingsCard(
+                        title: 'Profile',
+                        icon: Icons.person_outline,
+                        child: _buildProfileSection(context, authState, user),
+                      ),
+                      const SizedBox(height: AppSizes.lg),
+                      _SettingsCard(
+                        title: 'Security',
+                        icon: Icons.lock_outline,
+                        child: SecuritySection(
+                          isGoogleAccount: user?.isGoogleUser ?? false,
+                          isBusy: _isChangingPassword,
+                          onChangePassword: _handleChangePassword,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.lg),
+                      _SettingsCard(
+                        title: 'Appearance',
+                        icon: Icons.palette_outlined,
+                        child: AppearanceRow(
+                          isDark: isDark,
+                          onChanged: (_) =>
+                              ref.read(themeProvider.notifier).toggleTheme(),
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.lg),
+                      _SettingsCard(
+                        title: 'Account',
+                        icon: Icons.info_outline,
+                        child: _buildAccountSection(context, user, isDark),
+                      ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(
+    BuildContext context,
+    AuthState authState,
+    UserModel? user,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildAvatar(context, authState, user),
+            const SizedBox(width: AppSizes.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
+                    style: text.titleMedium,
+                  ),
+                  const SizedBox(height: AppSizes.xs),
+                  Text(
+                    'This image will be displayed on your profile.',
+                    style: text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-
-              // Two-column layout — stacks vertically on narrow screens
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final profileCard = _buildProfileCard(
-                    authState,
-                    user,
-                    isDark,
-                  );
-                  final sections = Column(
-                    children: [
-                      _buildSection(
-                        'Profile Information',
-                        Icons.person_outline,
-                        _buildProfileSection(user, isDark),
-                        isDark,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        'Security',
-                        Icons.lock_outline,
-                        _buildSecuritySection(isDark),
-                        isDark,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        'Account',
-                        Icons.info_outline,
-                        _buildAccountSection(user, isDark),
-                        isDark,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        'Appearance',
-                        Icons.palette_outlined,
-                        _buildAppearanceSection(),
-                        isDark,
-                      ),
-                    ],
-                  );
-
-                  if (constraints.maxWidth < 760) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        profileCard,
-                        const SizedBox(height: 24),
-                        sections,
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 320, child: profileCard),
-                      const SizedBox(width: 24),
-                      Expanded(child: sections),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
+        const SizedBox(height: AppSizes.lg),
+        Divider(color: scheme.outlineVariant),
+        const SizedBox(height: AppSizes.lg),
+        if (_isEditingProfile)
+          _buildNameEditForm(context, user)
+        else
+          _buildNameDisplay(context, user),
+        const SizedBox(height: AppSizes.md),
+        _infoRow(context, 'Email', user?.email ?? '-'),
+      ],
     );
   }
 
-  Widget _buildProfileCard(AuthState authState, dynamic user, bool isDark) {
-    final cardBg = AppColors.getCard(isDark);
-    final borderColor = AppColors.getBorder(isDark);
-    final textPrimary = AppColors.getPrimary(isDark);
-    final textSecondary = AppColors.getTextSecondary(isDark);
-    final dividerColor = AppColors.getBorder(isDark);
-    final avatarBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final avatarText = isDark ? Colors.black : Colors.white;
-    final cameraBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final cameraIcon = isDark ? Colors.black : Colors.white;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: avatarBg,
-                backgroundImage: _selectedImagePath != null
-                    ? FileImage(File(_selectedImagePath!))
-                    : (user?.profilePictureUrl != null
-                          ? NetworkImage(
-                              '${ApiConfig.baseUrl}${user.profilePictureUrl}',
-                            )
-                          : null),
-                child:
-                    (_selectedImagePath == null &&
-                        user?.profilePictureUrl == null)
-                    ? Text(
-                        authState.userInitial,
-                        style: TextStyle(
-                          fontSize: 48,
-                          color: avatarText,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
-              ),
-              if (_isUploadingImage)
-                const Positioned.fill(
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black54,
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Material(
-                  color: cameraBg,
-                  shape: CircleBorder(
-                    side: BorderSide(color: cardBg, width: 3),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: _isUploadingImage ? null : _handlePickImage,
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(
-                        child: Icon(
-                          Icons.camera_alt,
-                          color: cameraIcon,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            user?.email ?? '',
-            style: TextStyle(color: textSecondary, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-          Divider(color: dividerColor),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.verified, size: 16, color: Colors.green.shade700),
-                const SizedBox(width: 6),
-                Text(
-                  user?.isVerified == true ? 'Verified' : 'Unverified',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSection(String title, IconData icon, Widget child, bool isDark) {
-    final cardBg = AppColors.getCard(isDark);
-    final borderColor = AppColors.getBorder(isDark);
-    final iconBg = isDark ? Colors.grey.shade700 : Colors.grey.shade100;
-    final iconColor = isDark ? Colors.grey.shade300 : Colors.black87;
-    final textPrimary = AppColors.getPrimary(isDark);
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileSection(dynamic user, bool isDark) {
-    if (!_isEditingProfile) {
-      return Column(
-        children: [
-          _buildInfoRow('First Name', user?.firstName ?? '-', isDark),
-          _buildInfoRow('Last Name', user?.lastName ?? '-', isDark),
-          _buildInfoRow('Email', user?.email ?? '-', isDark),
-          const SizedBox(height: 16),
-          if (user?.googleId == null)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _isEditingProfile = true),
-                icon: Icon(
-                  Icons.edit,
-                  size: 18,
-                  color: AppColors.getPrimary(isDark),
-                ),
-                label: Text(
-                  'Edit Profile',
-                  style: TextStyle(color: AppColors.getPrimary(isDark)),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.getPrimary(isDark),
-                  side: BorderSide(
-                    color: isDark ? Colors.grey.shade600 : Colors.black,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      );
-    }
-
-    return Column(
+  Widget _buildAvatar(
+    BuildContext context,
+    AuthState authState,
+    UserModel? user,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    return Stack(
       children: [
-        AppTextField(
-          controller: _firstNameController,
-          hint: 'First Name',
-          errorText: _firstNameError,
+        CircleAvatar(
+          radius: 32,
+          backgroundColor: scheme.primary,
+          backgroundImage: _selectedImagePath != null
+              ? FileImage(File(_selectedImagePath!))
+              : (user?.profilePictureUrl != null
+                    ? NetworkImage(
+                        '${ApiConfig.baseUrl}${user!.profilePictureUrl}',
+                      )
+                    : null),
+          child: (_selectedImagePath == null && user?.profilePictureUrl == null)
+              ? Text(
+                  authState.userInitial,
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : null,
         ),
-        const SizedBox(height: 12),
-        AppTextField(
-          controller: _lastNameController,
-          hint: 'Last Name',
-          errorText: _lastNameError,
+        if (_isUploadingImage)
+          Positioned.fill(
+            child: CircleAvatar(
+              backgroundColor: scheme.scrim.withValues(alpha: 0.5),
+              child: const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Material(
+            color: scheme.primary,
+            shape: CircleBorder(
+              side: BorderSide(color: scheme.surfaceContainerLow, width: 2),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: _isUploadingImage ? null : _handlePickImage,
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: Center(
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: scheme.onPrimary,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildNameDisplay(BuildContext context, UserModel? user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _infoRow(context, 'First Name', user?.firstName ?? '-'),
+        _infoRow(context, 'Last Name', user?.lastName ?? '-'),
+        if (user?.googleId == null) ...[
+          const SizedBox(height: AppSizes.sm),
+          OutlinedButton.icon(
+            onPressed: () => setState(() => _isEditingProfile = true),
+            icon: const Icon(Icons.edit_outlined, size: AppSizes.iconSm),
+            label: const Text('Edit Profile'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNameEditForm(BuildContext context, UserModel? user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _editableField(
+                context,
+                controller: _firstNameController,
+                label: 'First Name',
+                errorText: _firstNameError,
+              ),
+            ),
+            const SizedBox(width: AppSizes.md),
+            Expanded(
+              child: _editableField(
+                context,
+                controller: _lastNameController,
+                label: 'Last Name',
+                errorText: _lastNameError,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.md),
         Row(
           children: [
             Expanded(
@@ -533,35 +394,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : () {
                         setState(() {
                           _isEditingProfile = false;
+                          _firstNameError = null;
+                          _lastNameError = null;
                           _firstNameController.text = user?.firstName ?? '';
                           _lastNameController.text = user?.lastName ?? '';
                         });
                       },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
                 child: const Text('Cancel'),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.md),
             Expanded(
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: _isSavingProfile ? null : _handleSaveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentStrong,
-                  foregroundColor: AppColors.onAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
                 child: _isSavingProfile
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Save'),
               ),
@@ -572,116 +422,97 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSecuritySection(bool isDark) {
-    final buttonBg = AppColors.accentStrong;
-    final buttonText = AppColors.onAccent;
-
-    return Column(
-      children: [
-        AppTextField(
-          controller: _currentPasswordController,
-          hint: 'Current Password',
-          isPassword: true,
-          errorText: _currentPasswordError,
-          isDark: isDark,
+  Widget _editableField(
+    BuildContext context, {
+    required TextEditingController controller,
+    required String label,
+    String? errorText,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        errorText: errorText,
+        filled: true,
+        fillColor: scheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          borderSide: BorderSide(color: scheme.outlineVariant),
         ),
-        const SizedBox(height: 12),
-        AppTextField(
-          controller: _newPasswordController,
-          hint: 'New Password',
-          isPassword: true,
-          errorText: _newPasswordError,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
-        AppTextField(
-          controller: _confirmPasswordController,
-          hint: 'Confirm Password',
-          isPassword: true,
-          errorText: _confirmPasswordError,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isChangingPassword ? null : _handleChangePassword,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonBg,
-              foregroundColor: buttonText,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: _isChangingPassword
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: buttonText,
-                    ),
-                  )
-                : Text('Update Password', style: TextStyle(color: buttonText)),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildAccountSection(dynamic user, bool isDark) {
+  Widget _buildAccountSection(
+    BuildContext context,
+    UserModel? user,
+    bool isDark,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final successColor = isDark ? AppPalette.successDark : AppPalette.success;
+    final isVerified = user?.isVerified == true;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow(
+        _infoRow(
+          context,
           'Account Type',
           user?.googleId != null ? 'Google' : 'Email',
-          isDark,
         ),
-        _buildInfoRow(
+        _infoRow(
+          context,
           'Verification',
-          user?.isVerified == true ? 'Verified' : 'Pending',
-          isDark,
+          isVerified ? 'Verified' : 'Pending',
+          valueColor: isVerified ? successColor : scheme.onSurface,
         ),
-        _buildInfoRow(
-          'Member Since',
-          _formatDate(user?.createdAt?.toIso8601String()),
-          isDark,
-        ),
+        _infoRow(context, 'Member Since', _formatMemberSince(user?.createdAt)),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value, bool isDark) {
-    final labelColor = AppColors.getTextSecondary(isDark);
-    final valueBg = isDark ? Colors.grey.shade800 : Colors.grey.shade100;
-    final valueColor = AppColors.getPrimary(isDark);
+  String _formatMemberSince(DateTime? date) {
+    if (date == null) return '-';
+    return DateFormat('MMM d, y').format(date);
+  }
 
+  Widget _infoRow(
+    BuildContext context,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 120,
+            width: 130,
             child: Text(
               label,
-              style: TextStyle(color: labelColor, fontSize: 14),
+              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.md),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md,
+                vertical: AppSizes.sm,
+              ),
               decoration: BoxDecoration(
-                color: valueBg,
-                borderRadius: BorderRadius.circular(8),
+                color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
               child: Text(
                 value,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  color: valueColor,
+                style: text.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? scheme.onSurface,
                 ),
               ),
             ),
@@ -690,84 +521,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+}
 
-  String _formatDate(String? dateString) {
-    if (dateString == null) return '-';
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (e) {
-      return '-';
-    }
-  }
+/// A bordered, titled card wrapping one settings section.
+class _SettingsCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
 
-  Widget _buildAppearanceSection() {
-    final themeState = ref.watch(themeProvider);
-    final isDark = themeState.isDark;
+  const _SettingsCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.lg),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.getPrimary(isDark),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  isDark ? Icons.dark_mode : Icons.light_mode,
-                  color: isDark ? Colors.black : Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dark Mode',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: AppColors.getPrimary(isDark),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isDark
-                          ? 'Currently using dark theme'
-                          : 'Currently using light theme',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: isDark,
-                onChanged: (_) =>
-                    ref.read(themeProvider.notifier).toggleTheme(),
-                activeThumbColor: Colors.white,
-                activeTrackColor: AppColors.accentColor,
-                inactiveThumbColor: Colors.black,
-                inactiveTrackColor: Colors.grey.shade300,
-              ),
+              Icon(icon, size: AppSizes.iconSm, color: scheme.onSurfaceVariant),
+              const SizedBox(width: AppSizes.sm),
+              Text(title, style: text.titleMedium),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: AppSizes.md),
+          child,
+        ],
+      ),
     );
   }
 }
