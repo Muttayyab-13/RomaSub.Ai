@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_sizes.dart';
+import '../../core/utils/validators.dart';
 
 /// Password-change UI for the settings screen. Pure: state in via
 /// [isGoogleAccount]/[isBusy], the completed (current, next) pair out via
 /// [onChangePassword] — the screen owns the actual API call and busy flag.
+/// [onChangePassword] reports back whether the change succeeded so this
+/// widget knows when it's safe to clear the form.
 ///
 /// Google accounts never set a password, so showing a change-password form
 /// for them would be a dead end (fields that error on every submit). Instead
@@ -12,7 +15,7 @@ import '../../core/constants/app_sizes.dart';
 class SecuritySection extends StatefulWidget {
   final bool isGoogleAccount;
   final bool isBusy;
-  final void Function(String current, String next) onChangePassword;
+  final Future<bool> Function(String current, String next) onChangePassword;
 
   const SecuritySection({
     super.key,
@@ -26,6 +29,7 @@ class SecuritySection extends StatefulWidget {
 }
 
 class _SecuritySectionState extends State<SecuritySection> {
+  final _formKey = GlobalKey<FormState>();
   final _current = TextEditingController();
   final _next = TextEditingController();
   final _confirm = TextEditingController();
@@ -38,11 +42,17 @@ class _SecuritySectionState extends State<SecuritySection> {
     super.dispose();
   }
 
-  bool get _canSubmit => _next.text.isNotEmpty && _next.text == _confirm.text;
+  Future<void> _submit() async {
+    if (widget.isBusy) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-  void _submit() {
-    if (!_canSubmit) return;
-    widget.onChangePassword(_current.text, _next.text);
+    final ok = await widget.onChangePassword(_current.text, _next.text);
+    if (ok && mounted) {
+      _current.clear();
+      _next.clear();
+      _confirm.clear();
+      _formKey.currentState?.reset();
+    }
   }
 
   @override
@@ -73,26 +83,46 @@ class _SecuritySectionState extends State<SecuritySection> {
   }
 
   Widget _passwordForm(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _field(context, controller: _current, label: 'Current Password'),
-        SizedBox(height: AppSizes.sm),
-        _field(context, controller: _next, label: 'New Password'),
-        SizedBox(height: AppSizes.sm),
-        _field(context, controller: _confirm, label: 'Confirm Password'),
-        SizedBox(height: AppSizes.md),
-        FilledButton(
-          onPressed: widget.isBusy ? null : _submit,
-          child: widget.isBusy
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Update Password'),
-        ),
-      ],
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _field(
+            context,
+            controller: _current,
+            label: 'Current Password',
+            validator: (value) => (value == null || value.isEmpty)
+                ? 'Enter your current password'
+                : null,
+          ),
+          SizedBox(height: AppSizes.sm),
+          _field(
+            context,
+            controller: _next,
+            label: 'New Password',
+            validator: Validators.password,
+          ),
+          SizedBox(height: AppSizes.sm),
+          _field(
+            context,
+            controller: _confirm,
+            label: 'Confirm Password',
+            validator: (value) => Validators.confirmPassword(value, _next.text),
+          ),
+          SizedBox(height: AppSizes.md),
+          FilledButton(
+            onPressed: widget.isBusy ? null : _submit,
+            child: widget.isBusy
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Update Password'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -100,12 +130,13 @@ class _SecuritySectionState extends State<SecuritySection> {
     BuildContext context, {
     required TextEditingController controller,
     required String label,
+    required String? Function(String?) validator,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    return TextField(
+    return TextFormField(
       controller: controller,
       obscureText: true,
-      onChanged: (_) => setState(() {}),
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         filled: true,

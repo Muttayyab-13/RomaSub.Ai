@@ -25,7 +25,7 @@ import '../../widgets/settings/security_section.dart';
 /// This is a live, fully-wired screen — the redesign is a design-system
 /// migration, not a behavior change. The three real handlers
 /// (`_handleSaveProfile`, `_handleChangePassword`, `_handlePickImage`) and the
-/// `user.googleId == null` gating for name-edit are preserved as-is.
+/// `!user.isGoogleUser` gating for name-edit are preserved as-is.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -91,14 +91,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   /// Adapts [SecuritySection]'s `(current, next)` callback onto the real
-  /// `authNotifier.changePassword` call.
-  Future<void> _handleChangePassword(String current, String next) async {
+  /// `authNotifier.changePassword` call. Returns whether it succeeded so
+  /// [SecuritySection] knows it's safe to clear its fields.
+  Future<bool> _handleChangePassword(String current, String next) async {
     setState(() => _isChangingPassword = true);
     final success = await ref
         .read(authNotifierProvider.notifier)
         .changePassword(current, next);
 
-    if (!mounted) return;
+    if (!mounted) return success;
     setState(() => _isChangingPassword = false);
     if (success) {
       AppSnackbar.showSuccess(context, 'Password changed successfully!');
@@ -106,6 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final error = ref.read(authNotifierProvider).error;
       if (error != null) AppSnackbar.showError(context, error);
     }
+    return success;
   }
 
   Future<void> _handlePickImage() async {
@@ -346,7 +348,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       children: [
         _infoRow(context, 'First Name', user?.firstName ?? '-'),
         _infoRow(context, 'Last Name', user?.lastName ?? '-'),
-        if (user?.googleId == null) ...[
+        if (!(user?.isGoogleUser ?? false)) ...[
           const SizedBox(height: AppSizes.sm),
           OutlinedButton.icon(
             onPressed: () => setState(() => _isEditingProfile = true),
@@ -459,7 +461,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _infoRow(
           context,
           'Account Type',
-          user?.googleId != null ? 'Google' : 'Email',
+          (user?.isGoogleUser ?? false) ? 'Google' : 'Email',
         ),
         _infoRow(
           context,
