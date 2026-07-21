@@ -113,12 +113,14 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
       // Track when controller's platform texture becomes ready and when the
       // first frame is rendered. These are the two checkpoints that have to
       // happen for the video to be visible.
-      controller.platform.future.then((_) {
-        log('controller.platform ready (texture attached to libmpv)');
-      }).catchError((e, st) {
-        log('controller.platform FAILED: $e');
-        debugPrint(st.toString());
-      });
+      controller.platform.future
+          .then((_) {
+            log('controller.platform ready (texture attached to libmpv)');
+          })
+          .catchError((e, st) {
+            log('controller.platform FAILED: $e');
+            debugPrint(st.toString());
+          });
       controller.id.addListener(() {
         log('controller.id changed -> ${controller.id.value}');
       });
@@ -191,8 +193,10 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
       );
       _subscriptions.add(
         player.stream.videoParams.listen((p) {
-          log('videoParams -> dw=${p.dw} dh=${p.dh} rotate=${p.rotate} '
-              'pixelformat=${p.pixelformat}');
+          log(
+            'videoParams -> dw=${p.dw} dh=${p.dh} rotate=${p.rotate} '
+            'pixelformat=${p.pixelformat}',
+          );
         }),
       );
       _subscriptions.add(
@@ -215,10 +219,7 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
   /// Mark the project's media as gone from the server so the UI can show a
   /// clear "re-upload" message instead of an endless "Loading video...".
   void markUnavailable() {
-    state = state.copyWith(
-      mediaUnavailable: true,
-      error: 'Media unavailable',
-    );
+    state = state.copyWith(mediaUnavailable: true, error: 'Media unavailable');
   }
 
   void play() => state.player?.play();
@@ -299,5 +300,5 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
 /// Riverpod provider for VideoPlayerNotifier
 final videoPlayerNotifierProvider =
     StateNotifierProvider.autoDispose<VideoPlayerNotifier, VideoPlayerState>(
-  (ref) => VideoPlayerNotifier(),
-);
+      (ref) => VideoPlayerNotifier(),
+    );

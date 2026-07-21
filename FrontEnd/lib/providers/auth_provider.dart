@@ -16,11 +16,7 @@ class AuthState {
   final bool isLoading;
   final String? error;
 
-  AuthState({
-    this.user,
-    this.isLoading = false,
-    this.error,
-  });
+  AuthState({this.user, this.isLoading = false, this.error});
 
   /// Check if user is authenticated
   bool get isAuthenticated => user != null;
@@ -35,11 +31,7 @@ class AuthState {
   String get userInitial => user?.initial ?? 'U';
 
   /// Copy with method for immutable state updates
-  AuthState copyWith({
-    UserModel? user,
-    bool? isLoading,
-    String? error,
-  }) {
+  AuthState copyWith({UserModel? user, bool? isLoading, String? error}) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
@@ -73,6 +65,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Initialize - check for existing token and validate
   Future<void> initialize() async {
     try {
+      // Honour "Remember me": if the last sign-in opted out of persistence,
+      // drop the stored session on cold start so the user must log in again.
+      final remember = await _storage.getRememberMe();
+      if (!remember) {
+        await _storage.clearAll();
+        return;
+      }
+
       final user = await _storage.getUser();
       if (user != null) {
         // Validate token by fetching current user from API
@@ -90,14 +90,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Login with email and password
-  Future<bool> login(String email, String password) async {
+  /// Login with email and password.
+  ///
+  /// [rememberMe] controls whether the session survives a cold app restart.
+  /// The token is always persisted so in-session API calls work; when
+  /// [rememberMe] is false the stored session is cleared on the next
+  /// [initialize].
+  Future<bool> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       final response = await _authService.login(email, password);
       await _storage.saveToken(response.accessToken);
       await _storage.saveUser(response.user);
+      await _storage.saveRememberMe(rememberMe);
 
       state = state.copyWith(user: response.user, isLoading: false);
       return true;
@@ -192,7 +202,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       // Use desktop OAuth flow for Windows/macOS/Linux
-      if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      if (!kIsWeb &&
+          (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
         if (_desktopOAuth == null) {
           state = state.copyWith(
             error: 'Desktop Google Sign-In is not configured',
@@ -298,7 +309,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Change password (requires current password)
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -397,7 +411,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 /// Riverpod provider for AuthNotifier
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   final authService = ref.watch(authServiceProvider);
   final userService = ref.watch(userServiceProvider);
   final storageAsync = ref.watch(storageServiceProvider);
@@ -427,7 +443,13 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
         desktopOAuth = GoogleOAuthDesktopService();
       }
 
-      return AuthNotifier(authService, userService, storage, googleSignIn, desktopOAuth);
+      return AuthNotifier(
+        authService,
+        userService,
+        storage,
+        googleSignIn,
+        desktopOAuth,
+      );
     },
     orElse: () {
       // Return a temporary notifier while storage is loading/errored
@@ -439,13 +461,13 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
 /// Temporary auth notifier used while storage is initializing
 class _LoadingAuthNotifier extends AuthNotifier {
   _LoadingAuthNotifier()
-      : super(
-          _DummyAuthService(),
-          _DummyUserService(),
-          _DummyStorageService(),
-          null, // No Google Sign-In during loading
-          null, // No desktop OAuth during loading
-        );
+    : super(
+        _DummyAuthService(),
+        _DummyUserService(),
+        _DummyStorageService(),
+        null, // No Google Sign-In during loading
+        null, // No desktop OAuth during loading
+      );
 
   @override
   Future<void> initialize() async {
@@ -453,7 +475,11 @@ class _LoadingAuthNotifier extends AuthNotifier {
   }
 
   @override
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     state = state.copyWith(
       error: 'Please wait, app is initializing...',
       isLoading: false,

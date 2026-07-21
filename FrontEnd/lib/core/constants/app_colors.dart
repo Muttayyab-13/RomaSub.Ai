@@ -114,5 +114,6 @@ class AppColors {
   /// Contrast-safe in each mode: teal-700 on light (~5.5:1 on white), teal-400
   /// on dark (~10:1 on near-black). Use `accentColor` (teal-500) only for fills
   /// where text contrast is not a concern (switch tracks, low-alpha tints).
-  static Color getAccent(bool isDark) => isDark ? accentColorDark : accentStrong;
+  static Color getAccent(bool isDark) =>
+      isDark ? accentColorDark : accentStrong;
 }

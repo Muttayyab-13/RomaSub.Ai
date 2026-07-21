@@ -17,10 +17,7 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         ApiConfig.authLogin,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -57,10 +54,7 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         ApiConfig.authVerifyEmail,
-        data: {
-          'email': email,
-          'otp': otp,
-        },
+        data: {'email': email, 'otp': otp},
       );
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -86,9 +80,7 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         ApiConfig.authGoogle,
-        data: {
-          'id_token': idToken,
-        },
+        data: {'id_token': idToken},
       );
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -97,14 +89,14 @@ class AuthService {
   }
 
   /// Login with Google OAuth using authorization code (for desktop)
-  Future<AuthResponseModel> googleLoginWithCode(String code, String redirectUri) async {
+  Future<AuthResponseModel> googleLoginWithCode(
+    String code,
+    String redirectUri,
+  ) async {
     try {
       final response = await _client.dio.post(
         ApiConfig.authGoogleCode,
-        data: {
-          'code': code,
-          'redirect_uri': redirectUri,
-        },
+        data: {'code': code, 'redirect_uri': redirectUri},
       );
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -160,10 +152,7 @@ class AuthService {
     try {
       final response = await _client.dio.post(
         ApiConfig.authVerifyOtp,
-        data: {
-          'email': email,
-          'otp': otp,
-        },
+        data: {'email': email, 'otp': otp},
       );
       return MessageResponse.fromJson(response.data);
     } on DioException catch (e) {
@@ -197,7 +186,9 @@ class AuthService {
   ApiException _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      return NetworkException('Connection timeout. Please check your internet.');
+      return NetworkException(
+        'Connection timeout. Please check your internet.',
+      );
     } else if (e.type == DioExceptionType.connectionError) {
       return NetworkException('No internet connection');
     } else if (e.response != null) {
@@ -216,7 +207,10 @@ class AuthService {
       } else if (statusCode == 404) {
         return ServerException('Resource not found', statusCode);
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

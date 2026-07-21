@@ -13,10 +13,12 @@ class ForgotPasswordEmailScreen extends ConsumerStatefulWidget {
   const ForgotPasswordEmailScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordEmailScreen> createState() => _ForgotPasswordEmailScreenState();
+  ConsumerState<ForgotPasswordEmailScreen> createState() =>
+      _ForgotPasswordEmailScreenState();
 }
 
-class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailScreen> {
+class _ForgotPasswordEmailScreenState
+    extends ConsumerState<ForgotPasswordEmailScreen> {
   final _emailController = TextEditingController();
   String? _emailError;
 
@@ -32,9 +34,9 @@ class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailS
     });
 
     if (_emailError == null) {
-      final success = await ref.read(forgotPasswordProvider.notifier).requestOtp(
-            _emailController.text.trim(),
-          );
+      final success = await ref
+          .read(forgotPasswordProvider.notifier)
+          .requestOtp(_emailController.text.trim());
 
       if (success && mounted) {
         AppRoutes.to(context, AppRoutes.forgotPasswordOtp);
@@ -42,10 +44,7 @@ class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailS
         final error = ref.read(forgotPasswordProvider).error;
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-            ),
+            SnackBar(content: Text(error), backgroundColor: AppColors.error),
           );
         }
       }
@@ -79,8 +78,8 @@ class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailS
                 Text(
                   AppStrings.enterEmailReset,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSizes.xl),
@@ -93,7 +92,11 @@ class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailS
                   keyboardType: TextInputType.emailAddress,
                   onChanged: (_) {
                     if (_emailError != null) {
-                      setState(() => _emailError = Validators.email(_emailController.text));
+                      setState(
+                        () => _emailError = Validators.email(
+                          _emailController.text,
+                        ),
+                      );
                     }
                   },
                 ),
@@ -121,10 +124,12 @@ class _ForgotPasswordEmailScreenState extends ConsumerState<ForgotPasswordEmailS
 
                 // Back to Login link
                 GestureDetector(
-                  onTap: isLoading ? null : () {
-                    ref.read(forgotPasswordProvider.notifier).reset();
-                    AppRoutes.back(context);
-                  },
+                  onTap: isLoading
+                      ? null
+                      : () {
+                          ref.read(forgotPasswordProvider.notifier).reset();
+                          AppRoutes.back(context);
+                        },
                   child: Text(
                     AppStrings.backToLogin,
                     style: TextStyle(

@@ -27,8 +27,8 @@ class SubtitleOverlay extends ConsumerWidget {
     final currentTime = playerState.positionSeconds;
 
     // Dual-source: use realtime during streaming, editor when project loaded
-    final bool useRealtime = realtimeState.canPlay &&
-        editorState.project == null;
+    final bool useRealtime =
+        realtimeState.canPlay && editorState.project == null;
 
     int? segmentIndex;
     EditableSegment? segment;

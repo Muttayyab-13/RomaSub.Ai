@@ -45,8 +45,9 @@ void main() {
     expect(find.text('Export as TXT'), findsOneWidget);
   });
 
-  testWidgets('video sources also offer captioned-video export',
-      (tester) async {
+  testWidgets('video sources also offer captioned-video export', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(isVideo: true));
     await _openExportMenu(tester);
 

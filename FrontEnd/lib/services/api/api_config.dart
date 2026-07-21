@@ -14,19 +14,21 @@ class ApiConfig {
   static const String authRegister = '/auth/register';
   static const String authLogin = '/auth/login/json';
   static const String authGoogle = '/auth/google';
-  static const String authGoogleCode = '/auth/google/code';  // For desktop OAuth
+  static const String authGoogleCode = '/auth/google/code'; // For desktop OAuth
   static const String authMe = '/auth/me';
   static const String authChangePassword = '/auth/change-password';
   static const String authForgotPassword = '/auth/forgot-password';
   static const String authVerifyOtp = '/auth/verify-otp';
   static const String authResetPassword = '/auth/reset-password';
   static const String authVerifyEmail = '/auth/verify-email';
-  static const String authResendVerificationOtp = '/auth/resend-verification-otp';
+  static const String authResendVerificationOtp =
+      '/auth/resend-verification-otp';
 
   // Media Endpoints
   static const String mediaUpload = '/media/upload';
   static String mediaInfo(String fileId) => '/media/$fileId';
-  static String mediaExtractAudio(String fileId) => '/media/$fileId/extract-audio';
+  static String mediaExtractAudio(String fileId) =>
+      '/media/$fileId/extract-audio';
   static String mediaDelete(String fileId) => '/media/$fileId';
 
   // ASR (Transcription) Endpoints
@@ -37,9 +39,12 @@ class ApiConfig {
 
   // Transliteration Endpoints
   static const String transliterateText = '/transliterate/text';
-  static String transliterateFile(String fileId) => '/transliterate/$fileId/anonymous';
-  static String transliterateResult(String fileId) => '/transliterate/result/$fileId';
-  static String transliterateResultSrt(String fileId) => '/transliterate/result/$fileId/srt';
+  static String transliterateFile(String fileId) =>
+      '/transliterate/$fileId/anonymous';
+  static String transliterateResult(String fileId) =>
+      '/transliterate/result/$fileId';
+  static String transliterateResultSrt(String fileId) =>
+      '/transliterate/result/$fileId/srt';
 
   // Subtitle Endpoints
   static String subtitleCreate(String fileId) => '/subtitles/create/$fileId';
@@ -61,7 +66,8 @@ class ApiConfig {
   static String mediaStream(String fileId) => '/media/$fileId/stream';
 
   /// Full URL for video streaming (used by media_kit player)
-  static String mediaStreamUrl(String fileId) => '$baseUrl/media/$fileId/stream';
+  static String mediaStreamUrl(String fileId) =>
+      '$baseUrl/media/$fileId/stream';
 
   // Realtime Streaming Endpoints
   static String realtimeStream(String fileId) => '/realtime/stream/$fileId';
@@ -69,7 +75,8 @@ class ApiConfig {
   static String realtimeStatus(String fileId) => '/realtime/status/$fileId';
 
   /// Full URL for SSE stream (used by Dio stream client)
-  static String realtimeStreamUrl(String fileId) => '$baseUrl/realtime/stream/$fileId';
+  static String realtimeStreamUrl(String fileId) =>
+      '$baseUrl/realtime/stream/$fileId';
 
   // Projects & Exports listing
   static const String projectsList = '/subtitles/list/projects';
@@ -92,16 +99,18 @@ class ApiConfig {
     'avi',
     'mkv',
     'mov',
-    'webm'
+    'webm',
   ];
   static const List<String> allowedAudioExtensions = [
     'mp3',
     'wav',
     'm4a',
     'flac',
-    'ogg'
+    'ogg',
   ];
 
-  static List<String> get allowedExtensions =>
-      [...allowedVideoExtensions, ...allowedAudioExtensions];
+  static List<String> get allowedExtensions => [
+    ...allowedVideoExtensions,
+    ...allowedAudioExtensions,
+  ];
 }

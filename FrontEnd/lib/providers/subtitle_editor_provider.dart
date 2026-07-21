@@ -164,14 +164,15 @@ class EditorNotifier extends StateNotifier<EditorState> {
   // ===== Editing Operations =====
 
   void _pushUndo(EditorActionType type) {
-    final previous = state.segments
-        .map((s) => s.copyWith())
-        .toList();
-    var stack = [...state.undoStack, EditorAction(
-      type: type,
-      previousSegments: previous,
-      selectedIndex: state.selectedSegmentIndex,
-    )];
+    final previous = state.segments.map((s) => s.copyWith()).toList();
+    var stack = [
+      ...state.undoStack,
+      EditorAction(
+        type: type,
+        previousSegments: previous,
+        selectedIndex: state.selectedSegmentIndex,
+      ),
+    ];
     // Cap at max
     if (stack.length > maxUndoStack) {
       stack = stack.sublist(stack.length - maxUndoStack);
@@ -285,9 +286,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (!state.canUndo) return;
 
     final action = state.undoStack.last;
-    final currentSegments = state.segments
-        .map((s) => s.copyWith())
-        .toList();
+    final currentSegments = state.segments.map((s) => s.copyWith()).toList();
 
     // Push current state to redo
     final redoStack = [
@@ -321,9 +320,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (!state.canRedo) return;
 
     final action = state.redoStack.last;
-    final currentSegments = state.segments
-        .map((s) => s.copyWith())
-        .toList();
+    final currentSegments = state.segments.map((s) => s.copyWith()).toList();
 
     // Push current state to undo
     final undoStack = [
@@ -370,17 +367,11 @@ class EditorNotifier extends StateNotifier<EditorState> {
       }
     }
 
-    state = state.copyWith(
-      searchQuery: query,
-      searchResults: results,
-    );
+    state = state.copyWith(searchQuery: query, searchResults: results);
   }
 
   void clearSearch() {
-    state = state.copyWith(
-      searchQuery: '',
-      searchResults: [],
-    );
+    state = state.copyWith(searchQuery: '', searchResults: []);
   }
 
   // ===== Auto-fix =====
@@ -401,10 +392,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
         segmentCount: fixedSegments.length,
       );
 
-      state = state.copyWith(
-        project: updated,
-        hasUnsavedChanges: false,
-      );
+      state = state.copyWith(project: updated, hasUnsavedChanges: false);
     } catch (e) {
       state = state.copyWith(error: () => 'Failed to fix overlaps: $e');
     }
@@ -514,6 +502,6 @@ class EditorNotifier extends StateNotifier<EditorState> {
 /// Riverpod provider for EditorNotifier
 final editorNotifierProvider =
     StateNotifierProvider.autoDispose<EditorNotifier, EditorState>((ref) {
-  final subtitleService = ref.watch(subtitleServiceProvider);
-  return EditorNotifier(subtitleService);
-});
+      final subtitleService = ref.watch(subtitleServiceProvider);
+      return EditorNotifier(subtitleService);
+    });

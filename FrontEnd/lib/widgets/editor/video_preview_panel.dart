@@ -54,9 +54,7 @@ class VideoPreviewPanel extends ConsumerWidget {
                           ),
 
                         // Subtitle overlay at bottom
-                        const Positioned.fill(
-                          child: SubtitleOverlay(),
-                        ),
+                        const Positioned.fill(child: SubtitleOverlay()),
                       ],
                     )
                   : Center(
@@ -76,8 +74,8 @@ class VideoPreviewPanel extends ConsumerWidget {
                             Text(
                               playerState.mediaUnavailable
                                   ? 'This project\'s media file is no longer '
-                                      'available. Please re-upload the video to '
-                                      'edit or export captions.'
+                                        'available. Please re-upload the video to '
+                                        'edit or export captions.'
                                   : (playerState.error ?? 'Loading video...'),
                               textAlign: TextAlign.center,
                               style: const TextStyle(

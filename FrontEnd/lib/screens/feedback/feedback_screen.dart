@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/design/base_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api/api_client.dart';
 import '../../services/api/api_config.dart';
+import '../../widgets/common/app_snackbar.dart';
 
+/// The Feedback tab. Opts into the redesigned system via a scoped
+/// [buildBaseTheme] wrapper, matching Settings.
+///
+/// Design-system migration only — the submit flow (`_submitFeedback`, the POST
+/// to [ApiConfig.feedbackSubmit], the rating-required guard) is unchanged. The
+/// rating uses brand-teal stars with a live descriptor and hover preview.
 class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
 
@@ -18,6 +25,7 @@ class FeedbackScreen extends ConsumerStatefulWidget {
 class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _feedbackController = TextEditingController();
   int _rating = 0;
+  int _hoverRating = 0;
   bool _submitting = false;
 
   @override
@@ -28,12 +36,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
   Future<void> _submitFeedback() async {
     if (_rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a rating'),
-          backgroundColor: Colors.amber,
-        ),
-      );
+      AppSnackbar.showError(context, AppStrings.feedbackSelectRating);
       return;
     }
 
@@ -53,25 +56,16 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(AppStrings.feedbackThanks),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        AppSnackbar.showSuccess(context, AppStrings.feedbackThanks);
         setState(() {
           _rating = 0;
+          _hoverRating = 0;
           _feedbackController.clear();
         });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit feedback: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        AppSnackbar.showError(context, 'Failed to submit feedback: $e');
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -82,175 +76,208 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider).isDark;
 
-    final cardBg = AppColors.getCard(isDark);
-    final textPrimary = AppColors.getPrimary(isDark);
-    final textSecondary = AppColors.getTextSecondary(isDark);
-    final borderColor = AppColors.getBorder(isDark);
-    final buttonBg = AppColors.accentStrong;
-    final buttonText = AppColors.onAccent;
-    final starColor = isDark ? Colors.amber.shade300 : Colors.amber.shade600;
+    return Theme(
+      data: buildBaseTheme(isDark),
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          final text = Theme.of(context).textTheme;
 
-    return Column(
-      children: [
-        // Top Bar
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.lg,
-            vertical: AppSizes.md,
-          ),
-          decoration: BoxDecoration(
-            color: cardBg,
-            border: Border(bottom: BorderSide(color: borderColor)),
-          ),
-          child: Row(
-            children: [
-              Text(
-                AppStrings.feedback,
-                style: TextStyle(
-                  fontSize: AppSizes.fontXl,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
-
-        // Content
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.feedbackTitle,
-                  style: TextStyle(
-                    fontSize: AppSizes.fontXl,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.xs),
-                Text(
-                  AppStrings.feedbackSubtitle,
-                  style: TextStyle(color: textSecondary),
-                ),
-                const SizedBox(height: AppSizes.lg),
-
-                // Feedback Form
-                Container(
-                  padding: const EdgeInsets.all(AppSizes.lg),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                    border: Border.all(color: borderColor),
-                  ),
+          return ColoredBox(
+            color: scheme.surface,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.lg),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppStrings.rateExperience,
-                        style: TextStyle(
-                          fontSize: AppSizes.fontMd,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
+                        AppStrings.feedbackTitle,
+                        style: text.headlineMedium,
                       ),
-                      const SizedBox(height: AppSizes.md),
-
-                      // Star Rating
-                      Wrap(
-                        children: List.generate(5, (index) {
-                          return IconButton(
-                            iconSize: AppSizes.iconLg,
-                            onPressed: () {
-                              setState(() => _rating = index + 1);
-                            },
-                            icon: Icon(
-                              index < _rating ? Icons.star : Icons.star_border,
-                              color: starColor,
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: AppSizes.lg),
-
+                      const SizedBox(height: AppSizes.xs),
                       Text(
-                        AppStrings.yourFeedback,
-                        style: TextStyle(
-                          fontSize: AppSizes.fontMd,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.sm),
-
-                      TextField(
-                        controller: _feedbackController,
-                        maxLines: 6,
-                        style: TextStyle(color: textPrimary),
-                        decoration: InputDecoration(
-                          hintText: AppStrings.feedbackHint,
-                          hintStyle: TextStyle(color: textSecondary),
-                          filled: true,
-                          fillColor: isDark
-                              ? Colors.grey.shade800
-                              : Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusMd,
-                            ),
-                            borderSide: BorderSide(color: borderColor),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusMd,
-                            ),
-                            borderSide: BorderSide(color: borderColor),
-                          ),
+                        AppStrings.feedbackSubtitle,
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: AppSizes.lg),
-
-                      SizedBox(
-                        width: context.isMobile ? double.infinity : 200,
-                        child: ElevatedButton.icon(
-                          onPressed: _submitting ? null : _submitFeedback,
-                          icon: _submitting
-                              ? SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: buttonText,
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.send,
-                                  size: AppSizes.iconSm,
-                                  color: buttonText,
-                                ),
-                          label: Text(
-                            _submitting
-                                ? 'Submitting...'
-                                : AppStrings.submitFeedback,
-                            style: TextStyle(color: buttonText),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: buttonBg,
-                          ),
-                        ),
-                      ),
+                      _card(context),
                     ],
                   ),
                 ),
-              ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.lg),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.reviews_outlined,
+                size: AppSizes.iconSm,
+                color: scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: AppSizes.sm),
+              Text(AppStrings.rateExperience, style: text.titleMedium),
+            ],
+          ),
+          const SizedBox(height: AppSizes.md),
+          _ratingStars(context),
+          const SizedBox(height: AppSizes.lg),
+          Text(AppStrings.yourFeedback, style: text.labelLarge),
+          const SizedBox(height: AppSizes.sm),
+          _feedbackField(context),
+          const SizedBox(height: AppSizes.lg),
+          _submitButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _ratingStars(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+    // Hover previews a rating without committing it; tap commits.
+    final effective = _hoverRating > 0 ? _hoverRating : _rating;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        for (var i = 0; i < 5; i++)
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _hoverRating = i + 1),
+            onExit: (_) => setState(() => _hoverRating = 0),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _rating = i + 1),
+              child: Tooltip(
+                message: AppStrings.feedbackRatingLabels[i],
+                child: Padding(
+                  padding: const EdgeInsets.only(right: AppSizes.sm),
+                  child: AnimatedScale(
+                    scale: i < effective ? 1.12 : 1.0,
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 120),
+                    curve: Curves.easeOut,
+                    child: Icon(
+                      i < effective
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 34,
+                      color: i < effective ? scheme.primary : scheme.outline,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(width: AppSizes.sm),
+        Flexible(
+          child: Text(
+            effective > 0
+                ? AppStrings.feedbackRatingLabels[effective - 1]
+                : AppStrings.feedbackRatePrompt,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.labelLarge?.copyWith(
+              color: effective > 0 ? scheme.primary : scheme.onSurfaceVariant,
+              fontWeight: effective > 0 ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _feedbackField(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(AppSizes.radiusMd);
+
+    OutlineInputBorder borderOf(Color color, double width) =>
+        OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: color, width: width),
+        );
+
+    return TextField(
+      controller: _feedbackController,
+      minLines: 4,
+      maxLines: 7,
+      enabled: !_submitting,
+      style: TextStyle(color: scheme.onSurface, fontSize: AppSizes.fontMd),
+      decoration: InputDecoration(
+        hintText: AppStrings.feedbackHint,
+        hintStyle: TextStyle(
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
+        filled: true,
+        fillColor: scheme.surface,
+        contentPadding: const EdgeInsets.all(AppSizes.md),
+        border: borderOf(scheme.outlineVariant, 1),
+        enabledBorder: borderOf(scheme.outlineVariant, 1),
+        focusedBorder: borderOf(scheme.primary, 1.6),
+      ),
+    );
+  }
+
+  Widget _submitButton(BuildContext context) {
+    return SizedBox(
+      width: context.isMobile ? double.infinity : 220,
+      height: AppSizes.buttonHeight,
+      child: FilledButton.icon(
+        onPressed: _submitting ? null : _submitFeedback,
+        icon: _submitting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.send_rounded, size: AppSizes.iconSm),
+        label: Text(
+          _submitting
+              ? AppStrings.submittingFeedback
+              : AppStrings.submitFeedback,
+        ),
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+          textStyle: const TextStyle(
+            fontSize: AppSizes.fontMd,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

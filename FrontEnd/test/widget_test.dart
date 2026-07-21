@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:romasubai_frontend/main.dart';
 
 void main() {
-  testWidgets('MyApp builds a MaterialApp inside a ProviderScope',
-      (tester) async {
+  testWidgets('MyApp builds a MaterialApp inside a ProviderScope', (
+    tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
     // Pump for 2 seconds to allow SplashScreen timer to complete
     await tester.pump(const Duration(seconds: 2));

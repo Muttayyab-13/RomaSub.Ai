@@ -43,8 +43,7 @@ class EditableSegment {
 
   /// The text that actually reaches the viewer: Roman Urdu, falling back to
   /// Urdu. Mirrors the caption rule used everywhere else, including export.
-  String get displayText =>
-      romanUrduText.isNotEmpty ? romanUrduText : urduText;
+  String get displayText => romanUrduText.isNotEmpty ? romanUrduText : urduText;
 
   /// Reading rate in characters per second. Zero (not infinity) when the
   /// duration is zero, so the UI never has to render an infinity.
@@ -171,7 +170,11 @@ class SubtitleProject {
   }
 
   static const Set<String> _videoExtensions = {
-    'mp4', 'avi', 'mkv', 'mov', 'webm',
+    'mp4',
+    'avi',
+    'mkv',
+    'mov',
+    'webm',
   };
 
   static bool _deriveIsVideo(String filename) {
@@ -187,8 +190,7 @@ class SubtitleProject {
       fileId: json['file_id'] as String,
       projectName: json['project_name'] as String? ?? '',
       originalFilename: originalFilename,
-      isVideo: (json['is_video'] as bool?) ??
-          _deriveIsVideo(originalFilename),
+      isVideo: (json['is_video'] as bool?) ?? _deriveIsVideo(originalFilename),
       segments: segmentsList
           .map((s) => EditableSegment.fromJson(s as Map<String, dynamic>))
           .toList(),

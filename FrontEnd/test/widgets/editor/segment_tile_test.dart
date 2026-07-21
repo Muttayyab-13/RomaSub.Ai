@@ -38,81 +38,103 @@ Widget _host({
 
 void main() {
   testWidgets('shows the 1-based segment number', (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 7, start: 0, end: 2, romanUrduText: 'hi'),
-    ));
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(id: 7, start: 0, end: 2, romanUrduText: 'hi'),
+      ),
+    );
     expect(find.text('1'), findsOneWidget);
   });
 
   testWidgets('shows Roman Urdu when present', (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(
-        id: 1, start: 0, end: 2,
-        romanUrduText: 'Iski quality aur speed dono behtareen hain.',
-        urduText: 'اس کی کوالٹی',
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(
+          id: 1,
+          start: 0,
+          end: 2,
+          romanUrduText: 'Iski quality aur speed dono behtareen hain.',
+          urduText: 'اس کی کوالٹی',
+        ),
       ),
-    ));
-    expect(find.text('Iski quality aur speed dono behtareen hain.'),
-        findsOneWidget);
+    );
+    expect(
+      find.text('Iski quality aur speed dono behtareen hain.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('falls back to Urdu when Roman is empty', (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(
-        id: 1, start: 0, end: 2, romanUrduText: '', urduText: 'اس کی کوالٹی',
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(
+          id: 1,
+          start: 0,
+          end: 2,
+          romanUrduText: '',
+          urduText: 'اس کی کوالٹی',
+        ),
       ),
-    ));
+    );
     expect(find.text('اس کی کوالٹی'), findsOneWidget);
   });
 
   testWidgets('shows the timecode range', (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 72.4, end: 75.2),
-    ));
+    await tester.pumpWidget(
+      _host(segment: EditableSegment(id: 1, start: 72.4, end: 75.2)),
+    );
     expect(find.textContaining('00:01:12,400'), findsOneWidget);
     expect(find.textContaining('00:01:15,200'), findsOneWidget);
   });
 
   testWidgets('marks an edited segment', (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 0, end: 2, isEdited: true),
-    ));
+    await tester.pumpWidget(
+      _host(segment: EditableSegment(id: 1, start: 0, end: 2, isEdited: true)),
+    );
     expect(find.byIcon(Icons.edit_rounded), findsOneWidget);
   });
 
-  testWidgets('shows an overlap warning only when overlapping',
-      (tester) async {
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 0, end: 2),
-      hasOverlap: false,
-    ));
+  testWidgets('shows an overlap warning only when overlapping', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(id: 1, start: 0, end: 2),
+        hasOverlap: false,
+      ),
+    );
     expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
 
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 0, end: 2),
-      hasOverlap: true,
-    ));
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(id: 1, start: 0, end: 2),
+        hasOverlap: true,
+      ),
+    );
     expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
   });
 
   testWidgets('fires onTap', (tester) async {
     var tapped = false;
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 0, end: 2, romanUrduText: 'hi'),
-      onTap: () => tapped = true,
-    ));
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(id: 1, start: 0, end: 2, romanUrduText: 'hi'),
+        onTap: () => tapped = true,
+      ),
+    );
     await tester.tap(find.text('hi'));
     expect(tapped, isTrue);
   });
 
-  testWidgets('renders a delete affordance when selected and fires onDelete',
-      (tester) async {
+  testWidgets('renders a delete affordance when selected and fires onDelete', (
+    tester,
+  ) async {
     var deleted = false;
-    await tester.pumpWidget(_host(
-      segment: EditableSegment(id: 1, start: 0, end: 2),
-      isSelected: true,
-      onDelete: () => deleted = true,
-    ));
+    await tester.pumpWidget(
+      _host(
+        segment: EditableSegment(id: 1, start: 0, end: 2),
+        isSelected: true,
+        onDelete: () => deleted = true,
+      ),
+    );
 
     final deleteButton = find.byIcon(Icons.delete_outline_rounded);
     expect(deleteButton, findsOneWidget);

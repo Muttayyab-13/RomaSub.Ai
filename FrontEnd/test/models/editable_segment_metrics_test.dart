@@ -47,13 +47,17 @@ void main() {
 
   group('isComfortableReadingRate', () {
     test('accepts a normal rate', () {
-      expect(_seg(start: 0, end: 4, roman: 'a' * 40).isComfortableReadingRate,
-          isTrue);
+      expect(
+        _seg(start: 0, end: 4, roman: 'a' * 40).isComfortableReadingRate,
+        isTrue,
+      );
     });
 
     test('rejects a rate above the threshold', () {
-      expect(_seg(start: 0, end: 1, roman: 'a' * 40).isComfortableReadingRate,
-          isFalse);
+      expect(
+        _seg(start: 0, end: 1, roman: 'a' * 40).isComfortableReadingRate,
+        isFalse,
+      );
     });
   });
 

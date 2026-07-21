@@ -174,8 +174,9 @@ class _SubtitleListPanelState extends ConsumerState<SubtitleListPanel> {
                         index: index,
                         isSelected: editorState.selectedSegmentIndex == index,
                         isActive: activeSegment == index,
-                        matchesSearch:
-                            editorState.searchResults.contains(index),
+                        matchesSearch: editorState.searchResults.contains(
+                          index,
+                        ),
                         hasOverlap: segments[index].overlapsNext(next),
                         onTap: () {
                           editorNotifier.selectSegment(index);

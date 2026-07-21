@@ -131,7 +131,9 @@ class MediaService {
   ApiException _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      return NetworkException('Upload timeout. Please check your internet connection.');
+      return NetworkException(
+        'Upload timeout. Please check your internet connection.',
+      );
     } else if (e.type == DioExceptionType.connectionError) {
       return NetworkException('No internet connection');
     } else if (e.response != null) {
@@ -148,9 +150,14 @@ class MediaService {
       } else if (statusCode == 401) {
         return UnauthorizedException(message);
       } else if (statusCode == 413) {
-        return ValidationException('File too large. Maximum size is ${ApiConfig.maxFileSizeMB}MB');
+        return ValidationException(
+          'File too large. Maximum size is ${ApiConfig.maxFileSizeMB}MB',
+        );
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

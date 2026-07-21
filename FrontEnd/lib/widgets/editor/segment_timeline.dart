@@ -31,10 +31,13 @@ class TimelineBlock extends StatelessWidget {
       child: Container(
         width: segment.duration * pixelsPerSecond,
         decoration: BoxDecoration(
-          color:
-              isSelected ? editor.timelineBlockSelected : editor.timelineBlock,
+          color: isSelected
+              ? editor.timelineBlockSelected
+              : editor.timelineBlock,
           border: Border.all(
-            color: isSelected ? editor.timelineBlockBorder : scheme.outlineVariant,
+            color: isSelected
+                ? editor.timelineBlockBorder
+                : scheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(AppSizes.radiusSm),
@@ -125,8 +128,10 @@ class SegmentTimeline extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTapDown: (details) {
                   onSeek(
-                    (details.localPosition.dx / pixelsPerSecond)
-                        .clamp(0.0, durationSeconds),
+                    (details.localPosition.dx / pixelsPerSecond).clamp(
+                      0.0,
+                      durationSeconds,
+                    ),
                   );
                 },
                 child: SizedBox(
@@ -159,8 +164,10 @@ class SegmentTimeline extends StatelessWidget {
                       ),
                       Positioned(
                         key: playheadKey,
-                        left: (positionSeconds * pixelsPerSecond)
-                            .clamp(0.0, trackWidth),
+                        left: (positionSeconds * pixelsPerSecond).clamp(
+                          0.0,
+                          trackWidth,
+                        ),
                         top: 0,
                         bottom: 0,
                         width: 2,
@@ -229,14 +236,16 @@ class SegmentTimeline extends StatelessWidget {
   Widget _buildTickLabels(ColorScheme scheme) {
     final labels = <Widget>[];
     for (double t = 0; t <= durationSeconds; t += _tickInterval) {
-      labels.add(Positioned(
-        left: t * pixelsPerSecond + 3,
-        top: 2,
-        child: Text(
-          _formatTick(t),
-          style: AppTypography.mono(size: 9, color: scheme.onSurfaceVariant),
+      labels.add(
+        Positioned(
+          left: t * pixelsPerSecond + 3,
+          top: 2,
+          child: Text(
+            _formatTick(t),
+            style: AppTypography.mono(size: 9, color: scheme.onSurfaceVariant),
+          ),
         ),
-      ));
+      );
     }
     return Stack(children: labels);
   }

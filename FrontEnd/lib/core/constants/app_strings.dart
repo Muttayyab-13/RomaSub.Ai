@@ -6,14 +6,32 @@ class AppStrings {
   // Auth
   static const String login = "Login";
   static const String signUp = "Sign Up";
-  static const String loginTitle = "Login to RomaSub.AI";
-  static const String signupTitle = "Welcome to RomaSub.AI";
+  static const String loginTitle = "Welcome back";
+  // Rendered as: "<subtitle><appName>" with the brand name in teal.
+  static const String loginSubtitle = "Sign in to continue to ";
+  static const String signupTitle = "Create your account";
+  static const String signupSubtitle = "Sign up to continue to ";
   static const String email = "Email address";
+  static const String emailHint = "you@example.com";
   static const String password = "Password";
+  static const String passwordHint = "••••••••••";
   static const String firstName = "First name";
   static const String lastName = "Last name";
-  static const String continueBtn = "Continue";
+  static const String signIn = "Log In";
   static const String createAccount = "Create account";
+  static const String rememberMe = "Remember me";
+
+  // Auth — tab switcher (Log In / Sign Up)
+  static const String tabLogIn = "Log In";
+  static const String tabSignUp = "Sign Up";
+
+  // The branded hero left panel is now a single finished image
+  // (AppAssets.authHero); its lockup, tagline, feature pills, demo caption, and
+  // quote are baked into the artwork rather than composed from strings here.
+
+  // Auth — caption stage (legacy branded left panel, retained for reference)
+  static const String authStageEyebrow = "CAPTION STUDIO";
+  static const String authStageTagline = "Two scripts. One take.";
   static const String noAccount = "Don't have an account? ";
   static const String hasAccount = "Already have an account? ";
   static const String logIn = "Log in";
@@ -50,6 +68,8 @@ class AppStrings {
   static const String exports = "Exports";
   static const String feedback = "Feedback";
   static const String settings = "Settings";
+  static const String logout = "Log out";
+  static const String yourAccount = "Your account";
 
   // Dashboard — upload drop zone
   static const String dashUploadTitle = "Drag & drop media to start editing";
@@ -107,11 +127,22 @@ class AppStrings {
   static const String feedbackTitle = "We Value Your Feedback";
   static const String feedbackSubtitle =
       "Help us improve RomaSub.AI by sharing your thoughts";
-  static const String rateExperience = "Rate Your Experience";
-  static const String yourFeedback = "Your Feedback";
-  static const String feedbackHint = "Tell us what you think...";
+  static const String rateExperience = "Rate your experience";
+  static const String yourFeedback = "Your feedback";
+  static const String feedbackHint = "Tell us what worked and what didn't…";
   static const String submitFeedback = "Submit Feedback";
+  static const String submittingFeedback = "Submitting…";
   static const String feedbackThanks = "Thank you for your feedback!";
+  static const String feedbackRatePrompt = "Tap a star to rate";
+  static const String feedbackSelectRating = "Please choose a rating first";
+  // One word per star (index 0 = 1 star … index 4 = 5 stars).
+  static const List<String> feedbackRatingLabels = <String>[
+    "Poor",
+    "Fair",
+    "Good",
+    "Great",
+    "Excellent",
+  ];
   static const String accountCreated = "Account created successfully!";
 
   // Forgot Password Flow

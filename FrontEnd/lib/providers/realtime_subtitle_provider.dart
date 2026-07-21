@@ -56,8 +56,7 @@ class RealtimeState {
       phase == RealtimePhase.streaming || phase == RealtimePhase.complete;
 
   /// Progress as a fraction 0.0-1.0
-  double get progress =>
-      chunksTotal > 0 ? chunksReady / chunksTotal : 0.0;
+  double get progress => chunksTotal > 0 ? chunksReady / chunksTotal : 0.0;
 
   RealtimeState copyWith({
     RealtimePhase? phase,
@@ -92,7 +91,7 @@ class RealtimeNotifier extends StateNotifier<RealtimeState> {
   Timer? _seekDebounce;
 
   RealtimeNotifier(this._streamService, this._subtitleService)
-      : super(RealtimeState.initial());
+    : super(RealtimeState.initial());
 
   /// Start streaming subtitles for a file
   Future<void> startStreaming(String fileId, {String language = 'ur'}) async {
@@ -195,7 +194,9 @@ class RealtimeNotifier extends StateNotifier<RealtimeState> {
 
   /// Create a SubtitleProject from accumulated segments for editor handoff.
   /// Calls the existing POST /subtitles/create/{file_id} endpoint.
-  Future<SubtitleProject?> createProjectForEditor(String originalFilename) async {
+  Future<SubtitleProject?> createProjectForEditor(
+    String originalFilename,
+  ) async {
     if (state.fileId == null || state.segments.isEmpty) return null;
 
     try {
@@ -226,7 +227,7 @@ class RealtimeNotifier extends StateNotifier<RealtimeState> {
 /// Riverpod provider for RealtimeNotifier
 final realtimeNotifierProvider =
     StateNotifierProvider.autoDispose<RealtimeNotifier, RealtimeState>((ref) {
-  final streamService = ref.watch(realtimeStreamServiceProvider);
-  final subtitleService = ref.watch(subtitleServiceProvider);
-  return RealtimeNotifier(streamService, subtitleService);
-});
+      final streamService = ref.watch(realtimeStreamServiceProvider);
+      final subtitleService = ref.watch(subtitleServiceProvider);
+      return RealtimeNotifier(streamService, subtitleService);
+    });

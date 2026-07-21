@@ -100,10 +100,16 @@ class EditorTheme extends ThemeExtension<EditorTheme> {
       videoStage: Color.lerp(videoStage, other.videoStage, t)!,
       timelineTrack: Color.lerp(timelineTrack, other.timelineTrack, t)!,
       timelineBlock: Color.lerp(timelineBlock, other.timelineBlock, t)!,
-      timelineBlockSelected:
-          Color.lerp(timelineBlockSelected, other.timelineBlockSelected, t)!,
-      timelineBlockBorder:
-          Color.lerp(timelineBlockBorder, other.timelineBlockBorder, t)!,
+      timelineBlockSelected: Color.lerp(
+        timelineBlockSelected,
+        other.timelineBlockSelected,
+        t,
+      )!,
+      timelineBlockBorder: Color.lerp(
+        timelineBlockBorder,
+        other.timelineBlockBorder,
+        t,
+      )!,
       playhead: Color.lerp(playhead, other.playhead, t)!,
       segmentActive: Color.lerp(segmentActive, other.segmentActive, t)!,
       segmentSelected: Color.lerp(segmentSelected, other.segmentSelected, t)!,

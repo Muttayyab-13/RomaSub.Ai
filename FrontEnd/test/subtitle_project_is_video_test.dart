@@ -3,16 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:romasubai_frontend/models/subtitle_project_model.dart';
 
 Map<String, dynamic> _base(Map<String, dynamic> overrides) => {
-      'subtitle_id': 's1',
-      'file_id': 'f1',
-      'project_name': 'p',
-      'original_filename': 'clip.mp4',
-      'segments': <dynamic>[],
-      'segment_count': 0,
-      'created_at': 'now',
-      'updated_at': 'now',
-      ...overrides,
-    };
+  'subtitle_id': 's1',
+  'file_id': 'f1',
+  'project_name': 'p',
+  'original_filename': 'clip.mp4',
+  'segments': <dynamic>[],
+  'segment_count': 0,
+  'created_at': 'now',
+  'updated_at': 'now',
+  ...overrides,
+};
 
 void main() {
   test('uses backend is_video when present', () {
@@ -22,7 +22,8 @@ void main() {
 
   test('false when backend says audio source', () {
     final p = SubtitleProject.fromJson(
-        _base({'original_filename': 'voice.wav', 'is_video': false}));
+      _base({'original_filename': 'voice.wav', 'is_video': false}),
+    );
     expect(p.isVideo, isFalse);
   });
 

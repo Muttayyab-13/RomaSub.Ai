@@ -59,7 +59,9 @@ class VideoControls extends ConsumerWidget {
               // Play/Pause
               IconButton(
                 icon: Icon(
-                  state.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  state.isPlaying
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
                   color: AppColors.getTextPrimary(isDark),
                 ),
                 iconSize: AppSizes.iconMd,
@@ -81,7 +83,9 @@ class VideoControls extends ConsumerWidget {
 
               // Volume
               Icon(
-                state.volume > 0 ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                state.volume > 0
+                    ? Icons.volume_up_rounded
+                    : Icons.volume_off_rounded,
                 size: AppSizes.iconSm,
                 color: AppColors.getTextSecondary(isDark),
               ),
@@ -90,10 +94,12 @@ class VideoControls extends ConsumerWidget {
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 2.0,
-                    thumbShape:
-                        const RoundSliderThumbShape(enabledThumbRadius: 5),
-                    overlayShape:
-                        const RoundSliderOverlayShape(overlayRadius: 10),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 5,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 10,
+                    ),
                     activeTrackColor: AppColors.getTextSecondary(isDark),
                     inactiveTrackColor: AppColors.getBorder(isDark),
                     thumbColor: AppColors.getTextSecondary(isDark),

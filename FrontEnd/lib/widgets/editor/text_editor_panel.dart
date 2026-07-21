@@ -84,7 +84,9 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                   Icon(
                     Icons.touch_app_rounded,
                     size: AppSizes.iconXl,
-                    color: AppColors.getTextSecondary(isDark).withValues(alpha: 0.4),
+                    color: AppColors.getTextSecondary(
+                      isDark,
+                    ).withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: AppSizes.sm),
                   Text(
@@ -128,8 +130,9 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.warning.withValues(alpha: 0.15),
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusSm,
+                            ),
                           ),
                           child: Text(
                             'Edited',
@@ -229,20 +232,19 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                       ),
                       counterText: '',
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusMd),
-                        borderSide:
-                            BorderSide(color: AppColors.getBorder(isDark)),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorder(isDark),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusMd),
-                        borderSide:
-                            BorderSide(color: AppColors.getBorder(isDark)),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                        borderSide: BorderSide(
+                          color: AppColors.getBorder(isDark),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusMd),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                         borderSide: BorderSide(
                           color: AppColors.getPrimary(isDark),
                           width: 1.5,
@@ -274,7 +276,7 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                         message: segment.isComfortableReadingRate
                             ? 'Characters per second — a comfortable reading pace'
                             : 'Too fast to read comfortably. Lengthen the segment '
-                                'or shorten the text.',
+                                  'or shorten the text.',
                         child: Text(
                           '${segment.charsPerSecond.toStringAsFixed(1)} CPS',
                           style: AppTypography.mono(
@@ -393,7 +395,9 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                           label: const Text('Delete'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.error,
-                            side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
+                            side: BorderSide(
+                              color: AppColors.error.withValues(alpha: 0.5),
+                            ),
                           ),
                         ),
                       ),
@@ -406,8 +410,7 @@ class _TextEditorPanelState extends ConsumerState<TextEditorPanel> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          editorNotifier.addSegment(selectedIndex),
+                      onPressed: () => editorNotifier.addSegment(selectedIndex),
                       icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Add Segment After'),
                       style: OutlinedButton.styleFrom(

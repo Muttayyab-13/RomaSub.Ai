@@ -84,8 +84,7 @@ class AppPalette {
   static const Color warningDark = Color(0xFFFBBF24);
   static const Color successDark = Color(0xFF34D399);
 
-  static ColorScheme scheme(bool isDark) =>
-      isDark ? _darkScheme : _lightScheme;
+  static ColorScheme scheme(bool isDark) => isDark ? _darkScheme : _lightScheme;
 
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,

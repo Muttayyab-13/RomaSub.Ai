@@ -49,14 +49,18 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
   double _pixelsPerSecond = 40.0;
 
   void _zoomIn() => setState(() {
-        _pixelsPerSecond = (_pixelsPerSecond * 1.5)
-            .clamp(_minPixelsPerSecond, _maxPixelsPerSecond);
-      });
+    _pixelsPerSecond = (_pixelsPerSecond * 1.5).clamp(
+      _minPixelsPerSecond,
+      _maxPixelsPerSecond,
+    );
+  });
 
   void _zoomOut() => setState(() {
-        _pixelsPerSecond = (_pixelsPerSecond / 1.5)
-            .clamp(_minPixelsPerSecond, _maxPixelsPerSecond);
-      });
+    _pixelsPerSecond = (_pixelsPerSecond / 1.5).clamp(
+      _minPixelsPerSecond,
+      _maxPixelsPerSecond,
+    );
+  });
 
   @override
   void initState() {
@@ -71,16 +75,16 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
 
   Future<void> _initializeEditor() async {
     // Load subtitle project from backend
-    await ref.read(editorNotifierProvider.notifier).loadProject(
-          widget.fileId,
-          widget.transcription,
-        );
+    await ref
+        .read(editorNotifierProvider.notifier)
+        .loadProject(widget.fileId, widget.transcription);
 
     // If the media file no longer exists on the server (e.g. an old recents
     // project whose temp file was cleaned up), show a clear message instead
     // of letting the player spin forever.
-    final available =
-        await ref.read(mediaServiceProvider).isMediaAvailable(widget.fileId);
+    final available = await ref
+        .read(mediaServiceProvider)
+        .isMediaAvailable(widget.fileId);
     if (!available) {
       ref.read(videoPlayerNotifierProvider.notifier).markUnavailable();
       return;
@@ -101,7 +105,8 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    final isCtrl = HardwareKeyboard.instance.isControlPressed ||
+    final isCtrl =
+        HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
     // Ctrl+Z - Undo
@@ -172,17 +177,16 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
                       body: editorState.isLoading
                           ? _buildLoadingState(isDark)
                           : (editorState.error != null &&
-                                  editorState.project == null)
-                              ? _buildErrorState(isDark, editorState.error!)
-                              : Column(
-                                  children: [
-                                    const EditorToolbar(),
-                                    if (editorState.error != null)
-                                      _buildErrorBanner(
-                                          isDark, editorState.error!),
-                                    Expanded(child: _buildPanels(editorState)),
-                                  ],
-                                ),
+                                editorState.project == null)
+                          ? _buildErrorState(isDark, editorState.error!)
+                          : Column(
+                              children: [
+                                const EditorToolbar(),
+                                if (editorState.error != null)
+                                  _buildErrorBanner(isDark, editorState.error!),
+                                Expanded(child: _buildPanels(editorState)),
+                              ],
+                            ),
                     ),
                   );
                 },
@@ -247,9 +251,7 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppColors.getPrimary(isDark),
-          ),
+          CircularProgressIndicator(color: AppColors.getPrimary(isDark)),
           const SizedBox(height: AppSizes.md),
           Text(
             'Loading subtitle editor...',
@@ -276,10 +278,7 @@ class _SubtitleEditorScreenState extends ConsumerState<SubtitleEditorScreen> {
           const SizedBox(height: AppSizes.md),
           Text(
             error,
-            style: TextStyle(
-              color: AppColors.error,
-              fontSize: AppSizes.fontMd,
-            ),
+            style: TextStyle(color: AppColors.error, fontSize: AppSizes.fontMd),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.md),

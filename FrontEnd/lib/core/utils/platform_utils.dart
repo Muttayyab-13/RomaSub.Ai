@@ -7,11 +7,11 @@ class PlatformUtils {
   /// Supported: Web, Android, iOS, Windows, macOS, Linux (via desktop OAuth)
   static bool get isGoogleSignInSupported {
     return kIsWeb ||
-           Platform.isAndroid ||
-           Platform.isIOS ||
-           Platform.isWindows ||
-           Platform.isMacOS ||
-           Platform.isLinux;
+        Platform.isAndroid ||
+        Platform.isIOS ||
+        Platform.isWindows ||
+        Platform.isMacOS ||
+        Platform.isLinux;
   }
 
   /// Get current platform name for display

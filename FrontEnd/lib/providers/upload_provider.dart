@@ -249,7 +249,9 @@ class UploadNotifier extends StateNotifier<UploadState> {
       if (state.transcription?.hasRomanUrdu == true) {
         return state.transcription!.toRomanUrduSrtContent();
       }
-      state = state.copyWith(error: 'Failed to download Roman Urdu SRT: ${e.toString()}');
+      state = state.copyWith(
+        error: 'Failed to download Roman Urdu SRT: ${e.toString()}',
+      );
       return null;
     }
   }
@@ -289,9 +291,7 @@ class UploadNotifier extends StateNotifier<UploadState> {
   /// Render and download the captioned video ('hardsub' | 'softsub').
   ///
   /// Returns the MP4 bytes + filename, or null on failure (error in state).
-  Future<({List<int> bytes, String filename})?> exportVideo(
-    String mode,
-  ) async {
+  Future<({List<int> bytes, String filename})?> exportVideo(String mode) async {
     try {
       final subtitleId = await _ensureSubtitleProject();
       if (subtitleId == null) return null;

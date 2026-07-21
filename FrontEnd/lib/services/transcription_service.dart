@@ -25,12 +25,11 @@ class TranscriptionService {
     try {
       final response = await _client.dio.post(
         ApiConfig.asrTranscribe(fileId),
-        data: {
-          'language': language,
-          'auto_cleanup': autoCleanup,
-        },
+        data: {'language': language, 'auto_cleanup': autoCleanup},
         options: Options(
-          receiveTimeout: const Duration(minutes: 10), // Allow up to 10 minutes for transcription
+          receiveTimeout: const Duration(
+            minutes: 10,
+          ), // Allow up to 10 minutes for transcription
         ),
       );
       return TranscriptionModel.fromJson(response.data);
@@ -75,10 +74,12 @@ class TranscriptionService {
       final data = response.data as Map<String, dynamic>;
       final languages = data['languages'] as List<dynamic>;
       return languages
-          .map((lang) => {
-                'code': lang['code'] as String,
-                'name': lang['name'] as String,
-              })
+          .map(
+            (lang) => {
+              'code': lang['code'] as String,
+              'name': lang['name'] as String,
+            },
+          )
           .toList();
     } on DioException catch (e) {
       throw _handleError(e);
@@ -183,7 +184,10 @@ class TranscriptionService {
       } else if (statusCode == 404) {
         return ServerException('Transcription not found or not ready yet', 404);
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

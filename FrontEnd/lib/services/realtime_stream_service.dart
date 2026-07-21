@@ -99,9 +99,7 @@ class RealtimeStreamService {
   /// Get current session status (polling fallback).
   Future<Map<String, dynamic>> getStatus(String fileId) async {
     try {
-      final response = await _client.dio.get(
-        ApiConfig.realtimeStatus(fileId),
-      );
+      final response = await _client.dio.get(ApiConfig.realtimeStatus(fileId));
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);

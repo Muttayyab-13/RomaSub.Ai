@@ -30,8 +30,11 @@ class EditorToolbar extends ConsumerWidget {
         children: [
           // Back/Close button
           IconButton(
-            icon: Icon(Icons.arrow_back_rounded,
-                size: 20, color: AppColors.getTextPrimary(isDark)),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: AppColors.getTextPrimary(isDark),
+            ),
             tooltip: 'Back to Dashboard',
             onPressed: () => Navigator.of(context).pop(),
             splashRadius: 18,
@@ -78,11 +81,7 @@ class EditorToolbar extends ConsumerWidget {
           ),
 
           const SizedBox(width: AppSizes.sm),
-          Container(
-            width: 1,
-            height: 24,
-            color: AppColors.getBorder(isDark),
-          ),
+          Container(width: 1, height: 24, color: AppColors.getBorder(isDark)),
           const SizedBox(width: AppSizes.sm),
 
           // Save
@@ -205,7 +204,8 @@ class EditorToolbar extends ConsumerWidget {
 
     try {
       // Save to downloads directory
-      final dir = await getDownloadsDirectory() ??
+      final dir =
+          await getDownloadsDirectory() ??
           await getApplicationDocumentsDirectory();
       final filePath = '${dir.path}/${result['filename']}';
       await File(filePath).writeAsString(result['content']!);
@@ -261,7 +261,8 @@ class EditorToolbar extends ConsumerWidget {
     if (result == null) return;
 
     try {
-      final dir = await getDownloadsDirectory() ??
+      final dir =
+          await getDownloadsDirectory() ??
           await getApplicationDocumentsDirectory();
       final filePath = '${dir.path}/${result.filename}';
       await File(filePath).writeAsBytes(result.bytes);

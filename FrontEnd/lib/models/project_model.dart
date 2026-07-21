@@ -19,9 +19,8 @@ class Project {
     required this.createdAt,
   });
 
-  IconData get icon => type == ProjectType.video 
-      ? Icons.video_file 
-      : Icons.audiotrack;
+  IconData get icon =>
+      type == ProjectType.video ? Icons.video_file : Icons.audiotrack;
 
   // For future API integration
   factory Project.fromJson(Map<String, dynamic> json) {

@@ -3,11 +3,7 @@ import '../services/auth_service.dart';
 import '../services/api/api_exception.dart';
 
 /// Forgot password flow steps
-enum ForgotPasswordStep {
-  enterEmail,
-  verifyOtp,
-  resetPassword,
-}
+enum ForgotPasswordStep { enterEmail, verifyOtp, resetPassword }
 
 /// State for forgot password flow
 class ForgotPasswordState {
@@ -50,7 +46,8 @@ class ForgotPasswordState {
 class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
   final AuthService _authService;
 
-  ForgotPasswordNotifier(this._authService) : super(ForgotPasswordState.initial());
+  ForgotPasswordNotifier(this._authService)
+    : super(ForgotPasswordState.initial());
 
   /// Step 1: Request OTP via email
   Future<bool> requestOtp(String email) async {
@@ -162,6 +159,6 @@ class ForgotPasswordNotifier extends StateNotifier<ForgotPasswordState> {
 /// Riverpod provider for ForgotPasswordNotifier
 final forgotPasswordProvider =
     StateNotifierProvider<ForgotPasswordNotifier, ForgotPasswordState>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  return ForgotPasswordNotifier(authService);
-});
+      final authService = ref.watch(authServiceProvider);
+      return ForgotPasswordNotifier(authService);
+    });

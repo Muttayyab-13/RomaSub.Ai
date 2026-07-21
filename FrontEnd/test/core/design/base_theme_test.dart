@@ -9,10 +9,13 @@ import 'package:romasubai_frontend/core/design/base_theme.dart';
 import 'package:romasubai_frontend/core/design/editor_theme.dart';
 
 void main() {
-  test('buildBaseTheme uses the AppPalette scheme for the given brightness', () {
-    expect(buildBaseTheme(false).colorScheme.primary, AppPalette.primary);
-    expect(buildBaseTheme(true).colorScheme.primary, AppPalette.primaryDark);
-  });
+  test(
+    'buildBaseTheme uses the AppPalette scheme for the given brightness',
+    () {
+      expect(buildBaseTheme(false).colorScheme.primary, AppPalette.primary);
+      expect(buildBaseTheme(true).colorScheme.primary, AppPalette.primaryDark);
+    },
+  );
 
   test('buildBaseTheme does NOT carry the EditorTheme extension', () {
     expect(buildBaseTheme(false).extension<EditorTheme>(), isNull);

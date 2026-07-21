@@ -44,8 +44,8 @@ class SegmentTile extends StatelessWidget {
     final Color background = isSelected
         ? editor.segmentSelected
         : isActive
-            ? editor.segmentActive
-            : scheme.surface;
+        ? editor.segmentActive
+        : scheme.surface;
 
     final isUrduFallback = segment.romanUrduText.isEmpty;
 
@@ -86,10 +86,7 @@ class SegmentTile extends StatelessWidget {
                 children: [
                   Text(
                     '${segment.startFormatted} - ${segment.endFormatted}',
-                    style: AppTypography.mono(
-                      size: 11,
-                      color: scheme.primary,
-                    ),
+                    style: AppTypography.mono(size: 11, color: scheme.primary),
                   ),
                   const SizedBox(height: 4),
                   Expanded(

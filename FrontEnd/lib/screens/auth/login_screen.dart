@@ -8,10 +8,9 @@ import '../../core/utils/validators.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/common/app_logo.dart';
-import '../../widgets/common/app_text_field.dart';
-import '../../widgets/common/social_button.dart';
-import '../../widgets/common/theme_toggle_button.dart';
+import '../../widgets/auth/auth_shell.dart';
+import '../../widgets/auth/auth_tab_switcher.dart';
+import '../../widgets/auth/auth_text_field.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -19,14 +18,13 @@ class LoginScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
-// ... (skip unchanged parts in thought, but tool needs exact replacement if I use replace_file_content for single block? No, I need two edits: import and body)
-// Better use multi_replace.
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _emailError;
   String? _passwordError;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -44,7 +42,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (_emailError == null && _passwordError == null) {
       final success = await ref
           .read(authNotifierProvider.notifier)
-          .login(_emailController.text.trim(), _passwordController.text);
+          .login(
+            _emailController.text.trim(),
+            _passwordController.text,
+            rememberMe: _rememberMe,
+          );
 
       if (success && mounted) {
         AppRoutes.clearAndGo(context, AppRoutes.app);
@@ -132,250 +134,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.isLoading;
     final isDark = ref.watch(themeProvider).isDark;
 
-    // Theme-aware colors
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final textPrimary = AppColors.getPrimary(isDark);
-    final textSecondary = AppColors.getTextSecondary(isDark);
-    final textHint = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
-    final linkColor = AppColors.getAccent(isDark);
-
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: Stack(
-        children: [
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.xl,
-                vertical: AppSizes.xxl,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const AppLogo(),
-                    const SizedBox(height: AppSizes.xl),
-
-                    Text(
-                      AppStrings.loginTitle,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: AppSizes.xl),
-
-                    // Email
-                    AppTextField(
-                      controller: _emailController,
-                      hint: AppStrings.email,
-                      errorText: _emailError,
-                      keyboardType: TextInputType.emailAddress,
-                      isDark: isDark,
-                      onChanged: (_) {
-                        if (_emailError != null) {
-                          setState(
-                            () => _emailError = Validators.email(
-                              _emailController.text,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.md),
-
-                    // Password
-                    AppTextField(
-                      controller: _passwordController,
-                      hint: AppStrings.password,
-                      isPassword: true,
-                      errorText: _passwordError,
-                      isDark: isDark,
-                      onChanged: (_) {
-                        if (_passwordError != null) {
-                          setState(
-                            () => _passwordError = Validators.password(
-                              _passwordController.text,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSizes.sm),
-
-                    // Forgot Password link
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: InkWell(
-                        onTap: isLoading
-                            ? null
-                            : () => AppRoutes.to(
-                                context,
-                                AppRoutes.forgotPasswordEmail,
-                              ),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.sm,
-                            vertical: AppSizes.sm,
-                          ),
-                          child: Text(
-                            AppStrings.forgotPassword,
-                            style: TextStyle(
-                              color: isLoading ? textHint : linkColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Login Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: AppSizes.buttonHeight,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _handleLogin,
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                AppStrings.continueBtn,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.md),
-
-                    // Sign up link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          AppStrings.noAccount,
-                          style: TextStyle(color: textSecondary),
-                        ),
-                        InkWell(
-                          onTap: isLoading
-                              ? null
-                              : () => AppRoutes.to(context, AppRoutes.signup),
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusSm,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.xs,
-                              vertical: AppSizes.sm,
-                            ),
-                            child: Text(
-                              AppStrings.signUp,
-                              style: TextStyle(
-                                color: isLoading ? textHint : linkColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Conditional Google Sign-In (only on supported platforms)
-                    if (PlatformUtils.isGoogleSignInSupported) ...[
-                      // Divider
-                      _OrDivider(isDark: isDark),
-                      const SizedBox(height: AppSizes.lg),
-
-                      // Social Buttons
-                      SocialButton(
-                        icon: Icons.g_mobiledata,
-                        label: AppStrings.continueGoogle,
-                        onTap: isLoading ? () {} : () => _handleGoogleSignIn(),
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: AppSizes.xl),
-                    ] else
-                      const SizedBox(height: AppSizes.xl),
-
-                    // Footer
-                    _AuthFooter(isDark: isDark),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.md),
-                child: const ThemeToggleButton(),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return AuthShell(
+      isDark: isDark,
+      title: AppStrings.loginTitle,
+      subtitle: AppStrings.loginSubtitle,
+      activeTab: AuthTab.login,
+      form: _buildForm(context, isLoading),
     );
   }
-}
 
-class _OrDivider extends StatelessWidget {
-  final bool isDark;
-  const _OrDivider({this.isDark = false});
+  Widget _buildForm(BuildContext context, bool isLoading) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = AppColors.getBorder(isDark);
-    final textColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
-
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(child: Divider(color: dividerColor)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-          child: Text(AppStrings.orDivider, style: TextStyle(color: textColor)),
+        if (PlatformUtils.isGoogleSignInSupported) ...[
+          GoogleAuthButton(onPressed: isLoading ? null : _handleGoogleSignIn),
+          const SizedBox(height: AppSizes.md),
+          const AuthOrDivider(),
+          const SizedBox(height: AppSizes.md),
+        ],
+        LabeledAuthField(
+          label: AppStrings.email,
+          field: AuthTextField(
+            controller: _emailController,
+            label: AppStrings.email,
+            hintText: AppStrings.emailHint,
+            floatingLabel: false,
+            icon: Icons.mail_outline,
+            errorText: _emailError,
+            keyboardType: TextInputType.emailAddress,
+            enabled: !isLoading,
+            onChanged: (_) {
+              if (_emailError != null) {
+                setState(
+                  () => _emailError = Validators.email(_emailController.text),
+                );
+              }
+            },
+          ),
         ),
-        Expanded(child: Divider(color: dividerColor)),
+        const SizedBox(height: AppSizes.md),
+        LabeledAuthField(
+          label: AppStrings.password,
+          trailing: TextButton(
+            onPressed: isLoading
+                ? null
+                : () => AppRoutes.to(context, AppRoutes.forgotPasswordEmail),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.xs),
+              minimumSize: const Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              AppStrings.forgotPassword,
+              style: text.labelMedium?.copyWith(
+                color: scheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          field: AuthTextField(
+            controller: _passwordController,
+            label: AppStrings.password,
+            hintText: AppStrings.passwordHint,
+            floatingLabel: false,
+            icon: Icons.lock_outline,
+            isPassword: true,
+            errorText: _passwordError,
+            textInputAction: TextInputAction.done,
+            enabled: !isLoading,
+            onChanged: (_) {
+              if (_passwordError != null) {
+                setState(
+                  () => _passwordError = Validators.password(
+                    _passwordController.text,
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: AppSizes.md),
+        _rememberMeRow(context, isLoading),
+        const SizedBox(height: AppSizes.md),
+        SizedBox(
+          height: AppSizes.buttonHeight,
+          child: FilledButton(
+            onPressed: isLoading ? null : _handleLogin,
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+              textStyle: const TextStyle(
+                fontSize: AppSizes.fontMd,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(AppStrings.signIn),
+          ),
+        ),
+        const SizedBox(height: AppSizes.md),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              AppStrings.noAccount,
+              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            TextButton(
+              onPressed: isLoading
+                  ? null
+                  : () => AppRoutes.to(context, AppRoutes.signup),
+              child: Text(
+                AppStrings.signUp,
+                style: text.labelLarge?.copyWith(color: scheme.primary),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
-}
 
-class _AuthFooter extends StatelessWidget {
-  final bool isDark;
-  const _AuthFooter({this.isDark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
+  Widget _rememberMeRow(BuildContext context, bool isLoading) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            AppStrings.termsOfUse,
-            style: TextStyle(color: textColor, fontSize: AppSizes.fontXs),
+        SizedBox(
+          width: 22,
+          height: 22,
+          child: Checkbox(
+            value: _rememberMe,
+            onChanged: isLoading
+                ? null
+                : (v) => setState(() => _rememberMe = v ?? false),
+            activeColor: scheme.primary,
+            checkColor: scheme.onPrimary,
+            side: BorderSide(color: scheme.outline),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
-        Text(' | ', style: TextStyle(color: textColor)),
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            AppStrings.privacyPolicy,
-            style: TextStyle(color: textColor, fontSize: AppSizes.fontXs),
-          ),
+        const SizedBox(width: AppSizes.sm + 2),
+        Text(
+          AppStrings.rememberMe,
+          style: text.bodyMedium?.copyWith(color: scheme.onSurface),
         ),
       ],
     );

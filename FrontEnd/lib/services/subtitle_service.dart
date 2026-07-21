@@ -21,9 +21,7 @@ class SubtitleService {
     try {
       final response = await _client.dio.post(
         ApiConfig.subtitleCreate(fileId),
-        data: {
-          'project_name': ?projectName,
-        },
+        data: {'project_name': ?projectName},
       );
       return SubtitleProject.fromJson(response.data);
     } on DioException catch (e) {
@@ -107,9 +105,7 @@ class SubtitleService {
     try {
       final response = await _client.dio.put(
         ApiConfig.subtitleBulkUpdate(subtitleId),
-        data: {
-          'segments': segments.map((s) => s.toJson()).toList(),
-        },
+        data: {'segments': segments.map((s) => s.toJson()).toList()},
       );
       return SubtitleProject.fromJson(response.data);
     } on DioException catch (e) {
@@ -210,15 +206,17 @@ class SubtitleService {
         }
       }
 
-      final detail =
-          parsed is Map<String, dynamic> ? parsed['detail'] as String? : null;
+      final detail = parsed is Map<String, dynamic>
+          ? parsed['detail'] as String?
+          : null;
       final message = detail ?? 'Operation failed';
 
       if (statusCode == 400) return ValidationException(message, data);
       if (statusCode == 401) return UnauthorizedException(message);
       // Prefer the server's actionable detail (e.g. "Source video no longer
       // available. Please re-upload.") over a generic label when present.
-      if (statusCode == 404) return ServerException(detail ?? 'Project not found', 404);
+      if (statusCode == 404)
+        return ServerException(detail ?? 'Project not found', 404);
       if (statusCode != null && statusCode >= 500) {
         return ServerException('Server error', statusCode);
       }
