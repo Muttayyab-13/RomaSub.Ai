@@ -32,15 +32,34 @@ class VideoPreviewPanel extends ConsumerWidget {
               child: playerState.controller != null
                   ? Stack(
                       children: [
-                        // Video
+                        // Video. libmpv's own rotation is disabled (it crashes
+                        // the SW renderer on rotated clips), so re-apply the
+                        // container rotation here. For quarter/three-quarter
+                        // turns the box axes swap, so hand Video the swapped
+                        // extents and let RotatedBox turn it back upright.
                         Center(
                           child: LayoutBuilder(
-                            builder: (context, constraints) => Video(
-                              controller: playerState.controller!,
-                              controls: NoVideoControls,
-                              width: constraints.maxWidth,
-                              height: constraints.maxHeight,
-                            ),
+                            builder: (context, constraints) {
+                              final turns = playerState.rotationQuarterTurns;
+                              final swap = turns.isOdd;
+                              Widget video = Video(
+                                controller: playerState.controller!,
+                                controls: NoVideoControls,
+                                width: swap
+                                    ? constraints.maxHeight
+                                    : constraints.maxWidth,
+                                height: swap
+                                    ? constraints.maxWidth
+                                    : constraints.maxHeight,
+                              );
+                              if (turns != 0) {
+                                video = RotatedBox(
+                                  quarterTurns: turns,
+                                  child: video,
+                                );
+                              }
+                              return video;
+                            },
                           ),
                         ),
 

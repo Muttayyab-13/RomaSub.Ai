@@ -18,6 +18,12 @@ class VideoPlayerState {
   final String? error;
   final bool mediaUnavailable;
 
+  /// Number of clockwise quarter-turns to rotate the video texture for correct
+  /// display. We disable libmpv's own rotation (`video-rotate=no`) to dodge a
+  /// software-render crop assertion on rotated videos, so the container's
+  /// rotation metadata has to be re-applied in the Flutter layer instead.
+  final int rotationQuarterTurns;
+
   VideoPlayerState({
     this.player,
     this.controller,
@@ -30,6 +36,7 @@ class VideoPlayerState {
     this.isInitialized = false,
     this.error,
     this.mediaUnavailable = false,
+    this.rotationQuarterTurns = 0,
   });
 
   double get positionSeconds => position.inMilliseconds / 1000.0;
@@ -47,6 +54,7 @@ class VideoPlayerState {
     bool? isInitialized,
     String? error,
     bool? mediaUnavailable,
+    int? rotationQuarterTurns,
   }) {
     return VideoPlayerState(
       player: player ?? this.player,
@@ -60,6 +68,7 @@ class VideoPlayerState {
       isInitialized: isInitialized ?? this.isInitialized,
       error: error,
       mediaUnavailable: mediaUnavailable ?? this.mediaUnavailable,
+      rotationQuarterTurns: rotationQuarterTurns ?? this.rotationQuarterTurns,
     );
   }
 
@@ -101,14 +110,35 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
           // still plays. enableHardwareAcceleration only controls the
           // renderer (vo), not the decoder.
           hwdec: 'no',
-          // Set initial texture size to avoid 1x1 default which crashes
-          // mpv's mp_image_crop assertion with software rendering on Linux
+          // Fixed software-render texture size. NOTE: this does NOT prevent the
+          // mp_image_crop assertion on rotated videos — that crash reproduces at
+          // exactly this size and is handled by `video-rotate=no` below.
           width: 640,
           height: 480,
         ),
       );
       _playerRef = player;
       log('player + controller constructed');
+
+      // CRASH FIX: Disable libmpv's built-in rotation. Videos that carry
+      // container rotation metadata (e.g. portrait phone clips, rotate=±90)
+      // abort the whole process on Linux software rendering with:
+      //   mp_image_crop: Assertion `x1 <= img->w && y1 <= img->h' failed.
+      // The frame is decoded landscape (e.g. 1024x576) and rotated to portrait
+      // (576x1024), but mpv 0.37's SW renderer applies the source crop rect
+      // (0,0,1024,576) to the already-rotated frame -> x1=1024 > w=576 -> abort
+      // -> "Lost connection to device". Setting `video-rotate=no` (NOT `0`,
+      // which still rotates) skips that path; we re-apply the rotation in the
+      // Flutter layer via VideoPlayerState.rotationQuarterTurns instead.
+      final platform = player.platform;
+      if (platform is NativePlayer) {
+        try {
+          await platform.setProperty('video-rotate', 'no');
+          log('video-rotate=no set');
+        } catch (e) {
+          log('failed to set video-rotate: $e');
+        }
+      }
 
       // Track when controller's platform texture becomes ready and when the
       // first frame is rendered. These are the two checkpoints that have to
@@ -209,6 +239,26 @@ class VideoPlayerNotifier extends StateNotifier<VideoPlayerState> {
       log('calling player.open()');
       await player.open(Media(videoUrl), play: false);
       log('player.open() returned');
+
+      // Now that the demuxer is open, read the container rotation so the UI can
+      // re-apply it (we disabled libmpv's own rotation above). demux-rotation
+      // is degrees clockwise (0/90/180/270); RotatedBox takes quarter-turns.
+      if (platform is NativePlayer) {
+        try {
+          final raw = await platform.getProperty(
+            'current-tracks/video/demux-rotation',
+          );
+          final degrees = int.tryParse(raw.trim()) ?? 0;
+          final turns = (((degrees % 360) + 360) % 360) ~/ 90;
+          log('demux-rotation=$degrees -> quarterTurns=$turns');
+          if (mounted && turns != 0) {
+            state = state.copyWith(rotationQuarterTurns: turns);
+          }
+        } catch (e) {
+          // Property is absent for non-rotated videos; treat as no rotation.
+          log('demux-rotation unavailable ($e) -> no rotation');
+        }
+      }
     } catch (e, st) {
       log('initialize() threw: $e');
       debugPrint(st.toString());

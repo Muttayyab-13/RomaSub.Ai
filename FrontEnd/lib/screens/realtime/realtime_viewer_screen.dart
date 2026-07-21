@@ -348,12 +348,27 @@ class _RealtimeViewerScreenState extends ConsumerState<RealtimeViewerScreen> {
       child: playerState.controller != null
           ? Stack(
               children: [
+                // libmpv rotation is disabled (it crashes the SW renderer on
+                // rotated clips); re-apply container rotation here. Odd turns
+                // swap the box axes, so feed Video the swapped extents and let
+                // RotatedBox turn it back upright.
                 Center(
-                  child: Video(
-                    controller: playerState.controller!,
-                    controls: NoVideoControls,
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height,
+                  child: Builder(
+                    builder: (context) {
+                      final turns = playerState.rotationQuarterTurns;
+                      final swap = turns.isOdd;
+                      final size = MediaQuery.of(context).size;
+                      Widget video = Video(
+                        controller: playerState.controller!,
+                        controls: NoVideoControls,
+                        width: swap ? size.height : size.width,
+                        height: swap ? size.width : size.height,
+                      );
+                      if (turns != 0) {
+                        video = RotatedBox(quarterTurns: turns, child: video);
+                      }
+                      return video;
+                    },
                   ),
                 ),
                 if (playerState.isBuffering)
