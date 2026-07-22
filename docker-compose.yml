@@ -52,10 +52,27 @@ services:
       # Whisper Configuration
       WHISPER_MODEL: ${WHISPER_MODEL:-medium}
 
+      # Remote AI backends — the FAST path (Groq-hosted Whisper + Modal M2M100),
+      # read from the project .env. Without these the container silently falls
+      # back to slow on-CPU models. Remove/blank the keys to run fully offline.
+      WHISPER_BACKEND: ${WHISPER_BACKEND:-groq}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      TRANSLITERATION_BACKEND: ${TRANSLITERATION_BACKEND:-modal}
+      MODAL_ENDPOINT_URL: ${MODAL_ENDPOINT_URL:-}
+      MODAL_AUTH_TOKEN: ${MODAL_AUTH_TOKEN:-}
+
       # Claude Refinement Layer (Optional)
       ENABLE_LLM_REFINE: ${ENABLE_LLM_REFINE:-true}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_REFINE_MODEL: ${CLAUDE_REFINE_MODEL:-claude-haiku-4-5}
+
+      # Loanword/names dictionary substitution layer (Optional)
+      ENABLE_LOANWORD_DICT: ${ENABLE_LOANWORD_DICT:-false}
+
+      # Audio enhancement — clean extracted audio before ASR (batch + realtime)
+      ENABLE_AUDIO_ENHANCE: ${ENABLE_AUDIO_ENHANCE:-true}
+      AUDIO_ENHANCE_USE_RNNOISE: ${AUDIO_ENHANCE_USE_RNNOISE:-false}
+      AUDIO_RNNOISE_MODEL: ${AUDIO_RNNOISE_MODEL:-}
 
       # File Upload Configuration
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}

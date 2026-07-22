@@ -66,7 +66,10 @@ async def stream_subtitles(file_id: str, language: str = "ur"):
 
     # ===== SLOW PATH: chunked processing =====
 
-    # Extract audio if needed (reuse existing service)
+    # Extract audio if needed (reuse existing service). When
+    # settings.enable_audio_enhance is on, this returns the DENOISED/NORMALISED
+    # full-audio WAV; chunker_service slices each chunk from it, so realtime
+    # inherits enhancement without any per-chunk re-processing.
     success, audio_path = media_service.extract_audio(file_id)
     if not success:
         raise HTTPException(

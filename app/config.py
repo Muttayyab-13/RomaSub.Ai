@@ -68,13 +68,32 @@ class Settings(BaseSettings):
     # Urdu pre-processing (normalization always on; diacritization stub for future)
     enable_diacritics: bool = False
 
+    # Audio enhancement (pre-ASR clean-up in media.extract_audio).
+    # When True, the extracted 16 kHz mono WAV is run through a conservative
+    # FFmpeg filter chain BEFORE Whisper/Groq sees it, so noisy inputs give
+    # cleaner transcripts:
+    #   highpass=f=80   cut low rumble / hum / handling noise
+    #   afftdn=nf=-25   FFT broadband denoise (hiss, fans, AC, room tone)
+    #   dynaudnorm      lift quiet vocals to a consistent level
+    # Uses the bundled FFmpeg — no extra Python dependencies. Applied in
+    # extract_audio, so BOTH batch transcription and the realtime chunked path
+    # (which slices chunks from this enhanced WAV) receive cleaned audio.
+    enable_audio_enhance: bool = True
+    # Optional stronger neural denoise (RNNoise via FFmpeg's `arnndn`). Only
+    # takes effect when enable_audio_enhance is True AND audio_rnnoise_model
+    # points at a readable .rnnn model file (bundle one under app/data/). When
+    # the model is missing it transparently falls back to afftdn, so turning
+    # this on can never break extraction.
+    audio_enhance_use_rnnoise: bool = False
+    audio_rnnoise_model: str = ""
+
     # Loanword/names dictionary substitution layer (loanword_processor.process_batch).
     # When True, Urdu words found in app/data/loanword_dict.json + names_dict.json
     # are replaced with their English value BEFORE the model runs and stitched
     # back at the end. When False, the model handles all words directly.
     # Disable when the dictionary content is unverified — see
     # scripts/audit_loanword_dict.py and scripts/loanword_dict_audit.md.
-    enable_loanword_dict: bool = True
+    enable_loanword_dict: bool = False
 
     # Claude refinement layer (post-m2m100 polish)
     enable_llm_refine: bool = True

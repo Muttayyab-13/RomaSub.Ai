@@ -218,12 +218,54 @@ def get_file_info(file_id: str) -> Optional[Dict]:
 # Audio Extraction
 # ============================================================================
 
+def build_enhance_filter() -> Optional[str]:
+    """
+    Build the FFmpeg `-af` filter chain used to clean audio before ASR.
+
+    Returns None when enhancement is disabled (settings.enable_audio_enhance),
+    so callers can skip the filter entirely. Otherwise returns a conservative,
+    speech-tuned chain:
+
+        highpass=f=80   -> cut low rumble / hum / handling noise
+        <denoise>       -> afftdn (FFT denoise) or, when a valid RNNoise model
+                           is configured, arnndn (neural denoise)
+        dynaudnorm      -> normalise vocal loudness to a consistent level
+
+    RNNoise (arnndn) is opt-in and self-healing: if audio_enhance_use_rnnoise
+    is set but the model file is missing/unreadable, it logs a warning and
+    falls back to afftdn so extraction never breaks.
+    """
+    if not settings.enable_audio_enhance:
+        return None
+
+    denoise = "afftdn=nf=-25"
+    if settings.audio_enhance_use_rnnoise:
+        model = (settings.audio_rnnoise_model or "").strip()
+        if model and os.path.isfile(model):
+            # ffmpeg parses ':' as an option separator, so quote the path.
+            safe = model.replace("\\", "/")
+            denoise = f"arnndn=m='{safe}'"
+        else:
+            logger.warning(
+                "audio_enhance_use_rnnoise=True but RNNoise model missing/unreadable "
+                "(%r); falling back to afftdn denoise", model,
+            )
+
+    return f"highpass=f=80,{denoise},dynaudnorm"
+
+
 def extract_audio(file_id: str) -> Tuple[bool, str]:
     """
     Extract audio from video file using FFmpeg.
 
-    For audio files, returns the original file path.
-    For video files, extracts audio track as WAV (16kHz, mono).
+    For video files, extracts the audio track as WAV (16kHz, mono).
+    For audio files, returns the original file path UNLESS audio enhancement
+    is enabled — in which case the audio is re-encoded through the enhancement
+    filter chain into a cleaned 16kHz mono WAV.
+
+    When settings.enable_audio_enhance is True, a speech-tuned denoise/normalise
+    filter chain (see build_enhance_filter) is applied so Whisper/Groq receives
+    cleaner audio.
 
     Args:
         file_id: ID of the uploaded file
@@ -235,8 +277,10 @@ def extract_audio(file_id: str) -> Tuple[bool, str]:
     if not file_info:
         return False, "File not found"
 
-    # If already audio, no extraction needed
-    if not file_info["is_video"]:
+    enhance_af = build_enhance_filter()
+
+    # Plain audio file with no enhancement: use the original as-is (no re-encode).
+    if not file_info["is_video"] and enhance_af is None:
         file_info["audio_path"] = file_info["file_path"]
         file_info["status"] = "audio_ready"
         _save_registry()
@@ -254,19 +298,27 @@ def extract_audio(file_id: str) -> Tuple[bool, str]:
     )
 
     try:
-        print(f"\n[AUDIO] Extracting audio from: {file_info['file_path']}")
+        action = "Extracting + enhancing" if enhance_af else "Extracting"
+        print(f"\n[AUDIO] {action} audio from: {file_info['file_path']}")
         print(f"[AUDIO] Output path: {audio_path}")
+        if enhance_af:
+            print(f"[AUDIO] Enhancement filter: {enhance_af}")
 
-        # Use FFmpeg to extract audio
+        # Use FFmpeg to extract audio. -vn works for both video (drops the
+        # video track) and audio-only inputs (no-op), so the command is shared.
         command = [
             "ffmpeg",
             "-i", file_info["file_path"],
             "-vn",  # No video
+        ]
+        if enhance_af:
+            command += ["-af", enhance_af]  # pre-ASR denoise / normalise
+        command += [
             "-acodec", "pcm_s16le",  # WAV format
             "-ar", "16000",  # 16kHz sample rate (good for Whisper)
             "-ac", "1",  # Mono channel
             "-y",  # Overwrite output
-            audio_path
+            audio_path,
         ]
 
         result = subprocess.run(
