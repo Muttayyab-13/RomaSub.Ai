@@ -56,7 +56,7 @@ pydantic[Email]
 streamlit
 requests
 
-# M2M100 evaluation scripts (scripts/run_raw_m2m100.py)
+# M2M100 evaluation script (scripts/model_eval.py)
 sacrebleu
 jiwer
 datasets

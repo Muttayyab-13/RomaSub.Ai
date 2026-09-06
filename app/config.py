@@ -91,8 +91,9 @@ class Settings(BaseSettings):
     # When True, Urdu words found in app/data/loanword_dict.json + names_dict.json
     # are replaced with their English value BEFORE the model runs and stitched
     # back at the end. When False, the model handles all words directly.
-    # Disable when the dictionary content is unverified — see
-    # scripts/audit_loanword_dict.py and scripts/loanword_dict_audit.md.
+    # Disable when the dictionary content is unverified — the recorded runs in
+    # eval_results/ show the dict layer costing ~13 BLEU (98.87 -> 86.13) on the
+    # Roman-Urdu-Parl test split, which is why it defaults to False.
     enable_loanword_dict: bool = False
 
     # Claude refinement layer (post-m2m100 polish)

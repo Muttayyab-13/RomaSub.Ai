@@ -200,7 +200,7 @@ def transliterate_batch(texts: List[str], batch_size: int = 8) -> List[str]:
                 normalization → M2M100 → reconstruction → fuzzy post-process.
       * False — bypass the dictionary layer entirely. Just urduhack normalize
                 each text, then run M2M100. Use this when the dict content is
-                unverified (see scripts/audit_loanword_dict.py).
+                unverified (see the recorded runs in eval_results/).
 
     Args:
         texts: List of Urdu text strings

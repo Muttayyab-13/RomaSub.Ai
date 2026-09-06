@@ -9,8 +9,8 @@ handling, no normalization, no post-processing), and prints each sample as:
 
 Usage (from repo root, with venv active):
 
-    python scripts/run_raw_m2m100.py            # default: 10 samples
-    python scripts/run_raw_m2m100.py -n 25      # show 25 samples
+    python scripts/model_eval.py                # default: 10 samples
+    python scripts/model_eval.py -n 25          # show 25 samples
 """
 
 from __future__ import annotations
