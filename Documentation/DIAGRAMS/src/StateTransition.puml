@@ -1,0 +1,45 @@
+@startuml StateTransition
+' RomaSub.Ai — State Transition Diagram
+' Regenerated: the export state now distinguishes text export from video rendering.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam state {
+  BackgroundColor #EAF2FB
+  BorderColor #2C6FB5
+}
+skinparam ArrowColor #334155
+
+[*] --> NotAuthenticated
+NotAuthenticated --> NotAuthenticated : Login Failed
+NotAuthenticated --> Authenticated : Login Successful
+Authenticated --> Idle : Enter Dashboard
+Authenticated --> Logout : Logout
+Idle --> Logout : Logout
+Logout --> NotAuthenticated
+NotAuthenticated --> [*]
+
+Idle --> LoadingVideo : User selects video
+LoadingVideo --> ExtractingAudio : Video loaded
+ExtractingAudio --> ProcessingChunks : Audio extracted
+ProcessingChunks --> GeneratingSubtitles : Chunks processed
+GeneratingSubtitles --> Previewing : Subtitles generated
+
+Previewing --> Editing : User edits subtitles
+Editing --> Previewing : Save edits
+Previewing --> FeedbackSubmitted : User submits feedback
+FeedbackSubmitted --> Previewing : Continue preview
+
+Previewing --> ExportingText : User exports SRT / VTT / TXT
+Previewing --> RenderingVideo : User exports captioned video
+
+state RenderingVideo {
+  [*] --> Hardsub : mode = hardsub
+  [*] --> Softsub : mode = softsub
+  Hardsub : FFmpeg burn-in (re-encode)
+  Softsub : FFmpeg mux mov_text (stream copy)
+}
+
+ExportingText --> Completed : File generated
+RenderingVideo --> Completed : MP4 rendered
+Completed --> Idle : Start new project
+@enduml

@@ -1,4 +1,4 @@
-name: romasubai_frontend
+name: RomaSub.AI
 description: "RomaSub.AI - Roman Urdu Caption Generator"
 publish_to: 'none'
 version: 1.0.0+1
@@ -48,6 +48,13 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
+  # Video Player (desktop + mobile support)
+  media_kit: ^1.1.10+1
+  media_kit_video: ^1.2.4
+  media_kit_libs_windows_video: ^1.0.9
+  media_kit_libs_linux: ^1.1.3
+  media_kit_libs_macos_video: ^1.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,6 +62,19 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
+
   assets:
+    - assets/images/
     - assets/images/logos/
+    - assets/fonts/
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono.ttf
+    - family: NotoNastaliqUrdu
+      fonts:
+        - asset: assets/fonts/NotoNastaliqUrdu.ttf

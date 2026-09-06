@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/constants/app_colors.dart';
+
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/design/base_theme.dart';
 import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/upload_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/sidebar/sidebar.dart';
-import '../../widgets/dialogs/upload_progress_dialog.dart';
+import '../../providers/nav_provider.dart';
+import '../../providers/library_providers.dart';
+import '../../models/system_health.dart';
 import '../../services/api/api_config.dart';
+import '../../widgets/dashboard/stat_card.dart';
+import '../../widgets/dashboard/system_status_card.dart';
+import '../../widgets/dashboard/recent_projects_card.dart';
+import '../../widgets/dashboard/upload_dropzone.dart';
+import '../../widgets/dialogs/upload_progress_dialog.dart';
 
+/// The Dashboard tab. Opts into the redesigned system via a scoped
+/// [buildBaseTheme] wrapper; the shell chrome around it keeps the old look.
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -20,617 +29,199 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  /// Handle file picker and start upload process
   Future<void> _handleFilePicker() async {
     try {
-      // Pick file with allowed extensions
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ApiConfig.allowedExtensions,
         allowMultiple: false,
       );
+      if (result == null || result.files.isEmpty) return;
 
-      // Check if user cancelled
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
-
-      // Get file path
-      final file = result.files.first;
-      final filePath = file.path;
-
+      final filePath = result.files.first.path;
       if (filePath == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to access file path'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+        _snack('Failed to access file path');
         return;
       }
 
-      // Show upload progress dialog
-      if (mounted) {
-        showUploadProgressDialog(context);
-      }
-
-      // Start upload and transcription
+      if (mounted) showUploadProgressDialog(context);
       await ref
           .read(uploadNotifierProvider.notifier)
-          .uploadAndTranscribe(
-            filePath,
-            language: 'ur', // Urdu language
-          );
+          .uploadAndTranscribe(filePath, language: 'ur');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('File picker error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      _snack('File picker error: ${e.toString()}');
     }
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _openProject(Map<String, dynamic> project) {
+    AppRoutes.to(
+      context,
+      AppRoutes.editor,
+      arguments: {'fileId': project['file_id'], 'transcription': null},
+    );
+  }
+
+  void _goToProjectsTab() {
+    ref.read(navIndexProvider.notifier).state = AppTab.projects.index;
+  }
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 17) return 'Good Evening';
+    if (hour >= 12) return 'Good Afternoon';
+    return 'Good Morning';
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authNotifierProvider);
     final isDark = ref.watch(themeProvider).isDark;
+    final authState = ref.watch(authNotifierProvider);
+    final projectsAsync = ref.watch(projectsProvider);
+    final exportsAsync = ref.watch(exportsProvider);
+    final healthAsync = ref.watch(systemHealthProvider);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
-        children: [
-          const Sidebar(currentRoute: AppRoutes.dashboard),
-          Expanded(
+    final firstName = authState.user?.firstName ?? '';
+    final projects =
+        projectsAsync.asData?.value ?? const <Map<String, dynamic>>[];
+
+    return Theme(
+      data: buildBaseTheme(isDark),
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          final text = Theme.of(context).textTheme;
+          return ColoredBox(
+            color: scheme.surface,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.xl),
+              padding: const EdgeInsets.all(AppSizes.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Row
-                  _buildHeader(authState, isDark),
-                  const SizedBox(height: AppSizes.xl),
+                  Text(
+                    firstName.isEmpty
+                        ? _greeting()
+                        : '${_greeting()}, $firstName',
+                    style: text.headlineMedium,
+                  ),
+                  const SizedBox(height: AppSizes.xs),
+                  Text(
+                    AppStrings.dashGreetingSubtitle,
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.lg),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final wide = constraints.maxWidth >= 900;
+                      final mainColumn = Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          UploadDropzone(
+                            onTap: _handleFilePicker,
+                            compact:
+                                constraints.maxWidth <
+                                AppSizes.breakpointMobile,
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+                          RecentProjectsCard(
+                            projects: projects,
+                            onProjectTap: _openProject,
+                            onViewAll: _goToProjectsTab,
+                          ),
+                        ],
+                      );
+                      final rail = _Rail(
+                        totalProjects: projectsAsync.asData?.value.length,
+                        totalExports: exportsAsync.asData?.value.length,
+                        health: healthAsync,
+                      );
 
-                  // Main Content
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left - Upload Section
-                      Expanded(flex: 6, child: _buildUploadSection(isDark)),
-                      const SizedBox(width: AppSizes.lg),
-
-                      // Right - Status Section
-                      Expanded(flex: 4, child: _buildStatusSection(isDark)),
-                    ],
+                      if (!wide) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            mainColumn,
+                            const SizedBox(height: AppSizes.lg),
+                            rail,
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: mainColumn),
+                          const SizedBox(width: AppSizes.lg),
+                          SizedBox(width: 320, child: rail),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _buildHeader(AuthState authState, bool isDark) {
-    // Dynamic greeting based on time
-    final hour = DateTime.now().hour;
-    String greeting = 'Good Morning';
-    if (hour >= 12 && hour < 17) {
-      greeting = 'Good Afternoon';
-    } else if (hour >= 17) {
-      greeting = 'Good Evening';
-    }
+/// The right rail: two stat cards over the system-status card.
+class _Rail extends StatelessWidget {
+  final int? totalProjects;
+  final int? totalExports;
+  final AsyncValue<SystemHealth> health;
 
-    // Get first name
-    final firstName = authState.userName.trim().split(' ').first;
+  const _Rail({
+    required this.totalProjects,
+    required this.totalExports,
+    required this.health,
+  });
 
-    // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Greeting Card
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.xl,
-            vertical: AppSizes.lg,
-          ),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            boxShadow: [
-              BoxShadow(
-                color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-                blurRadius: 15,
-                offset: const Offset(0, 4),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$greeting, $firstName!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: AppSizes.xs),
-              Text(
-                AppStrings.welcomeBack,
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: AppSizes.fontMd,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Icons
         Row(
           children: [
-            _IconButton(
-              icon: isDark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
-              isDark: isDark,
+            Expanded(
+              child: StatCard(
+                icon: Icons.folder_outlined,
+                label: AppStrings.dashTotalProjects,
+                value: totalProjects?.toString(),
+              ),
             ),
             const SizedBox(width: AppSizes.md),
-            _IconButton(
-              icon: Icons.notifications_outlined,
-              hasBadge: true,
-              isDark: isDark,
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Guide to Use'),
-                    content: const Text(
-                      'Welcome to RomaSub.AI!\n\n'
-                      '1. Click "Choose File" to upload a video or audio.\n'
-                      '2. Wait for the transcription and translation to complete.\n'
-                      '3. Download your SRT subtitle file.\n\n'
-                      'Need more help? Visit the Feedback section.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Got it'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: AppSizes.md),
-            _ProfilePicture(authState: authState),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUploadSection(bool isDark) {
-    // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final textSecondary = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final accentBg = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-    final buttonBg = isDark ? Colors.grey.shade300 : Colors.black;
-    final buttonText = isDark ? Colors.black : Colors.white;
-    final borderColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppStrings.welcomeTitle,
-          style: TextStyle(
-            fontSize: AppSizes.fontXxl,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppSizes.sm),
-        Text(
-          AppStrings.welcomeDesc,
-          style: TextStyle(
-            fontSize: AppSizes.fontSm,
-            color: textSecondary,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: AppSizes.lg),
-
-        // Upload Box with dashed border
-        CustomPaint(
-          painter: DashedBorderPainter(
-            color: borderColor,
-            strokeWidth: 2,
-            dashWidth: 8,
-            dashSpace: 6,
-            borderRadius: AppSizes.radiusLg,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(AppSizes.xxl),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSizes.lg),
-                  decoration: BoxDecoration(
-                    color: accentBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.upload_outlined,
-                    size: AppSizes.iconXl,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.lg),
-                Text(
-                  AppStrings.uploadTitle,
-                  style: TextStyle(
-                    fontSize: AppSizes.fontLg,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.sm),
-                Text(
-                  AppStrings.uploadDesc,
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: AppSizes.fontSm,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSizes.lg),
-                ElevatedButton(
-                  onPressed: _handleFilePicker,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonBg,
-                    foregroundColor: buttonText,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.xl,
-                      vertical: AppSizes.md,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                    ),
-                  ),
-                  child: Text(
-                    AppStrings.chooseFile,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: AppSizes.fontMd,
-                      color: buttonText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusSection(bool isDark) {
-    // Theme-aware colors
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.xl),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.processingStatus,
-            style: TextStyle(
-              fontSize: AppSizes.fontLg,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSizes.xl),
-          _StatusItem(
-            label: AppStrings.audioTranscription,
-            status: AppStrings.ready,
-            isOnline: true,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSizes.lg),
-          _StatusItem(
-            label: AppStrings.romanUrduTranslation,
-            status: 'Pending',
-            isOnline: false,
-            isPending: true,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSizes.lg),
-          _StatusItem(
-            label: AppStrings.aiModelStatus,
-            status: AppStrings.online,
-            isOnline: true,
-            isDark: isDark,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IconButton extends StatelessWidget {
-  final IconData icon;
-  final bool hasBadge;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _IconButton({
-    required this.icon,
-    this.hasBadge = false,
-    required this.onTap,
-    this.isDark = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = isDark ? const Color(0xFF2A2A2A) : AppColors.surface;
-    final iconColor = isDark ? Colors.white : AppColors.textPrimary;
-    final shadowColor = isDark
-        ? Colors.black.withOpacity(0.3)
-        : Colors.black.withOpacity(0.03);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: 22),
-            if (hasBadge)
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+            Expanded(
+              child: StatCard(
+                icon: Icons.download_outlined,
+                label: AppStrings.dashExports,
+                value: totalExports?.toString(),
               ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StatusItem extends StatelessWidget {
-  final String label;
-  final String status;
-  final bool isOnline;
-  final bool isPending;
-  final bool isDark;
-
-  const _StatusItem({
-    required this.label,
-    required this.status,
-    required this.isOnline,
-    this.isPending = false,
-    this.isDark = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Determine colors based on status
-    Color backgroundColor;
-    Color textColor;
-    final labelColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-
-    if (isPending) {
-      backgroundColor = Colors.amber.withOpacity(0.15);
-      textColor = Colors.amber.shade700;
-    } else if (isOnline) {
-      backgroundColor = Colors.green.withOpacity(0.15);
-      textColor = Colors.green;
-    } else {
-      backgroundColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-      textColor = isDark ? Colors.white : Colors.black;
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(color: labelColor, fontSize: AppSizes.fontMd),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.md,
-            vertical: AppSizes.sm,
-          ),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              fontSize: AppSizes.fontSm,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
+        const SizedBox(height: AppSizes.md),
+        health.when(
+          data: (h) => SystemStatusCard(health: h),
+          // In flight: neutral "Checking…", not a premature green "Online".
+          loading: () => const SystemStatusCard.checking(),
+          // Defensive: systemHealthProvider catches its own errors and resolves
+          // as data(unreachable), so this branch only fires if the provider
+          // itself throws during construction.
+          error: (_, _) =>
+              const SystemStatusCard(health: SystemHealth.unreachable()),
         ),
       ],
     );
   }
-}
-
-class _ProfilePicture extends StatelessWidget {
-  final AuthState authState;
-
-  const _ProfilePicture({required this.authState});
-
-  @override
-  Widget build(BuildContext context) {
-    final user = authState.user;
-    final hasProfilePicture =
-        user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty;
-
-    return InkWell(
-      onTap: () => AppRoutes.replace(context, AppRoutes.settings),
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: hasProfilePicture ? null : Colors.black,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade300, width: 2),
-          image: hasProfilePicture
-              ? DecorationImage(
-                  image: NetworkImage(
-                    '${ApiConfig.baseUrl}${user.profilePictureUrl}',
-                  ),
-                  fit: BoxFit.cover,
-                )
-              : null,
-        ),
-        child: hasProfilePicture
-            ? null
-            : Center(
-                child: Text(
-                  authState.userInitial,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-      ),
-    );
-  }
-}
-
-/// Custom painter for dashed border
-class DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-  final double borderRadius;
-
-  DashedBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashWidth,
-    required this.dashSpace,
-    required this.borderRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          Radius.circular(borderRadius),
-        ),
-      );
-
-    final dashPath = _createDashedPath(path, dashWidth, dashSpace);
-    canvas.drawPath(dashPath, paint);
-  }
-
-  Path _createDashedPath(Path source, double dashWidth, double dashSpace) {
-    final dashedPath = Path();
-    for (final metric in source.computeMetrics()) {
-      double distance = 0.0;
-      bool draw = true;
-      while (distance < metric.length) {
-        final length = draw ? dashWidth : dashSpace;
-        if (distance + length > metric.length) {
-          if (draw) {
-            dashedPath.addPath(
-              metric.extractPath(distance, metric.length),
-              Offset.zero,
-            );
-          }
-          break;
-        } else {
-          if (draw) {
-            dashedPath.addPath(
-              metric.extractPath(distance, distance + length),
-              Offset.zero,
-            );
-          }
-          distance += length;
-          draw = !draw;
-        }
-      }
-    }
-    return dashedPath;
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

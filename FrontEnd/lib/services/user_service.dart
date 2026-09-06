@@ -4,7 +4,6 @@ import 'api/api_client.dart';
 import 'api/api_config.dart';
 import 'api/api_exception.dart';
 import '../models/user_model.dart';
-import 'dart:io';
 
 /// User profile service for handling profile-related API calls
 class UserService {
@@ -20,10 +19,7 @@ class UserService {
     try {
       final response = await _client.dio.put(
         '${ApiConfig.baseUrl}/users/profile',
-        data: {
-          'first_name': firstName,
-          'last_name': lastName,
-        },
+        data: {'first_name': firstName, 'last_name': lastName},
       );
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -36,20 +32,13 @@ class UserService {
     try {
       final fileName = imagePath.split('/').last;
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          imagePath,
-          filename: fileName,
-        ),
+        'file': await MultipartFile.fromFile(imagePath, filename: fileName),
       });
 
       await _client.dio.post(
         '${ApiConfig.baseUrl}/users/profile-picture',
         data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -68,7 +57,9 @@ class UserService {
   /// Get extended user details
   Future<UserModel> getUserDetails() async {
     try {
-      final response = await _client.dio.get('${ApiConfig.baseUrl}/users/me/details');
+      final response = await _client.dio.get(
+        '${ApiConfig.baseUrl}/users/me/details',
+      );
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -79,7 +70,9 @@ class UserService {
   ApiException _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      return NetworkException('Connection timeout. Please check your internet.');
+      return NetworkException(
+        'Connection timeout. Please check your internet.',
+      );
     } else if (e.type == DioExceptionType.connectionError) {
       return NetworkException('No internet connection');
     } else if (e.response != null) {
@@ -88,7 +81,8 @@ class UserService {
 
       String message = 'An error occurred';
       if (data is Map<String, dynamic>) {
-        message = data['detail'] as String? ?? data['message'] as String? ?? message;
+        message =
+            data['detail'] as String? ?? data['message'] as String? ?? message;
       }
 
       if (statusCode == 400) {
@@ -98,7 +92,10 @@ class UserService {
       } else if (statusCode == 404) {
         return ServerException('Resource not found', statusCode);
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

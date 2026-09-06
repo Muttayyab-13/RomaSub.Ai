@@ -8,13 +8,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: romasub_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-romasub_password}
       POSTGRES_DB: romasub_ai
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -35,7 +33,7 @@ services:
         condition: service_healthy
     environment:
       # Database Configuration
-      DATABASE_URL: postgresql://postgres:romasub_password@db:5432/romasub_ai
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-romasub_password}@db:5432/romasub_ai
 
       # JWT Configuration
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-this-in-production}
@@ -46,21 +44,59 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
 
-      # MailerSend Configuration (Optional)
-      MAILERSEND_API_KEY: ${MAILERSEND_API_KEY:-}
-      MAILERSEND_SENDER_EMAIL: ${MAILERSEND_SENDER_EMAIL:-noreply@romasub.ai}
-      MAILERSEND_SENDER_NAME: ${MAILERSEND_SENDER_NAME:-RomaSub.AI}
+      # Brevo Configuration (Optional — transactional email)
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-noreply@romasub.ai}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-RomaSub.AI}
 
       # Whisper Configuration
-      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_MODEL: ${WHISPER_MODEL:-medium}
+
+      # Remote AI backends — the FAST path (Groq-hosted Whisper + Modal M2M100),
+      # read from the project .env. Without these the container silently falls
+      # back to slow on-CPU models. Remove/blank the keys to run fully offline.
+      WHISPER_BACKEND: ${WHISPER_BACKEND:-groq}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      TRANSLITERATION_BACKEND: ${TRANSLITERATION_BACKEND:-modal}
+      MODAL_ENDPOINT_URL: ${MODAL_ENDPOINT_URL:-}
+      MODAL_AUTH_TOKEN: ${MODAL_AUTH_TOKEN:-}
+
+      # Claude Refinement Layer (Optional)
+      ENABLE_LLM_REFINE: ${ENABLE_LLM_REFINE:-true}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_REFINE_MODEL: ${CLAUDE_REFINE_MODEL:-claude-haiku-4-5}
+
+      # Loanword/names dictionary substitution layer (Optional)
+      ENABLE_LOANWORD_DICT: ${ENABLE_LOANWORD_DICT:-false}
+
+      # Audio enhancement — clean extracted audio before ASR (batch + realtime)
+      ENABLE_AUDIO_ENHANCE: ${ENABLE_AUDIO_ENHANCE:-true}
+      AUDIO_ENHANCE_USE_RNNOISE: ${AUDIO_ENHANCE_USE_RNNOISE:-false}
+      AUDIO_RNNOISE_MODEL: ${AUDIO_RNNOISE_MODEL:-}
 
       # File Upload Configuration
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-500}
       ALLOWED_VIDEO_EXTENSIONS: mp4,avi,mkv,mov,webm
       ALLOWED_AUDIO_EXTENSIONS: mp3,wav,m4a,flac,ogg
+      # Where uploaded media is stored inside the container. Must live under the
+      # media_data volume mount (/app/uploads) so files survive redeploys —
+      # otherwise "recents" projects point at media that no longer exists.
+      MEDIA_UPLOAD_DIR: ${MEDIA_UPLOAD_DIR:-/app/uploads/media}
+      # Where durable runtime JSON state lives (subtitle_state.json +
+      # file_registry.json). Kept SEPARATE from /app/app/data so the state
+      # volume never shadows the image-baked loanword/names dictionaries —
+      # editing those + rebuilding "just works" with no volume recreation.
+      STATE_DIR: ${STATE_DIR:-/app/var/state}
     volumes:
-      - upload_data:/tmp/romasub_uploads
-      - static_data:/app/uploads
+      # Durable uploaded media (videos/audio + extracted audio). The backend
+      # writes to /app/uploads/media (MEDIA_UPLOAD_DIR), which sits inside this.
+      - media_data:/app/uploads
+      # Durable runtime JSON state behind "recents": subtitle projects +
+      # media file registry. Mounted at STATE_DIR, separate from the baked
+      # dictionaries in /app/app/data.
+      - app_data:/app/var/state
+      - ./models:/app/models
+      - whisper_cache:/root/.cache/whisper
     ports:
       - "8000:8000"
     networks:
@@ -69,9 +105,14 @@ services:
 volumes:
   postgres_data:
     driver: local
-  upload_data:
+  # Uploaded media files (durable across redeploys). Supersedes the old
+  # upload_data (/tmp) + static_data volumes.
+  media_data:
     driver: local
-  static_data:
+  # Runtime JSON state (mounted at STATE_DIR): subtitle projects + file registry.
+  app_data:
+    driver: local
+  whisper_cache:
     driver: local
 
 networks:

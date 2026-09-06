@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/design/base_theme.dart';
 import '../../core/routes/app_routes.dart';
-import '../../models/project_model.dart';
+import '../../providers/library_providers.dart';
 import '../../providers/theme_provider.dart';
-import '../../widgets/sidebar/sidebar.dart';
-import '../../widgets/cards/project_card.dart';
+import '../../widgets/projects/projects_table.dart';
 
+/// The Projects tab. Opts into the redesigned system via a scoped
+/// [buildBaseTheme] wrapper; the shell chrome around it keeps the old look.
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
 
@@ -25,164 +27,223 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     super.dispose();
   }
 
+  void _openProject(BuildContext context, Map<String, dynamic> project) {
+    AppRoutes.to(
+      context,
+      AppRoutes.editor,
+      arguments: {'fileId': project['file_id'], 'transcription': null},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeProvider).isDark;
-    final allProjects = Project.getSampleData();
-    final projects = _searchQuery.isEmpty
-        ? allProjects
-        : allProjects
-              .where(
-                (p) =>
-                    p.title.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    ) ||
-                    p.fileName.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    ),
-              )
-              .toList();
+    final projectsAsync = ref.watch(projectsProvider);
 
-    // Theme-aware colors
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final cardBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final textPrimary = isDark ? Colors.white : Colors.black;
-    final borderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade300;
+    return Theme(
+      data: buildBaseTheme(isDark),
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          final text = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: Row(
-        children: [
-          const Sidebar(currentRoute: AppRoutes.projects),
-          Expanded(
-            child: Column(
-              children: [
-                // Top Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.lg,
-                    vertical: AppSizes.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isDark ? Colors.black : Colors.grey)
-                            .withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+          return ColoredBox(
+            color: scheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        AppStrings.recentProjects,
-                        style: TextStyle(
-                          fontSize: AppSizes.fontXl,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
-                      ),
+                      Text(AppStrings.allProjects, style: text.headlineMedium),
+                      const SizedBox(width: AppSizes.sm),
+                      _CountPill(count: projectsAsync.asData?.value.length),
                       const Spacer(),
-                      SizedBox(
-                        width: 280,
-                        height: 40,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (v) => setState(() => _searchQuery = v),
-                          style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
-                            hintText: AppStrings.searchProjects,
-                            hintStyle: TextStyle(
-                              color: isDark
-                                  ? Colors.grey.shade500
-                                  : Colors.grey.shade600,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              size: AppSizes.iconSm,
-                              color: textPrimary,
-                            ),
-                            filled: true,
-                            fillColor: isDark
-                                ? Colors.grey.shade800
-                                : Colors.grey.shade100,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: AppSizes.sm,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.radiusMd,
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 280),
+                          child: SizedBox(
+                            height: 40,
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (v) =>
+                                  setState(() => _searchQuery = v),
+                              style: text.bodyMedium,
+                              decoration: InputDecoration(
+                                hintText: AppStrings.searchProjects,
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  size: AppSizes.iconSm,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                                isDense: true,
+                                filled: true,
+                                fillColor: scheme.surface,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: AppSizes.sm,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusMd,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: scheme.outlineVariant,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusMd,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: scheme.outlineVariant,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusMd,
+                                  ),
+                                  borderSide: BorderSide(color: scheme.primary),
+                                ),
                               ),
-                              borderSide: BorderSide(color: borderColor),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.radiusMd,
-                              ),
-                              borderSide: BorderSide(color: borderColor),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSizes.md),
+                      const SizedBox(width: AppSizes.sm),
                       IconButton(
-                        icon: Icon(
-                          Icons.notifications_outlined,
-                          color: textPrimary,
-                        ),
-                        onPressed: () {},
+                        icon: const Icon(Icons.refresh),
+                        color: scheme.onSurfaceVariant,
+                        tooltip: AppStrings.refreshTooltip,
+                        onPressed: () => ref.invalidate(projectsProvider),
                       ),
                     ],
                   ),
-                ),
-
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSizes.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppStrings.allProjects,
-                          style: TextStyle(
-                            fontSize: AppSizes.fontLg,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                childAspectRatio: 1.4,
-                                crossAxisSpacing: AppSizes.md,
-                                mainAxisSpacing: AppSizes.md,
+                  const SizedBox(height: AppSizes.lg),
+                  Expanded(
+                    child: projectsAsync.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              AppStrings.projectsLoadError,
+                              style: text.bodyMedium?.copyWith(
+                                color: scheme.error,
                               ),
-                          itemCount: projects.length,
-                          itemBuilder: (context, index) {
-                            final project = projects[index];
-                            return ProjectCard(
-                              title: project.fileName,
-                              time: project.timeAgo,
-                              icon: project.icon,
-                              onTap: () {},
-                              isDark: isDark,
-                            );
-                          },
+                            ),
+                            const SizedBox(height: AppSizes.sm),
+                            TextButton(
+                              onPressed: () => ref.invalidate(projectsProvider),
+                              child: const Text('Retry'),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                      data: (allProjects) {
+                        final query = _searchQuery.trim().toLowerCase();
+                        final filtered = query.isEmpty
+                            ? allProjects
+                            : allProjects.where((p) {
+                                final name = (p['project_name'] ?? '')
+                                    .toString()
+                                    .toLowerCase();
+                                final file = (p['original_filename'] ?? '')
+                                    .toString()
+                                    .toLowerCase();
+                                return name.contains(query) ||
+                                    file.contains(query);
+                              }).toList();
+
+                        if (allProjects.isEmpty) {
+                          return const _EmptyState(
+                            icon: Icons.folder_open_outlined,
+                            title: AppStrings.projectsEmptyTitle,
+                            subtitle: AppStrings.projectsEmptySubtitle,
+                          );
+                        }
+
+                        if (filtered.isEmpty) {
+                          return const _EmptyState(
+                            icon: Icons.search_off_rounded,
+                            title: AppStrings.projectsSearchEmpty,
+                          );
+                        }
+
+                        return SingleChildScrollView(
+                          child: ProjectsTable(
+                            projects: filtered,
+                            onProjectTap: (p) => _openProject(context, p),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A small mono count pill next to the page title, e.g. "142 total".
+class _CountPill extends StatelessWidget {
+  final int? count;
+
+  const _CountPill({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+      ),
+      child: Text(
+        count == null ? '—' : '$count total',
+        style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+
+  const _EmptyState({required this.icon, required this.title, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: AppSizes.iconXl, color: scheme.onSurfaceVariant),
+          const SizedBox(height: AppSizes.md),
+          Text(
+            title,
+            style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: AppSizes.xs),
+            Text(
+              subtitle!,
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );

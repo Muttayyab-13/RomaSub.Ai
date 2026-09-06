@@ -13,10 +13,12 @@ class ForgotPasswordOtpScreen extends ConsumerStatefulWidget {
   const ForgotPasswordOtpScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordOtpScreen> createState() => _ForgotPasswordOtpScreenState();
+  ConsumerState<ForgotPasswordOtpScreen> createState() =>
+      _ForgotPasswordOtpScreenState();
 }
 
-class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScreen> {
+class _ForgotPasswordOtpScreenState
+    extends ConsumerState<ForgotPasswordOtpScreen> {
   final _otpController = TextEditingController();
   int _resendCooldown = 0;
   Timer? _timer;
@@ -39,9 +41,9 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
       return;
     }
 
-    final success = await ref.read(forgotPasswordProvider.notifier).verifyOtp(
-          _otpController.text,
-        );
+    final success = await ref
+        .read(forgotPasswordProvider.notifier)
+        .verifyOtp(_otpController.text);
 
     if (success && mounted) {
       AppRoutes.to(context, AppRoutes.forgotPasswordReset);
@@ -49,10 +51,7 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
       final error = ref.read(forgotPasswordProvider).error;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -64,7 +63,9 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
     final email = ref.read(forgotPasswordProvider).email;
     if (email == null) return;
 
-    final success = await ref.read(forgotPasswordProvider.notifier).requestOtp(email);
+    final success = await ref
+        .read(forgotPasswordProvider.notifier)
+        .requestOtp(email);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,10 +79,7 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
       final error = ref.read(forgotPasswordProvider).error;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -155,8 +153,8 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
                   textAlign: TextAlign.center,
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                     children: [
                       const TextSpan(text: '${AppStrings.codeSentTo}\n'),
                       TextSpan(
@@ -206,7 +204,9 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
 
                 // Resend Code link
                 GestureDetector(
-                  onTap: _resendCooldown > 0 || isLoading ? null : _handleResendCode,
+                  onTap: _resendCooldown > 0 || isLoading
+                      ? null
+                      : _handleResendCode,
                   child: Text(
                     _resendCooldown > 0
                         ? '${AppStrings.resendCode} ($_resendCooldown s)'
@@ -223,14 +223,20 @@ class _ForgotPasswordOtpScreenState extends ConsumerState<ForgotPasswordOtpScree
 
                 // Back link
                 GestureDetector(
-                  onTap: isLoading ? null : () {
-                    ref.read(forgotPasswordProvider.notifier).goToPreviousStep();
-                    AppRoutes.back(context);
-                  },
+                  onTap: isLoading
+                      ? null
+                      : () {
+                          ref
+                              .read(forgotPasswordProvider.notifier)
+                              .goToPreviousStep();
+                          AppRoutes.back(context);
+                        },
                   child: Text(
                     AppStrings.backToLogin,
                     style: TextStyle(
-                      color: isLoading ? AppColors.textHint : AppColors.textSecondary,
+                      color: isLoading
+                          ? AppColors.textHint
+                          : AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

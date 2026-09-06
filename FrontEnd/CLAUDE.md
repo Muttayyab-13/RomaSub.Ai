@@ -6,33 +6,33 @@ RomaSub.AI is a Roman Urdu Caption Generator application built with Flutter. It 
 ## Tech Stack
 - **Framework:** Flutter 3.8.1+
 - **Language:** Dart
-- **State Management:** Simple InheritedWidget pattern
+- **State Management:** Riverpod (`flutter_riverpod`) — `ConsumerWidget`/`ConsumerStatefulWidget` + `Notifier` providers
 - **Architecture:** Feature-based folder structure with layered separation
 
 ## Project Structure
 
 ```
 lib/
-├── main.dart                    # App entry point with AppProvider wrapper
+├── main.dart                    # App entry point wrapped in ProviderScope
 ├── core/                        # App-wide configurations
 │   ├── constants/
 │   │   ├── app_assets.dart      # Asset paths (logos, images)
-│   │   ├── app_colors.dart      # Color palette (light theme)
+│   │   ├── app_colors.dart      # Color palette (light + dark tokens, teal accent)
 │   │   ├── app_sizes.dart       # Spacing, sizing, radius constants
 │   │   └── app_strings.dart     # All UI text strings (centralized)
 │   ├── routes/
 │   │   └── app_routes.dart      # Route names & navigation helpers
 │   ├── theme/
-│   │   └── app_theme.dart       # Material 3 light theme configuration
+│   │   └── app_theme.dart       # Material 3 light + dark theme configuration
 │   └── utils/
 │       └── validators.dart      # Form validation (email, password, name)
-├── models/
-│   ├── project_model.dart       # Project data model with JSON serialization
-│   └── export_model.dart        # Export data model
-├── providers/                   # Simple state management
-│   ├── app_provider.dart        # Main InheritedWidget wrapper
-│   ├── auth_provider.dart       # Authentication state (login, signup, logout)
-│   └── project_provider.dart    # Projects state (CRUD, search)
+├── models/                      # Data models (project, export, user, auth, subtitle…)
+├── providers/                   # Riverpod providers (Notifier-based)
+│   ├── auth_provider.dart       # Auth state (login, signup, Google, profile)
+│   ├── theme_provider.dart      # Light/dark theme toggle
+│   ├── upload_provider.dart     # Upload + transcription + export
+│   ├── subtitle_editor_provider.dart # Subtitle editing state
+│   └── …                        # realtime, video_player, project, forgot_password
 ├── screens/                     # Page-level widgets
 │   ├── splash_screen.dart       # Initial loading screen (2s)
 │   ├── auth/
@@ -61,7 +61,7 @@ lib/
 ## Key Files Reference
 
 ### Entry Point
-- `main.dart` - Wraps app with `AppProvider`, sets theme and initial route
+- `main.dart` - Wraps app with `ProviderScope`, sets theme and initial route
 
 ### Navigation
 - `core/routes/app_routes.dart` - All route constants and navigation methods:
@@ -71,9 +71,10 @@ lib/
   - `AppRoutes.back(context)` - Pop current route
 
 ### State Management
-- `providers/app_provider.dart` - Access via `AppProvider.of(context)`
-  - `.auth` - AuthProvider instance
-  - `.projects` - ProjectProvider instance
+- Riverpod. In a `ConsumerWidget`/`ConsumerStatefulWidget`, use the injected `ref`:
+  - `ref.watch(authNotifierProvider)` - read auth state and rebuild on change
+  - `ref.read(authNotifierProvider.notifier).login(...)` - call actions
+  - `ref.watch(themeProvider).isDark` - current theme
 
 ### Styling
 - `core/constants/app_colors.dart` - All color definitions
@@ -99,7 +100,7 @@ DashboardScreen
 ├── ProjectsScreen (grid view)
 ├── ExportsScreen (list view)
 ├── FeedbackScreen (rating form)
-└── Settings (not implemented)
+└── SettingsScreen (profile, security, appearance)
     ↓ (logout)
 LoginScreen
 ```
@@ -135,15 +136,14 @@ flutter clean && flutter pub get
 ## Design Decisions
 
 ### Theme
-- **Light theme** used consistently across all screens
-- Primary color: Black (#000000)
-- Accent color: Blue (#2563EB)
-- Background: Light gray (#F8F9FA)
-- Sidebar: Dark gray (#1F2937)
+- **Light + dark themes**, toggled at runtime via `themeProvider`
+- Primary (neutral): Black (#000000) / White in dark mode
+- Brand accent: Teal (#14B8A6; `accentStrong` #0F766E for filled CTAs) — used for primary CTAs, active nav, links, focus
+- Background: Light gray (#F8F9FA) / near-black (#0F0F0F) in dark
+- Sidebar: Black (#1F2937-family) / dark grey in dark mode
 
 ### State Management
-- Simple `InheritedWidget` pattern chosen over Provider/Riverpod/Bloc for simplicity
-- Suitable for current app size; can be migrated to Riverpod if app grows
+- **Riverpod** (`flutter_riverpod`). `ProviderScope` wraps the app in `main.dart`; each feature has a `Notifier`/`AsyncNotifier` provider in `providers/`.
 
 ### Validation
 - Email accepts any valid email format (not restricted to Gmail)
@@ -156,15 +156,14 @@ flutter clean && flutter pub get
 
 ## TODO / Future Improvements
 
-- [ ] Implement actual file upload with `file_picker` package
-- [ ] Connect to backend API for authentication
-- [ ] Add video/audio processing integration
-- [ ] Implement Settings screen
-- [ ] Add loading states and error handling
-- [ ] Implement social login (Google, Microsoft, Apple)
-- [ ] Add responsive design for mobile
-- [ ] Persist auth state with `shared_preferences`
-- [ ] Add unit and widget tests
+Done: file upload (`file_picker`), backend auth, audio/video processing, Settings screen,
+loading/error states, Google sign-in, auth persistence.
+
+Open (see `UI_UX_AUDIT.md` at repo root for the full UI/UX backlog):
+- [ ] Responsive / mobile layout (screens are desktop-first `Row[Sidebar, …]`)
+- [ ] Route all hardcoded colors through `AppColors` tokens (token refactor)
+- [ ] Sidebar text labels + preserve back-stack on navigation
+- [ ] Expand widget/unit test coverage
 
 ## Dependencies
 
@@ -198,10 +197,12 @@ assets/
 
 ## Common Patterns
 
-### Accessing State
+### Accessing State (Riverpod)
 ```dart
-final auth = AppProvider.of(context).auth;
-final projects = AppProvider.of(context).projects;
+// Inside a ConsumerWidget / ConsumerStatefulWidget:
+final authState = ref.watch(authNotifierProvider);      // rebuilds on change
+ref.read(authNotifierProvider.notifier).login(email, pw); // fire an action
+final isDark = ref.watch(themeProvider).isDark;
 ```
 
 ### Navigation

@@ -70,6 +70,23 @@ class AppColors {
   static const Color sidebarActiveDark = Color(0xFF2A2A2A);
 
   // ============================================================================
+  // BRAND ACCENT (teal) — used sparingly for primary CTAs, active states,
+  // links, and focus rings. Distinct from the legacy grey `accent` above.
+  // ============================================================================
+
+  /// Teal-500. Borders, active indicators, links, focus rings, icon tints.
+  static const Color accentColor = Color(0xFF14B8A6);
+
+  /// Teal-400. Brighter variant for better legibility on dark surfaces.
+  static const Color accentColorDark = Color(0xFF2DD4BF);
+
+  /// Teal-700. Filled CTA backgrounds that carry white text (meets contrast).
+  static const Color accentStrong = Color(0xFF0F766E);
+
+  /// Foreground color on accent-filled surfaces.
+  static const Color onAccent = Color(0xFFFFFFFF);
+
+  // ============================================================================
   // HELPER METHODS for dynamic theming
   // ============================================================================
 
@@ -84,4 +101,19 @@ class AppColors {
       isDark ? textSecondaryDark : textSecondary;
   static Color getBorder(bool isDark) => isDark ? borderDark : border;
   static Color getPrimary(bool isDark) => isDark ? primaryDark : primary;
+  static Color getTextHint(bool isDark) => isDark ? textHintDark : textHint;
+  static Color getDivider(bool isDark) => isDark ? dividerDark : divider;
+
+  /// Elevated card/panel surface: white in light mode, the slightly-raised
+  /// `surfaceVariantDark` (#2A2A2A) in dark mode. This is the surface the
+  /// screens actually use for cards (distinct from the deeper `surfaceDark`
+  /// #1A1A1A that backs dialogs/menus in the theme).
+  static Color getCard(bool isDark) => isDark ? surfaceVariantDark : surface;
+
+  /// Brand accent for FOREGROUND uses (links, icons, active indicators, focus).
+  /// Contrast-safe in each mode: teal-700 on light (~5.5:1 on white), teal-400
+  /// on dark (~10:1 on near-black). Use `accentColor` (teal-500) only for fills
+  /// where text contrast is not a concern (switch tracks, low-alpha tints).
+  static Color getAccent(bool isDark) =>
+      isDark ? accentColorDark : accentStrong;
 }

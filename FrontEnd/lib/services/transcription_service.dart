@@ -20,15 +20,16 @@ class TranscriptionService {
   Future<TranscriptionModel> transcribe(
     String fileId, {
     String language = 'ur',
+    bool autoCleanup = false,
   }) async {
     try {
       final response = await _client.dio.post(
         ApiConfig.asrTranscribe(fileId),
-        queryParameters: {
-          'language': language,
-        },
+        data: {'language': language, 'auto_cleanup': autoCleanup},
         options: Options(
-          receiveTimeout: const Duration(minutes: 10), // Allow up to 10 minutes for transcription
+          receiveTimeout: const Duration(
+            minutes: 10,
+          ), // Allow up to 10 minutes for transcription
         ),
       );
       return TranscriptionModel.fromJson(response.data);
@@ -73,11 +74,45 @@ class TranscriptionService {
       final data = response.data as Map<String, dynamic>;
       final languages = data['languages'] as List<dynamic>;
       return languages
-          .map((lang) => {
-                'code': lang['code'] as String,
-                'name': lang['name'] as String,
-              })
+          .map(
+            (lang) => {
+              'code': lang['code'] as String,
+              'name': lang['name'] as String,
+            },
+          )
           .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Transliterate raw Urdu text to Roman Urdu
+  ///
+  /// [urduText] - Urdu text to transliterate
+  ///
+  /// Returns a map with urdu_text, roman_urdu_text, processing_time_seconds
+  Future<Map<String, dynamic>> transliterateText(String urduText) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConfig.transliterateText,
+        data: {'text': urduText},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get Roman Urdu SRT subtitle content
+  ///
+  /// Returns the Roman Urdu SRT file content as a string
+  Future<String> getTransliterationSrt(String fileId) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConfig.transliterateResultSrt(fileId),
+      );
+      final data = response.data as Map<String, dynamic>;
+      return data['srt_content'] as String;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -149,7 +184,10 @@ class TranscriptionService {
       } else if (statusCode == 404) {
         return ServerException('Transcription not found or not ready yet', 404);
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

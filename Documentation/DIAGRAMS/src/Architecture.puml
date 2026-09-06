@@ -1,0 +1,95 @@
+@startuml Architecture
+' RomaSub.Ai — Layered Architecture
+' Regenerated to add the Video Export Service and FFmpeg video rendering.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+}
+skinparam ArrowColor #334155
+skinparam componentStyle rectangle
+
+rectangle "Client Layer" #F4F7FB {
+  rectangle "Desktop App\n(Flutter)" as APP
+}
+
+rectangle "Device Storage" #F4F7FB {
+  rectangle "Temp Files\nAudio / Video Cache" as CACHE
+  rectangle "Local Config\nUser Preferences" as CONF
+}
+
+rectangle "Backend Entry Layer" #EAF2FB {
+  rectangle "REST API Gateway\n(FastAPI)" as GW
+}
+
+rectangle "Backend Services" #EAF2FB {
+  rectangle "Feedback\nService" as SFEED
+  rectangle "Media\nService" as SMEDIA
+  rectangle "Subtitle\nService" as SSUB
+  rectangle "Auth\nService" as SAUTH
+  rectangle "Email\nService" as SEMAIL
+  rectangle "ASR\nService" as SASR
+  rectangle "Transliteration\nService" as STRANS
+  rectangle "<b>Video Export</b>\n<b>Service</b>" as SVID #D7F0DD
+}
+
+rectangle "AI Processing Layer" #F1EAFB {
+  rectangle "Whisper Engine\nUrdu ASR (small)" as WHISPER
+  rectangle "M2M100 Engine\nUrdu -> Roman (fine-tuned)" as M2M
+}
+
+rectangle "Data Access Layer" #E9F6EE {
+  rectangle "Feedback\nRepository" as RFEED
+  rectangle "Project\nRepository" as RPROJ
+  rectangle "Subtitle\nRepository" as RSUB
+  rectangle "User\nRepository" as RUSER
+}
+
+rectangle "External Integrations" #FCEFE7 {
+  rectangle "MailSender\nAPI" as EXTMAIL
+  rectangle "Google\nAuth 2.0" as EXTGOOG
+  rectangle "<b>FFmpeg</b>\nAudio Extract\n+ Video Render" as EXTFF #D7F0DD
+  rectangle "Hugging Face\nTransformers" as EXTHF
+}
+
+rectangle "Database Layer" #E9F6EE {
+  database "PostgreSQL\nUsers, Projects, Metadata" as DB
+  database "File Storage\nAudio, Subtitles, Video Exports" as FS
+}
+
+APP --> GW
+APP --> CACHE
+APP --> CONF
+
+GW --> SFEED
+GW --> SMEDIA
+GW --> SSUB
+GW --> SAUTH
+GW --> SASR
+GW --> STRANS
+GW --> SVID
+
+SAUTH --> SEMAIL
+SASR --> WHISPER
+STRANS --> M2M
+
+SMEDIA --> EXTFF
+SVID --> EXTFF : render (burn-in / mux)
+SVID --> SMEDIA : source video + segments
+SEMAIL --> EXTMAIL
+SAUTH --> EXTGOOG
+M2M --> EXTHF
+
+SFEED --> RFEED
+SSUB --> RSUB
+SSUB --> RPROJ
+SAUTH --> RUSER
+
+RFEED --> DB
+RPROJ --> DB
+RSUB --> DB
+RUSER --> DB
+SMEDIA --> FS
+SVID --> FS
+@enduml

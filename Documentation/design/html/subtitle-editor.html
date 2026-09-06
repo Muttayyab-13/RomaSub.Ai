@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RomaSub.AI - Subtitle Editor</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "border-strong": "#CBD5E1",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "primary-container": "#008378",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-fixed-dim": "#ffb59a",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "surface-primary": "#FFFFFF",
+                        "primary-fixed": "#89f5e7",
+                        "outline-variant": "#bcc9c6",
+                        "on-secondary-container": "#5c647a",
+                        "surface-container-high": "#dce9ff",
+                        "secondary-fixed": "#dae2fd",
+                        "tertiary": "#924628",
+                        "secondary-container": "#dae2fd",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "surface-variant": "#d3e4fe",
+                        "accent-teal-subtle": "#F0FDFA",
+                        "on-primary-fixed-variant": "#005049",
+                        "surface-tertiary": "#F1F5F9",
+                        "primary": "#00685f",
+                        "surface-tint": "#006a61",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#3d4947",
+                        "on-primary-container": "#f4fffc",
+                        "tertiary-container": "#b05e3d",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00201d",
+                        "on-tertiary-container": "#fffbff",
+                        "outline": "#6d7a77",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "text-urdu": "#1E293B",
+                        "inverse-primary": "#6bd8cb",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "secondary": "#565e74",
+                        "on-tertiary-fixed-variant": "#773215",
+                        "primary-fixed-dim": "#6bd8cb",
+                        "tertiary-fixed": "#ffdbce",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-container": "#e5eeff",
+                        "inverse-surface": "#213145",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "surface": "#f8f9ff",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "border-subtle": "#E2E8F0",
+                        "on-tertiary-fixed": "#370e00",
+                        "surface-secondary": "#F8FAFC",
+                        "error-container": "#ffdad6"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        "timeline-height": "180px",
+                        "row-height-compact": "32px",
+                        "panel-gap": "1px",
+                        "container-padding": "12px",
+                        "row-height-standard": "44px",
+                        "sidebar-width": "240px"
+                    },
+                    fontFamily: {
+                        "body-sm": ["Inter"],
+                        "display-urdu": ["Inter"],
+                        "mono-ui": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "editor-text": ["Inter"]
+                    },
+                    fontSize: {
+                        "body-sm": ["13px", { lineHeight: "20px", fontWeight: "400" }],
+                        "display-urdu": ["24px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "mono-ui": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+                        "label-caps": ["11px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "editor-text": ["15px", { lineHeight: "28px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { margin: 0; overflow: hidden; background-color: #f8f9ff; }
+        
+        /* Custom scrollbars for professional density */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #94A3B8;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 18px; /* High density size */
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+    </style>
+</head>
+<body class="flex h-screen w-full bg-surface text-on-surface font-body-sm text-body-sm">
+<!-- SideNavBar (Shared Component) -->
+<nav class="bg-surface-secondary text-primary font-body-sm text-body-sm w-sidebar-width h-screen sticky left-0 top-0 border-r border-border-subtle flex flex-col h-full py-container-padding flex-shrink-0 z-40 hidden md:flex">
+<div class="px-container-padding mb-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden flex-shrink-0">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Minimalist geometric avatar placeholder with teal tones, clean digital style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlkkb6ibfHvOyuW3IX6y-vGt9iPKi4JknRtvSKd2jCvsgbYIWNhnIN_KPKSmI0JFhr9UuMf5GvliE1dqA0AMZsCmDtEOu_1pgqhtowToZ6llgcMz02OEi8s6jUPfPPunAtTFdeoygMYG9QYJ_lt-o-hY2AtGFtAdr_9TuvkveOFz-8nJ57S6OPZhfaad9kn6GLsYN0z-c0yj6XPkM6cugfbmoHHewjrTG0wpiyJKpyJ46NjYtK6AGdBQ"/>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-display-urdu text-display-urdu text-primary truncate" style="font-size: 16px; line-height: 20px;">RomaSub.AI</span>
+<span class="text-on-surface-variant text-[11px] truncate">Pro Editor</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 px-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary bg-accent-teal-subtle border-l-2 border-primary cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="folder_open">folder_open</span>
+<span class="font-semibold">Recent Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+<span>Exports</span>
+</a>
+</div>
+<div class="mt-auto px-2 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span>Feedback</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Workspace Area -->
+<div class="flex-1 flex flex-col h-screen min-w-0 bg-surface-primary">
+<!-- TopNavBar (Shared Component Integration + Custom Editor Toolbar) -->
+<header class="bg-surface-primary text-primary font-body-sm text-body-sm h-row-height-standard w-full sticky top-0 z-50 border-b border-border-subtle flex justify-between items-center px-container-padding flex-shrink-0">
+<!-- Left: Project Context & Tooling -->
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-semibold text-on-surface">Documentary_Ep1_Draft.mp4</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-container" title="Unsaved changes"></span>
+</div>
+</div>
+<div class="h-5 w-[1px] bg-border-strong mx-2"></div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary text-on-surface-variant transition-colors" title="Undo">
+<span class="material-symbols-outlined text-[16px]" data-icon="undo">undo</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary text-on-surface-variant transition-colors opacity-50 cursor-not-allowed" title="Redo">
+<span class="material-symbols-outlined text-[16px]" data-icon="redo">redo</span>
+</button>
+</div>
+<div class="h-5 w-[1px] bg-border-strong mx-2"></div>
+<button class="flex items-center gap-1.5 px-2 py-1 rounded text-primary hover:bg-accent-teal-subtle transition-colors text-xs font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="magic_button">magic_button</span>
+                    Fix Overlaps
+                </button>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 mr-2">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="notifications">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<button class="h-row-height-compact px-4 border border-border-strong rounded text-on-surface font-semibold hover:bg-surface-secondary transition-colors">
+                    Save
+                </button>
+<button class="h-row-height-compact px-4 bg-primary text-on-primary rounded font-semibold hover:bg-primary-container transition-colors">
+                    Export
+                </button>
+</div>
+</header>
+<!-- 3-Panel Editor Layout -->
+<main class="flex-1 flex flex-row overflow-hidden w-full relative">
+<!-- Panel 1: Segment List -->
+<aside class="w-[300px] flex-shrink-0 flex flex-col border-r border-border-subtle bg-surface-secondary relative z-10">
+<div class="h-8 border-b border-border-subtle flex items-center px-3 justify-between bg-surface-tertiary flex-shrink-0">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SUBTITLES</span>
+<span class="font-mono-ui text-mono-ui text-on-surface-variant">124 Segments</span>
+</div>
+<div class="flex-1 overflow-y-auto p-1 flex flex-col gap-1">
+<!-- Segment: Inactive -->
+<div class="group flex gap-2 p-2 rounded hover:border-border-strong border border-transparent cursor-pointer bg-surface-primary">
+<span class="font-mono-ui text-[10px] text-on-surface-variant pt-1 w-4 text-right select-none">1</span>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-mono-ui text-[10px] text-primary">00:01:12.400 - 00:01:15.200</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface line-clamp-2">
+                                Ye ek naya project hai jisme hum kaam kar rahe hain.
+                            </div>
+</div>
+</div>
+<!-- Segment: Active -->
+<div class="group flex gap-2 p-2 rounded border-l-2 border-l-primary border border-border-subtle bg-accent-teal-subtle cursor-pointer shadow-sm relative">
+<span class="font-mono-ui text-[10px] text-primary pt-1 w-4 text-right select-none font-bold">2</span>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-mono-ui text-[10px] text-primary font-bold">00:01:15.500 - 00:01:18.900</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface">
+                                Iski quality aur speed dono behtareen hain.
+                            </div>
+</div>
+</div>
+<!-- Segment: Inactive -->
+<div class="group flex gap-2 p-2 rounded hover:border-border-strong border border-transparent cursor-pointer bg-surface-primary">
+<span class="font-mono-ui text-[10px] text-on-surface-variant pt-1 w-4 text-right select-none">3</span>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-mono-ui text-[10px] text-on-surface-variant">00:01:19.100 - 00:01:22.000</span>
+<span class="material-symbols-outlined text-[14px] text-error" title="Gap too short">warning</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface line-clamp-2 opacity-60 italic">
+                                (Music plays)
+                            </div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Panel 2: Center Canvas (Video + Timeline) -->
+<section class="flex-1 flex flex-col min-w-0 bg-surface-primary z-0 relative">
+<!-- Video Player Area -->
+<div class="flex-1 bg-on-secondary-fixed flex flex-col items-center justify-center relative overflow-hidden p-4">
+<div class="w-full max-w-3xl aspect-video bg-black rounded shadow-lg relative border border-on-secondary-fixed-variant flex items-end justify-center pb-8 overflow-hidden group">
+<!-- Video Placeholder -->
+<div class="absolute inset-0 bg-cover bg-center w-full h-full opacity-50" data-alt="A cinematic, high-contrast documentary shot of a bustling city street at twilight, deep shadows and glowing neon lights, professional color grading, sharp focus." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBkU2Pqvv30KCoAJDrzlujrw-IZjURqK-a-1W0TTcenBF5iQheTkWC8QGGF8yt-8Z_B5DfnjEec_nSasbABuY1zPEeN8Ajibz3TwrT4tmPX0AouAF-ree0aNxTKYCvzFLzmSEv-KjZvFDPJgMM-Ia2mboWJTeN-DG-jWtCVRhoJxScJbbVoznjjJgsqgvUX_jz6bdL_6BCcWX9I6KQoBe-ZukGTscJLeAcsoHAf8ZKWN8ILBIILuo_92g')"></div>
+<!-- Subtitle Overlay -->
+<div class="relative z-10 bg-black/60 px-4 py-2 rounded text-center backdrop-blur-sm border border-white/10 max-w-[80%]">
+<p class="font-display-urdu text-[22px] text-white leading-tight font-medium" dir="rtl">
+                                اس کی کوالٹی اور رفتار دونوں بہترین ہیں۔
+                            </p>
+<p class="font-body-sm text-white/80 mt-1">
+                                Iski quality aur speed dono behtareen hain.
+                            </p>
+</div>
+</div>
+<!-- Player Controls -->
+<div class="w-full max-w-3xl mt-4 flex flex-col gap-2">
+<!-- Progress Bar -->
+<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden flex cursor-pointer relative group">
+<div class="h-full bg-primary-fixed-dim w-1/3"></div>
+<div class="h-full bg-outline-variant w-1/6"></div>
+<div class="absolute left-1/3 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-fixed rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<!-- Controls Row -->
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary transition-colors text-white">
+<span class="material-symbols-outlined icon-fill">play_arrow</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary transition-colors text-white">
+<span class="material-symbols-outlined">skip_previous</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary transition-colors text-white">
+<span class="material-symbols-outlined">skip_next</span>
+</button>
+<span class="font-mono-ui text-mono-ui ml-2 text-surface-dim">00:01:16.200 / 00:45:00.000</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary transition-colors text-white">
+<span class="material-symbols-outlined">volume_up</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-tertiary transition-colors text-white">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Dock -->
+<div class="h-timeline-height flex-shrink-0 bg-surface-secondary border-t border-border-strong flex flex-col relative">
+<!-- Timeline Toolbar -->
+<div class="h-8 border-b border-border-subtle flex items-center px-3 justify-between bg-surface-tertiary">
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TIMELINE</span>
+<div class="flex gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-variant"><span class="material-symbols-outlined text-[14px]">zoom_in</span></button>
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-variant"><span class="material-symbols-outlined text-[14px]">zoom_out</span></button>
+</div>
+</div>
+<div class="font-mono-ui text-[10px] text-on-surface-variant">Scale: 1s</div>
+</div>
+<!-- Timeline Track Area -->
+<div class="flex-1 relative overflow-x-auto overflow-y-hidden bg-surface flex flex-col">
+<!-- Time Ruler -->
+<div class="h-5 border-b border-border-subtle flex items-end px-4 relative opacity-50 text-[9px] font-mono-ui font-medium text-on-surface-variant">
+<div class="absolute left-[10%]">01:14</div>
+<div class="absolute left-[30%]">01:16</div>
+<div class="absolute left-[50%]">01:18</div>
+<div class="absolute left-[70%]">01:20</div>
+<div class="absolute left-[90%]">01:22</div>
+</div>
+<!-- Audio Waveform Track -->
+<div class="h-12 border-b border-border-subtle relative flex items-center overflow-hidden opacity-30">
+<!-- Abstract Waveform representation -->
+<div class="w-full h-full flex items-center gap-[1px] px-4">
+<div class="w-1 h-3 bg-primary rounded-sm"></div><div class="w-1 h-6 bg-primary rounded-sm"></div><div class="w-1 h-4 bg-primary rounded-sm"></div><div class="w-1 h-8 bg-primary rounded-sm"></div><div class="w-1 h-2 bg-primary rounded-sm"></div><div class="w-1 h-5 bg-primary rounded-sm"></div>
+<div class="w-10 h-1 bg-transparent"></div>
+<div class="w-1 h-4 bg-primary rounded-sm"></div><div class="w-1 h-7 bg-primary rounded-sm"></div><div class="w-1 h-9 bg-primary rounded-sm"></div><div class="w-1 h-10 bg-primary rounded-sm"></div><div class="w-1 h-6 bg-primary rounded-sm"></div><div class="w-1 h-4 bg-primary rounded-sm"></div>
+</div>
+</div>
+<!-- Subtitle Track -->
+<div class="flex-1 relative mt-2 px-4">
+<!-- Playhead -->
+<div class="absolute top-[-70px] bottom-0 left-[35%] w-[1px] bg-error z-20 pointer-events-none">
+<div class="w-2 h-2 bg-error absolute top-0 left-1/2 -translate-x-1/2 rotate-45"></div>
+</div>
+<!-- Subtitle Bricks -->
+<div class="absolute left-[5%] w-[20%] h-8 bg-surface-primary border border-border-strong rounded flex items-center px-2 cursor-pointer hover:border-primary truncate text-[11px]">
+                                Ye ek naya project hai...
+                            </div>
+<div class="absolute left-[27%] w-[25%] h-8 bg-accent-teal-subtle border-2 border-primary rounded flex items-center px-2 cursor-pointer shadow-sm truncate text-[11px] z-10 font-medium text-primary">
+                                Iski quality aur speed...
+                            </div>
+<div class="absolute left-[55%] w-[15%] h-8 bg-surface-primary border border-border-strong rounded flex items-center px-2 cursor-pointer hover:border-primary truncate text-[11px] opacity-60">
+                                (Music plays)
+                            </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Panel 3: Right Inspector (Detailed Editor) -->
+<aside class="w-[320px] flex-shrink-0 border-l border-border-subtle bg-surface-primary flex flex-col relative z-10">
+<div class="h-8 border-b border-border-subtle flex items-center px-3 justify-between bg-surface-tertiary flex-shrink-0">
+<span class="font-label-caps text-label-caps text-on-surface-variant">INSPECTOR</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+<!-- Meta info -->
+<div class="flex items-center justify-between border-b border-border-subtle pb-3">
+<span class="font-label-caps text-primary bg-accent-teal-subtle px-2 py-0.5 rounded">SEGMENT 2</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-pointer hover:text-primary">delete</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-pointer hover:text-primary">content_copy</span>
+</div>
+</div>
+<!-- Roman Urdu Input (Editable) -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-on-surface-variant">ROMAN URDU (EDITABLE)</label>
+<textarea class="w-full bg-surface-secondary border border-border-strong rounded p-3 font-editor-text text-editor-text text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-y min-h-[100px]" placeholder="Type here...">Iski quality aur speed dono behtareen hain.</textarea>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono-ui">
+<span>43 Chars</span>
+<span>21.5 CPS</span>
+</div>
+</div>
+<!-- Urdu Script (Read Only) -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-on-surface-variant">URDU SCRIPT (AUTO-GENERATED)</label>
+<button class="text-primary hover:underline text-[10px] font-medium">Edit</button>
+</div>
+<div class="w-full bg-surface-tertiary border border-border-subtle rounded p-4 font-display-urdu text-[20px] leading-relaxed text-text-urdu text-right" dir="rtl">
+                            اس کی کوالٹی اور رفتار دونوں بہترین ہیں۔
+                        </div>
+<p class="text-[10px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+                            AI Translation Active
+                        </p>
+</div>
+</div>
+<!-- Timing Controls (Docked Bottom) -->
+<div class="p-4 border-t border-border-subtle bg-surface-secondary flex flex-col gap-3">
+<label class="font-label-caps text-on-surface-variant">TIMING</label>
+<div class="grid grid-cols-2 gap-2">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant">IN</span>
+<input class="w-full h-row-height-compact bg-surface-primary border border-border-strong rounded px-2 font-mono-ui text-mono-ui text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="00:01:15.500"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant">OUT</span>
+<input class="w-full h-row-height-compact bg-surface-primary border border-border-strong rounded px-2 font-mono-ui text-mono-ui text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="00:01:18.900"/>
+</div>
+</div>
+<div class="flex justify-between items-center pt-2 border-t border-border-subtle">
+<span class="text-[11px] text-on-surface-variant font-medium">Duration: <span class="font-mono-ui">00:00:03.400</span></span>
+<div class="flex gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded border border-border-strong hover:bg-surface-tertiary transition-colors" title="Snap to playhead"><span class="material-symbols-outlined text-[14px]">align_horizontal_left</span></button>
+<button class="w-6 h-6 flex items-center justify-center rounded border border-border-strong hover:bg-surface-tertiary transition-colors" title="Snap to playhead"><span class="material-symbols-outlined text-[14px]">align_horizontal_right</span></button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

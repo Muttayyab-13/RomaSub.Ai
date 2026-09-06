@@ -43,7 +43,8 @@ class UploadResponseModel {
   /// Get file size in human-readable format
   String get fileSizeFormatted {
     if (fileSize < 1024) return '$fileSize B';
-    if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    if (fileSize < 1024 * 1024)
+      return '${(fileSize / 1024).toStringAsFixed(1)} KB';
     return '${fileSizeMb.toStringAsFixed(2)} MB';
   }
 

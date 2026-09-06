@@ -75,6 +75,23 @@ class MediaService {
     }
   }
 
+  /// Returns whether the media file for [fileId] still exists on the server.
+  /// 404 -> false (file was cleaned up / lost). Other errors -> true
+  /// (don't punish the user for a transient network hiccup).
+  Future<bool> isMediaAvailable(String fileId) async {
+    try {
+      await _client.dio.get(ApiConfig.mediaInfo(fileId));
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return false;
+      return true;
+    } catch (_) {
+      // Non-DioException: be permissive so a transient/unexpected error
+      // never blocks playback or hangs the editor on "Loading video...".
+      return true;
+    }
+  }
+
   /// Get file information by file_id
   Future<Map<String, dynamic>> getFileInfo(String fileId) async {
     try {
@@ -114,7 +131,9 @@ class MediaService {
   ApiException _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      return NetworkException('Upload timeout. Please check your internet connection.');
+      return NetworkException(
+        'Upload timeout. Please check your internet connection.',
+      );
     } else if (e.type == DioExceptionType.connectionError) {
       return NetworkException('No internet connection');
     } else if (e.response != null) {
@@ -131,9 +150,14 @@ class MediaService {
       } else if (statusCode == 401) {
         return UnauthorizedException(message);
       } else if (statusCode == 413) {
-        return ValidationException('File too large. Maximum size is ${ApiConfig.maxFileSizeMB}MB');
+        return ValidationException(
+          'File too large. Maximum size is ${ApiConfig.maxFileSizeMB}MB',
+        );
       } else if (statusCode != null && statusCode >= 500) {
-        return ServerException('Server error. Please try again later.', statusCode);
+        return ServerException(
+          'Server error. Please try again later.',
+          statusCode,
+        );
       } else {
         return ServerException(message, statusCode);
       }

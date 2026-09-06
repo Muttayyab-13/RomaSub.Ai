@@ -1,182 +1,153 @@
 """
 Email Service for RomaSub.AI
-Handles sending OTP emails via MailerSend API
+Handles sending OTP emails via the Brevo transactional email API.
 
 Pure functions for email operations.
 """
 
-from mailersend import MailerSendClient, EmailBuilder
-from app.config import settings
 import logging
-import base64
-import os
+import requests
 
-# Setup logging
+from app.config import settings
+
+# Brevo transactional email endpoint (verified against
+# https://developers.brevo.com/reference/send-transac-email)
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_TIMEOUT_SECONDS = 10
+
 logger = logging.getLogger(__name__)
 
-# Path to logo file
-LOGO_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "FrontEnd", "assets", "images", "logos", "logo.png")
-
-
-def get_logo_base64() -> str:
-    """
-    Load logo and convert to base64 string.
-
-    Returns:
-        Base64 encoded logo string, or empty string if file not found
-    """
-    try:
-        if os.path.exists(LOGO_PATH):
-            with open(LOGO_PATH, "rb") as f:
-                logo_data = f.read()
-                return base64.b64encode(logo_data).decode('utf-8')
-    except Exception as e:
-        logger.warning(f"Failed to load logo: {e}")
-    return ""
-
 
 # ============================================================================
-# Email Template Functions - Black & White Theme
+# Email Template Functions
+# ----------------------------------------------------------------------------
+# Professional black-and-white transactional templates. Brand-aligned with
+# the Flutter frontend (see FrontEnd/lib/core/constants/app_colors.dart):
+#   primary  #000000   text   #111827 / #6B7280 / #9CA3AF
+#   surface  #FFFFFF   bg     #F8F9FA   border #E5E7EB
+# No emojis. Single H1 with a small uppercase eyebrow label above it.
 # ============================================================================
 
-def get_password_reset_template(name: str, otp: str) -> str:
+BRAND_NAME = "RomaSub.AI"
+BRAND_TAGLINE = "Roman Urdu Caption Generator"
+COPYRIGHT_YEAR = 2026
+
+
+def _render_otp_email(name: str, otp: str, eyebrow: str, heading: str,
+                      intro: str, disclaimer: str) -> str:
     """
-    Generate HTML template for password reset email.
+    Render a transactional OTP email. All variants share the same scaffold
+    so visual treatment stays consistent; only the copy varies.
 
     Args:
-        name: Recipient name
-        otp: OTP code
-
-    Returns:
-        HTML email content
+        name: Recipient's display name (already trusted — comes from our DB).
+        otp: 6-digit one-time code.
+        eyebrow: Short uppercase label shown above the heading
+                 (e.g. "Password Reset").
+        heading: Single H1 line.
+        intro: Body paragraph explaining what the code is for.
+        disclaimer: Final paragraph for the "didn't request this" case.
     """
-    logo_base64 = get_logo_base64()
-    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI" style="max-width: 180px; height: auto;">' if logo_base64 else '<div style="font-size: 28px; font-weight: bold; color: white;">RomaSub.AI</div>'
+    # Header is purely typographic — the brand name + tagline render
+    # consistently across every email client without needing image assets
+    # or worrying about embedded-image rendering quirks.
 
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {{ margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; }}
-            .wrapper {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
-            .card {{ background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }}
-            .header {{ background: #000000; padding: 32px; text-align: center; }}
-            .content {{ padding: 40px 32px; }}
-            .title {{ color: #1a1a1a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; }}
-            .text {{ color: #666; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; }}
-            .otp-container {{ background: #f8f8f8; border: 2px solid #e0e0e0; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }}
-            .otp-code {{ font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #000000; font-family: monospace; }}
-            .expiry {{ display: inline-block; background: #000; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 16px; }}
-            .footer {{ background: #fafafa; padding: 24px 32px; text-align: center; border-top: 1px solid #eee; }}
-            .footer-text {{ color: #999; font-size: 12px; margin: 0; }}
-            .divider {{ height: 1px; background: #eee; margin: 24px 0; }}
-            .security-note {{ background: #f0f0f0; padding: 16px; border-radius: 8px; margin-top: 24px; }}
-            .security-text {{ color: #666; font-size: 13px; margin: 0; }}
-        </style>
-    </head>
-    <body>
-        <div class="wrapper">
-            <div class="card">
-                <div class="header">
-                    {logo_html}
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{heading}</title>
+    <style>
+        body {{ margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F8F9FA; color: #111827; }}
+        .wrapper {{ max-width: 560px; margin: 0 auto; padding: 32px 16px; }}
+        .card {{ background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }}
+        .header {{ background: #000000; padding: 40px 32px; text-align: center; }}
+        .brand-name {{ color: #FFFFFF; font-size: 26px; font-weight: 700; letter-spacing: 0.3px; margin: 0; }}
+        .brand-tagline {{ color: #9CA3AF; font-size: 12px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; margin: 10px 0 0 0; }}
+        .content {{ padding: 40px 36px 32px; }}
+        .eyebrow {{ color: #6B7280; font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; margin: 0 0 12px 0; }}
+        .heading {{ color: #111827; font-size: 22px; font-weight: 600; line-height: 1.3; margin: 0 0 24px 0; }}
+        .greeting {{ color: #111827; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0; }}
+        .body-text {{ color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 28px 0; }}
+        .code-block {{ background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 8px; padding: 28px 16px; text-align: center; margin: 0 0 12px 0; }}
+        .code-value {{ color: #000000; font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 32px; font-weight: 600; letter-spacing: 10px; line-height: 1; }}
+        .code-meta {{ color: #6B7280; font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; text-align: center; margin: 0 0 28px 0; }}
+        .divider {{ height: 1px; background: #E5E7EB; border: 0; margin: 28px 0; }}
+        .disclaimer {{ color: #6B7280; font-size: 13px; line-height: 1.6; margin: 0; }}
+        .footer {{ padding: 24px 32px 28px; text-align: center; border-top: 1px solid #E5E7EB; background: #FAFAFA; }}
+        .footer-brand {{ color: #111827; font-size: 13px; font-weight: 600; margin: 0; }}
+        .footer-tagline {{ color: #9CA3AF; font-size: 11px; letter-spacing: 0.8px; margin: 4px 0 14px 0; }}
+        .footer-meta {{ color: #9CA3AF; font-size: 11px; line-height: 1.6; margin: 0; }}
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <div class="header">
+                <p class="brand-name">{BRAND_NAME}</p>
+                <p class="brand-tagline">{BRAND_TAGLINE}</p>
+            </div>
+            <div class="content">
+                <p class="eyebrow">{eyebrow}</p>
+                <h1 class="heading">{heading}</h1>
+                <p class="greeting">Hi {name},</p>
+                <p class="body-text">{intro}</p>
+                <div class="code-block">
+                    <div class="code-value">{otp}</div>
                 </div>
-                <div class="content">
-                    <h1 class="title">🔐 Password Reset</h1>
-                    <p class="text">Hello <strong>{name}</strong>,</p>
-                    <p class="text">We received a request to reset your password. Use the verification code below:</p>
-                    
-                    <div class="otp-container">
-                        <div class="otp-code">{otp}</div>
-                        <div class="expiry">⏱️ Expires in 15 minutes</div>
-                    </div>
-                    
-                    <div class="security-note">
-                        <p class="security-text">🛡️ If you didn't request this reset, please ignore this email. Your account is still secure.</p>
-                    </div>
-                </div>
-                <div class="footer">
-                    <p class="footer-text">© 2024 RomaSub.AI — Roman Urdu Captions Generator</p>
-                </div>
+                <p class="code-meta">Valid for 15 minutes</p>
+                <hr class="divider">
+                <p class="disclaimer">{disclaimer}</p>
+            </div>
+            <div class="footer">
+                <p class="footer-brand">{BRAND_NAME}</p>
+                <p class="footer-tagline">{BRAND_TAGLINE}</p>
+                <p class="footer-meta">&copy; {COPYRIGHT_YEAR} {BRAND_NAME}. All rights reserved.<br>This is an automated message. Please do not reply to this email.</p>
             </div>
         </div>
-    </body>
-    </html>
-    """
+    </div>
+</body>
+</html>"""
+
+
+def get_password_reset_template(name: str, otp: str) -> str:
+    """Generate the password-reset OTP email."""
+    return _render_otp_email(
+        name=name,
+        otp=otp,
+        eyebrow="Password Reset",
+        heading="Verification code required",
+        intro=(
+            "We received a request to reset the password for your "
+            f"{BRAND_NAME} account. Use the verification code below to "
+            "continue with the password reset."
+        ),
+        disclaimer=(
+            "If you did not request a password reset, you can safely ignore "
+            "this email. Your account remains secure and no changes will be "
+            "made."
+        ),
+    )
 
 
 def get_email_verify_template(name: str, otp: str) -> str:
-    """
-    Generate HTML template for email verification.
-
-    Args:
-        name: Recipient name
-        otp: OTP code
-
-    Returns:
-        HTML email content
-    """
-    logo_base64 = get_logo_base64()
-    logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="RomaSub.AI" style="max-width: 180px; height: auto;">' if logo_base64 else '<div style="font-size: 28px; font-weight: bold; color: white;">RomaSub.AI</div>'
-
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body {{ margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; }}
-            .wrapper {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
-            .card {{ background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }}
-            .header {{ background: #000000; padding: 32px; text-align: center; }}
-            .content {{ padding: 40px 32px; }}
-            .title {{ color: #1a1a1a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; }}
-            .text {{ color: #666; font-size: 15px; line-height: 1.6; margin: 0 0 24px 0; }}
-            .highlight {{ color: #000; font-weight: 600; }}
-            .otp-container {{ background: #f8f8f8; border: 2px solid #e0e0e0; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }}
-            .otp-code {{ font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #000000; font-family: monospace; }}
-            .expiry {{ display: inline-block; background: #000; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 16px; }}
-            .footer {{ background: #fafafa; padding: 24px 32px; text-align: center; border-top: 1px solid #eee; }}
-            .footer-text {{ color: #999; font-size: 12px; margin: 0; }}
-            .welcome-box {{ background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%); border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center; }}
-            .welcome-emoji {{ font-size: 48px; margin-bottom: 12px; }}
-            .welcome-text {{ color: #333; font-size: 16px; font-weight: 600; margin: 0; }}
-        </style>
-    </head>
-    <body>
-        <div class="wrapper">
-            <div class="card">
-                <div class="header">
-                    {logo_html}
-                </div>
-                <div class="content">
-                    <div class="welcome-box">
-                        <div class="welcome-emoji">👋</div>
-                        <p class="welcome-text">Welcome to RomaSub.AI!</p>
-                    </div>
-                    
-                    <h1 class="title">✉️ Verify Your Email</h1>
-                    <p class="text">Hello <strong>{name}</strong>,</p>
-                    <p class="text">Thank you for joining <span class="highlight">RomaSub.AI</span>! Please enter the verification code below to activate your account:</p>
-                    
-                    <div class="otp-container">
-                        <div class="otp-code">{otp}</div>
-                        <div class="expiry">⏱️ Expires in 15 minutes</div>
-                    </div>
-                    
-                    <p class="text" style="margin-top: 24px;">Once verified, you'll have full access to generate Roman Urdu captions for your videos!</p>
-                </div>
-                <div class="footer">
-                    <p class="footer-text">© 2024 RomaSub.AI — Roman Urdu Captions Generator</p>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    """Generate the email-verification OTP email."""
+    return _render_otp_email(
+        name=name,
+        otp=otp,
+        eyebrow="Email Verification",
+        heading="Confirm your email address",
+        intro=(
+            f"Welcome to {BRAND_NAME}. To complete your registration and "
+            "begin generating Roman Urdu captions for your videos, please "
+            "confirm your email address using the verification code below."
+        ),
+        disclaimer=(
+            f"If you did not create a {BRAND_NAME} account, please disregard "
+            "this email. No further action is required."
+        ),
+    )
 
 
 # ============================================================================
@@ -198,8 +169,8 @@ def send_otp_email(to_email: str, to_name: str, otp: str, purpose: str = "passwo
     """
     try:
         # Check if API key is configured
-        if not settings.mailersend_api_key:
-            logger.warning("MailerSend API key not configured. OTP: %s", otp)
+        if not settings.brevo_api_key:
+            logger.warning("Brevo API key not configured. OTP: %s", otp)
             print(f"\n{'='*50}")
             print(f"EMAIL OTP (API not configured)")
             print(f"To: {to_email}")
@@ -207,32 +178,71 @@ def send_otp_email(to_email: str, to_name: str, otp: str, purpose: str = "passwo
             print(f"{'='*50}\n")
             return True  # Return True for development/testing
 
-        # Subject and content based on purpose
+        # Subject and content based on purpose. Plain-text fallback mirrors the
+        # HTML copy for clients that don't render HTML or strip it.
         if purpose == "password_reset":
-            subject = "🔐 Reset Your RomaSub.AI Password"
+            subject = "Password reset verification code"
             html_content = get_password_reset_template(to_name, otp)
-            text_content = f"Your password reset OTP is: {otp}. This code expires in 15 minutes."
+            text_content = (
+                f"Hi {to_name},\n\n"
+                f"We received a request to reset the password for your "
+                f"RomaSub.AI account. Your verification code is:\n\n"
+                f"    {otp}\n\n"
+                f"This code is valid for 15 minutes.\n\n"
+                f"If you did not request a password reset, you can safely "
+                f"ignore this email.\n\n"
+                f"— RomaSub.AI"
+            )
         else:
-            subject = "✉️ Verify Your RomaSub.AI Email"
+            subject = "Confirm your RomaSub.AI email address"
             html_content = get_email_verify_template(to_name, otp)
-            text_content = f"Your email verification OTP is: {otp}. This code expires in 15 minutes."
+            text_content = (
+                f"Hi {to_name},\n\n"
+                f"Welcome to RomaSub.AI. Please confirm your email address "
+                f"using the verification code below:\n\n"
+                f"    {otp}\n\n"
+                f"This code is valid for 15 minutes.\n\n"
+                f"If you did not create a RomaSub.AI account, please "
+                f"disregard this email.\n\n"
+                f"— RomaSub.AI"
+            )
 
-        # Create MailerSend client (v2.0.0 API)
-        client = MailerSendClient(api_key=settings.mailersend_api_key)
+        # Send via Brevo REST API. camelCase field names are required by Brevo
+        # (htmlContent / textContent / messageId).
+        response = requests.post(
+            BREVO_API_URL,
+            headers={
+                "api-key": settings.brevo_api_key,
+                "content-type": "application/json",
+                "accept": "application/json",
+            },
+            json={
+                "sender": {
+                    "email": settings.brevo_sender_email,
+                    "name": settings.brevo_sender_name,
+                },
+                "to": [{"email": to_email, "name": to_name}],
+                "subject": subject,
+                "htmlContent": html_content,
+                "textContent": text_content,
+            },
+            timeout=BREVO_TIMEOUT_SECONDS,
+        )
 
-        # Build email using EmailBuilder
-        email = (EmailBuilder()
-            .from_email(settings.mailersend_sender_email, settings.mailersend_sender_name)
-            .to(to_email, to_name)
-            .subject(subject)
-            .html(html_content)
-            .text(text_content)
-            .build())
+        if response.status_code != 201:
+            # Most common cause is unverified sender domain (400) or bad key (401).
+            logger.error(
+                "Brevo send failed for %s: HTTP %s — %s",
+                to_email, response.status_code, response.text,
+            )
+            print(f"\n{'='*50}")
+            print(f"EMAIL SENDING FAILED - OTP for {to_email}: {otp}")
+            print(f"Brevo HTTP {response.status_code}: {response.text}")
+            print(f"{'='*50}\n")
+            return False
 
-        # Send email
-        response = client.emails.send(email)
-
-        logger.info("OTP email sent to %s, response: %s", to_email, response)
+        message_id = response.json().get("messageId", "<unknown>")
+        logger.info("OTP email sent to %s, messageId: %s", to_email, message_id)
         return True
 
     except Exception as e:

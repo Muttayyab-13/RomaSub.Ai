@@ -1,0 +1,89 @@
+@startuml Package
+' RomaSub.Ai — Package Diagram
+' Regenerated to add VideoExportService (services/video_export.py) and FFmpeg.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+}
+skinparam ArrowColor #334155
+
+package "Frontend Layer (Flutter Desktop App)" #F4F7FB {
+  package "UI Screens" {
+    rectangle "Dashboard" as UI1
+    rectangle "LoginScreen" as UI2
+    rectangle "VideoUploadScreen" as UI3
+    rectangle "SubtitleEditor" as UI4
+    rectangle "ExportScreen" as UI5
+  }
+  package "Client Services" {
+    rectangle "APIClient" as CS1
+    rectangle "SubtitlePreviewer" as CS2
+    rectangle "ChunkSender" as CS3
+  }
+}
+
+package "Backend Layer (FastAPI Backend)" #FFF6E5 {
+  package "API Controllers" {
+    rectangle "TransliterationController" as C1
+    rectangle "AuthController" as C2
+    rectangle "ProjectController" as C3
+    rectangle "FeedbackController" as C4
+    rectangle "ExportController" as C5
+    rectangle "ASRController" as C6
+    rectangle "MediaController" as C7
+  }
+  package "Service Layer" {
+    rectangle "TransliterationService" as S1
+    rectangle "FeedbackService" as S2
+    rectangle "AuthService" as S3
+    rectangle "SubtitleAssemblyService" as S4
+    rectangle "ASRService" as S5
+    rectangle "ChunkService" as S6
+    rectangle "**VideoExportService**" as S7 #D7F0DD
+  }
+  package "AI Models" {
+    rectangle "M2M100 Transliteration" as A1
+    rectangle "WhisperASR" as A2
+  }
+  rectangle "**FFmpeg**\n(audio extract + video render)" as FF #D7F0DD
+}
+
+package "Data Layer" #E9F6EE {
+  package "Repositories" {
+    rectangle "FeedbackRepository" as R1
+    rectangle "ExportRepository" as R2
+    rectangle "ProjectRepository" as R3
+    rectangle "UserRepository" as R4
+    rectangle "SubtitleChunkRepository" as R5
+    rectangle "MediaRepository" as R6
+  }
+  database "PostgreSQL DB" as DB
+  rectangle "File Storage" as FS #DCE7F5
+}
+
+UI1 --> CS1
+UI4 --> CS1
+UI5 --> CS1
+CS1 --> C5
+CS1 --> C2
+C5 --> S4
+C5 --> S7
+S7 --> FF
+S4 --> A1
+S5 --> A2
+S1 --> A1
+S4 --> R2
+S7 --> R6
+S2 --> R1
+S3 --> R4
+S4 --> R3
+R1 --> DB
+R2 --> DB
+R3 --> DB
+R4 --> DB
+R5 --> FS
+R6 --> FS
+@enduml

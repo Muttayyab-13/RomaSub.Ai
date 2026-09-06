@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
           width: 140,
           height: 140,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(
+          errorBuilder: (_, _, _) => const Icon(
             Icons.video_library,
             size: 100,
             color: AppColors.accent,

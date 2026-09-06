@@ -47,6 +47,19 @@ class StorageService {
     await _prefs.remove('user_json');
   }
 
+  // ========== Remember Me (session persistence flag) ==========
+
+  /// Whether the last sign-in asked to be remembered across app restarts.
+  /// Defaults to `true` so existing/unset installs keep their session.
+  Future<bool> getRememberMe() async {
+    return _prefs.getBool('remember_me') ?? true;
+  }
+
+  /// Persist the "remember me" choice made at sign-in.
+  Future<void> saveRememberMe(bool value) async {
+    await _prefs.setBool('remember_me', value);
+  }
+
   // ========== Project Data Storage (Local) ==========
 
   /// Save projects list to shared preferences
@@ -67,6 +80,7 @@ class StorageService {
     await deleteToken();
     await clearUser();
     await _prefs.remove('projects_list');
+    await _prefs.remove('remember_me');
   }
 }
 

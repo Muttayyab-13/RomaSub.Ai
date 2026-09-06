@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from app.database import init_db
-from app.routers import auth_router, media_router, asr_router, user_router
+from app.routers import auth_router, media_router, asr_router, user_router, transliteration_router, subtitle_router, realtime_router, feedback_router
 from app.config import settings
 
 # Configure logging
@@ -56,16 +56,32 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         logger.warning("Make sure PostgreSQL is running and database exists")
-    
+
+    # Eager-load Urdu pre-processor so first request doesn't pay init latency
+    try:
+        from app.services.urdu_preprocessor import load_diacritizer
+        load_diacritizer()
+    except Exception as e:
+        logger.warning(f"Urdu preprocessor init failed: {e}")
+
+    # Eager-init Claude refiner (no-op if enable_llm_refine is False)
+    try:
+        from app.services.llm_refiner import init_refiner
+        init_refiner()
+    except Exception as e:
+        logger.warning(f"Claude refiner init failed: {e}")
+
     # Log configuration
     logger.info(f"Whisper Model: {settings.whisper_model}")
+    logger.info(f"M2M100 Model: {settings.m2m100_model_path}")
+    logger.info(f"Transliteration Device: {settings.transliteration_device}")
     logger.info(f"Max File Size: {settings.max_file_size_mb}MB")
-    logger.info(f"Temp Upload Dir: {settings.temp_upload_dir}")
+    logger.info(f"Media Upload Dir: {settings.media_upload_dir}")
     
     logger.info("="*60)
     logger.info("Server ready! API docs at: http://localhost:8000/docs")
     logger.info("="*60)
-    
+
     yield
     
     # Shutdown
@@ -90,6 +106,7 @@ app = FastAPI(
     - **Module 1**: User Authentication & Registration
     - **Module 2**: Video/Audio Input Handler
     - **Module 3**: Automated Speech Recognition (ASR)
+    - **Module 6**: Transliteration Engine (Urdu to Roman Urdu)
     
     ---
     
@@ -143,6 +160,10 @@ app.include_router(auth_router)
 app.include_router(media_router)
 app.include_router(asr_router)
 app.include_router(user_router)
+app.include_router(transliteration_router)
+app.include_router(subtitle_router)
+app.include_router(realtime_router)
+app.include_router(feedback_router)
 
 
 # Root endpoint
@@ -160,7 +181,10 @@ async def root():
         "modules": {
             "auth": "User authentication and registration",
             "media": "Video/audio file upload and processing",
-            "asr": "Automatic speech recognition with Whisper"
+            "asr": "Automatic speech recognition with Whisper",
+            "transliteration": "Urdu to Roman Urdu transliteration with M2M100",
+            "subtitles": "Subtitle editing, export (SRT/VTT/TXT), and project management",
+            "realtime": "Real-time subtitle streaming with SSE and seek reprioritization"
         }
     }
 
@@ -173,7 +197,9 @@ async def health_check():
     return {
         "status": "healthy",
         "database": "connected",
-        "whisper_model": settings.whisper_model
+        "whisper_model": settings.whisper_model,
+        "m2m100_model": settings.m2m100_model_path,
+        "transliteration_device": settings.transliteration_device
     }
 
 

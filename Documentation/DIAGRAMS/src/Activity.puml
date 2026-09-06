@@ -1,0 +1,53 @@
+@startuml Activity
+' RomaSub.Ai — Activity Diagram
+' Regenerated to include the captioned-video export branch (video download).
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam ActivityBackgroundColor #EAF2FB
+skinparam ActivityBorderColor #2C6FB5
+skinparam ActivityDiamondBackgroundColor #FFF6E5
+skinparam ActivityDiamondBorderColor #C9922E
+
+start
+:Open App;
+
+if (Already registered?) then (yes)
+else (no)
+  :Register Account;
+endif
+
+repeat
+  :Enter Login Credentials;
+repeat while (Valid?) is (no)
+->yes;
+
+:Show Dashboard;
+:Upload Audio / Video;
+
+if (Audio only?) then (yes)
+else (no)
+  :Extract Audio from Video;
+endif
+
+:Run Whisper ASR\n(Urdu text + timestamps);
+:Transliteration Engine\n(Urdu -> Roman Urdu);
+:Generate timed subtitles\n(.srt, .vtt, .txt);
+
+fork
+  :Preview subtitles\n(real-time overlay on video);
+fork again
+  :Edit subtitles\n(text & timing);
+fork again
+  :Export subtitles\n(.srt / .vtt / .txt);
+fork again
+  :Export captioned video (MP4);
+  if (Caption mode?) then (hardsub)
+    :FFmpeg burn-in\n(re-encode: libx264 / aac);
+  else (softsub)
+    :FFmpeg mux mov_text\n(stream copy);
+  endif
+  :Download MP4 to device;
+end fork
+
+stop
+@enduml

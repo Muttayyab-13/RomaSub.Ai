@@ -1,0 +1,61 @@
+@startuml DFD
+' RomaSub.Ai — Data Flow Diagram (Level 0 + Level 1)
+' Regenerated to include the Video Export process and captioned-video output.
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor #EAF2FB
+  BorderColor #2C6FB5
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+}
+skinparam databaseBackgroundColor #FFF6E5
+skinparam databaseBorderColor #C9922E
+skinparam ArrowColor #334155
+
+frame "DFD Level 0" as L0 {
+  rectangle "User" as U0
+  usecase "RomaSub.Ai\nSystem" as SYS
+  U0 --> SYS : Upload Audio / Video
+  SYS --> U0 : Roman Urdu Subtitles (.srt / .vtt / .txt)\n**+ Captioned Video (.mp4)**
+}
+
+frame "DFD Level 1" as L1 {
+  rectangle "User" as U
+  usecase "1.0\nChunk\nProcessing" as P1
+  usecase "2.0\nASR Model\n(Whisper)" as P2
+  usecase "3.0\nTransliteration\nModel (M2M100)" as P3
+  usecase "4.0\nSubtitle\nAssembly" as P4
+  usecase "5.0\nAuthentication" as P5
+  usecase "6.0\nFeedback\nManager" as P6
+  usecase "7.0\nVideo Export\n(FFmpeg)" as P7
+
+  database "D1  File storage\n(subtitles / exports)" as D1
+  database "D2  User store\n(users, feedback)" as D2
+  database "D3  Media store\n(source video)" as D3
+
+  U --> P1 : Select / Upload Video
+  P1 --> D3 : store media
+  P1 --> P2 : Audio Chunk
+  P2 --> P1 : Urdu text + timestamps
+  P1 --> P3 : Urdu text
+  P3 --> P4 : Roman Urdu Subtitles
+  P4 --> D1 : Save Final SRT / VTT / TXT
+  P4 --> U : Show preview
+  U --> P4 : Export request (text)
+  P4 --> U : Exported file (.srt / .vtt / .txt)
+
+  U --> P7 : Video export request (mode)
+  P4 --> P7 : Segments (roman / urdu fallback)
+  D3 --> P7 : Source video
+  P7 --> U : Captioned Video (.mp4)
+
+  U --> P5 : Login Credentials
+  P5 --> D2 : User Info
+  D2 --> P5 : User Info
+  U --> P6 : Subtitle Edits / Feedback
+  P6 --> D2 : Store Feedback
+}
+@enduml

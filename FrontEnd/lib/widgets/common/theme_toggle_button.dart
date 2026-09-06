@@ -8,11 +8,15 @@ class ThemeToggleButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeProvider).isDark;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return IconButton(
       onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
       icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 300),
         transitionBuilder: (child, animation) {
           return RotationTransition(
             turns: animation,
@@ -27,8 +31,8 @@ class ThemeToggleButton extends ConsumerWidget {
       ),
       style: IconButton.styleFrom(
         backgroundColor: isDark
-            ? Colors.white.withOpacity(0.1)
-            : Colors.black.withOpacity(0.05),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.05),
         padding: const EdgeInsets.all(12),
       ),
     );

@@ -68,7 +68,7 @@ class AppSnackbar {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? textColor).withOpacity(0.15),
+                color: (iconColor ?? textColor).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: iconColor ?? textColor, size: 20),
@@ -90,7 +90,7 @@ class AppSnackbar {
               icon: Icon(
                 Icons.close,
                 size: 18,
-                color: textColor.withOpacity(0.6),
+                color: textColor.withValues(alpha: 0.6),
               ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),

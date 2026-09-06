@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 
 class AppTextField extends StatefulWidget {
@@ -31,11 +32,11 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     // Theme-aware colors
-    final bgColor = widget.isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final bgColor = AppColors.getCard(widget.isDark);
     final borderColor = widget.isDark
         ? Colors.grey.shade700
         : Colors.grey.shade300;
-    final textColor = widget.isDark ? Colors.white : Colors.black;
+    final textColor = AppColors.getPrimary(widget.isDark);
     final hintColor = widget.isDark
         ? Colors.grey.shade500
         : Colors.grey.shade500;

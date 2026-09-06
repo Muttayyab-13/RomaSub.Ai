@@ -31,7 +31,9 @@ class TranscriptionResponse(BaseModel):
     file_id: str
     language: str
     text: str
+    roman_urdu_text: Optional[str] = None
     segments: List[TranscriptionSegment]
+    roman_urdu_segments: Optional[List[dict]] = None
     segment_count: int
     processing_time_seconds: float
     audio_duration_seconds: Optional[float]
@@ -97,7 +99,9 @@ async def transcribe_file(
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),
@@ -138,7 +142,9 @@ async def transcribe_file_anonymous(
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),
@@ -168,7 +174,9 @@ async def get_transcription_result(file_id: str):
         file_id=file_id,
         language=result["language"],
         text=result["text"],
+        roman_urdu_text=result.get("roman_urdu_text"),
         segments=[TranscriptionSegment(**seg) for seg in result["segments"]],
+        roman_urdu_segments=result.get("roman_urdu_segments"),
         segment_count=result["segment_count"],
         processing_time_seconds=result["processing_time_seconds"],
         audio_duration_seconds=result.get("audio_duration_seconds"),
@@ -192,7 +200,21 @@ async def get_transcription_as_srt(file_id: str):
         )
     
     srt_content = asr_service.format_as_srt(result["segments"])
-    
+
+    # Record this download so it appears on the Recent Exports page.
+    try:
+        from app.services import subtitle as subtitle_service
+        original = result.get("original_filename") or f"file_{file_id}"
+        base = original.rsplit(".", 1)[0]
+        subtitle_service.record_export(
+            subtitle_id=None,
+            fmt="srt",
+            filename=f"{base}_urdu.srt",
+            file_id=file_id,
+        )
+    except Exception:
+        pass
+
     return SRTResponse(
         file_id=file_id,
         srt_content=srt_content

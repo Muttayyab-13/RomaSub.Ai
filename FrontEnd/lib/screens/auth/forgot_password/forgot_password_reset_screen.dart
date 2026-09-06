@@ -13,10 +13,12 @@ class ForgotPasswordResetScreen extends ConsumerStatefulWidget {
   const ForgotPasswordResetScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordResetScreen> createState() => _ForgotPasswordResetScreenState();
+  ConsumerState<ForgotPasswordResetScreen> createState() =>
+      _ForgotPasswordResetScreenState();
 }
 
-class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetScreen> {
+class _ForgotPasswordResetScreenState
+    extends ConsumerState<ForgotPasswordResetScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   String? _passwordError;
@@ -39,9 +41,9 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
     });
 
     if (_passwordError == null && _confirmPasswordError == null) {
-      final success = await ref.read(forgotPasswordProvider.notifier).resetPassword(
-            _passwordController.text,
-          );
+      final success = await ref
+          .read(forgotPasswordProvider.notifier)
+          .resetPassword(_passwordController.text);
 
       if (success && mounted) {
         // Show success message
@@ -61,10 +63,7 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
         final error = ref.read(forgotPasswordProvider).error;
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: AppColors.error,
-            ),
+            SnackBar(content: Text(error), backgroundColor: AppColors.error),
           );
         }
       }
@@ -99,8 +98,8 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
                 Text(
                   'Please enter your new password',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSizes.xl),
@@ -114,7 +113,9 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
                   onChanged: (_) {
                     if (_passwordError != null) {
                       setState(() {
-                        _passwordError = Validators.password(_passwordController.text);
+                        _passwordError = Validators.password(
+                          _passwordController.text,
+                        );
                         // Also revalidate confirm password if it has an error
                         if (_confirmPasswordError != null) {
                           _confirmPasswordError = Validators.confirmPassword(
@@ -169,14 +170,20 @@ class _ForgotPasswordResetScreenState extends ConsumerState<ForgotPasswordResetS
 
                 // Back link
                 GestureDetector(
-                  onTap: isLoading ? null : () {
-                    ref.read(forgotPasswordProvider.notifier).goToPreviousStep();
-                    AppRoutes.back(context);
-                  },
+                  onTap: isLoading
+                      ? null
+                      : () {
+                          ref
+                              .read(forgotPasswordProvider.notifier)
+                              .goToPreviousStep();
+                          AppRoutes.back(context);
+                        },
                   child: Text(
                     'Back',
                     style: TextStyle(
-                      color: isLoading ? AppColors.textHint : AppColors.textSecondary,
+                      color: isLoading
+                          ? AppColors.textHint
+                          : AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

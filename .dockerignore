@@ -50,6 +50,12 @@ uploads/
 /tmp/
 *.tmp
 
+# Runtime JSON state — persisted via the app_data named volume, not baked into
+# the image (keeps local dev projects/registry out of the built image). The
+# loanword/names dictionaries in app/data are intentionally NOT excluded.
+app/data/subtitle_state.json
+app/data/file_registry.json
+
 # OS
 .DS_Store
 Thumbs.db

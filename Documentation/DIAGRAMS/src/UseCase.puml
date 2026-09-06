@@ -1,0 +1,43 @@
+@startuml UseCase
+' RomaSub.Ai — Use Case Diagram
+' Regenerated to include captioned-video export (video download).
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #EAF2FB
+  BorderColor #2C6FB5
+}
+skinparam actorBorderColor #334155
+
+actor "User" as User
+
+rectangle "RomaSub.Ai" {
+  usecase UC1  as "Register Account"
+  usecase UC2  as "Login"
+  usecase UC3  as "Reset Password"
+  usecase UC4  as "Logout"
+  usecase UC5  as "Manage User Profile"
+  usecase UC6  as "Give Subtitle Feedback"
+  usecase UC7  as "Upload Video / Audio"
+  usecase UC8  as "View / Edit Subtitles"
+  usecase UC9  as "Real-Time Subtitle Preview"
+  usecase UC10 as "Export Subtitles\n(SRT / VTT / TXT)"
+  usecase UC11 as "Export Captioned Video\n(MP4: hardsub / softsub)"
+
+  User --> UC1
+  User --> UC2
+  User --> UC3
+  User --> UC4
+  User --> UC5
+  User --> UC6
+  User --> UC7
+
+  UC7 ..> UC8  : <<include>>
+  UC7 ..> UC9  : <<include>>
+  UC7 ..> UC10 : <<include>>
+  UC7 ..> UC11 : <<include>>
+  UC11 ..> UC8 : <<extend>>
+}
+@enduml

@@ -1,0 +1,38 @@
+@startuml RomaSubAI_HighLevel
+title RomaSub.AI — How It Works (High-Level Flow)
+
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam ArrowColor #33475B
+skinparam defaultFontSize 13
+skinparam rectangle {
+  BackgroundColor #EAF2FB
+  BorderColor #33475B
+}
+
+rectangle "Upload\nvideo / audio" as A
+rectangle "Audio Extraction\n(FFmpeg)" as B
+rectangle "Whisper ASR\nUrdu speech -> Urdu text" as C
+rectangle "Urdu Pre-processing\nnormalize + diacritize" as D
+rectangle "Loanword / Names\ndictionary lookup" as E
+rectangle "Transliteration\nUrdu -> Roman Urdu (M2M100)" as F
+rectangle "Merge / Reconstruct" as M
+rectangle "Refine (optional)\nClaude LLM" as G
+rectangle "Preview Subtitles" as H
+rectangle "Subtitle Editor (optional)\nreview & correct" as I
+rectangle "Export\nSRT · VTT · TXT · captioned MP4" as J
+
+A -> B
+B -> C
+C -> D
+D -> E
+E --> M : known loanwords & names\n(fixed spelling · bypass model)
+E --> F : remaining Urdu
+F -> M
+M -> G
+G -> H
+H -> J
+H ..> I : optional edit
+I ..> H : back to preview
+
+@enduml

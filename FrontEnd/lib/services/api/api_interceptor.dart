@@ -29,7 +29,7 @@ class AuthInterceptor extends Interceptor {
         }
       },
       loading: () {},
-      error: (_, __) {},
+      error: (_, _) {},
     );
 
     handler.next(options);
